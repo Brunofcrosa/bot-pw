@@ -208,10 +208,6 @@ const App = () => {
                             </button>
                         </div>
                         
-                        <button type="button" className="btn btn-outline-secondary" disabled={!currentServerId}>
-                            <CheckSquareIcon className="me-1" style={{ width: '1rem', height: '1rem' }} /> Selecionar
-                        </button>
-                        
                         <button 
                             type="button" 
                             className="btn btn-primary"
