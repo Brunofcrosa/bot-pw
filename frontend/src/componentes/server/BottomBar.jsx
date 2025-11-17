@@ -1,5 +1,5 @@
 import React from 'react';
-import './css/BottomBar.css'; // Path corrigido
+import './css/BottomBar.css';
 
 const BottomBar = ({ runningCount }) => {
     return (
@@ -7,10 +7,6 @@ const BottomBar = ({ runningCount }) => {
             <div>
                 <span className="running-count-label">Contas Rodando:</span> 
                 <span className="running-count-value">{runningCount}</span>
-            </div>
-            <div className="macro-key-info">
-                Macro Global: 
-                <span className="macro-key-value">Ctrl+Shift+T</span>
             </div>
         </div>
     );

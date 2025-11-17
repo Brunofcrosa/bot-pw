@@ -1,5 +1,3 @@
-/* frontend/src/componentes/server/css/ServerCard.css */
-
 .server-card {
     background-color: var(--color-bg-card);
     border: 1px solid var(--border-color);
@@ -15,7 +13,6 @@
     flex-grow: 1;
 }
 
-/* Container do Avatar + Nome/Classe */
 .card-header-info {
     display: flex; 
     align-items: center; 
@@ -32,7 +29,7 @@
     justify-content: center;
     font-size: 1.25rem;
     font-weight: bold;
-    color: var(--color-bg-card); /* Ajustado para ser mais visível na cor gerada */
+    color: var(--color-bg-card);
     border: 2px solid var(--color-accent-warning);
 }
 
@@ -55,7 +52,6 @@
     color: var(--color-text-light);
 }
 
-/* Linha de detalhe (Status, Login, PID) */
 .detail-row {
     display: flex; 
     justify-content: space-between; 
@@ -72,7 +68,6 @@
     font-size: 0.75rem;
 }
 
-/* Estilos de Status (Cores específicas para badge) */
 .badge-status {
     padding: 0.25rem 0.5rem; 
     border-radius: 9999px; 
@@ -105,10 +100,9 @@
     font-weight: 600;
 }
 
-/* Cores específicas de botão (Removidas do inline) */
 .btn-open {
     background-color: var(--color-accent-success);
-    color: white;
+    color: black;
 }
 
 .btn-close-game {

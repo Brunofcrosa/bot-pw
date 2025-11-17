@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { FaFolderOpen } from 'react-icons/fa'; 
-import './css/AccountModal.css'; // Path corrigido
+import './css/AccountModal.css';
 
-// Componente
 const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
-    // 1. ESTADOS (inalterados)
     const [charName, setCharName] = useState('');
     const [charClass, setCharClass] = useState('');
     const [login, setLogin] = useState('');
@@ -15,7 +13,6 @@ const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
         return null;
     }
 
-    // 2. FUNÇÕES DE LÓGICA (inalteradas)
     const handleBrowseExe = async () => {
         const path = await window.electronAPI.invoke('select-exe-file');
         if (path) {
@@ -38,7 +35,6 @@ const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
             login,
             password,
             exePath,
-            // Garantindo que a cor tem 6 dígitos para CSS correto
             charAvatarBg: `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}` 
         });
 
@@ -50,13 +46,12 @@ const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
         onClose();
     };
 
-    // 3. RENDERIZAÇÃO
     return (
         <div className="account-modal-backdrop">
             <div className="account-modal-dialog modal-dialog-centered"> 
                 <div className="account-modal-content">
                     
-                    <div className="modal-header border-bottom border-secondary bg-dark text-light p-3">
+                    <div className="modal-header border-bottom p-3">
                         <h5 className="modal-title fs-5 text-warning">
                             ✨ Adicionar Conta - **{serverName}**
                         </h5>
@@ -64,10 +59,10 @@ const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
                     </div>
                     
                     <form onSubmit={handleSubmit}>
-                        <div className="modal-body p-4 bg-dark text-light account-modal-body-scroll">
+                        <div className="modal-body p-4 account-modal-body-scroll">
                             
                             <div className="mb-3">
-                                <label className="form-label small text-light">Nome do Personagem*</label>
+                                <label className="form-label small">Nome do Personagem*</label>
                                 <input 
                                     type="text" 
                                     className="form-control form-control-custom-dark"
@@ -79,7 +74,7 @@ const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
                             </div>
                             
                             <div className="mb-3">
-                                <label className="form-label small text-light">Classe</label>
+                                <label className="form-label small">Classe</label>
                                 <input 
                                     type="text" 
                                     className="form-control form-control-custom-dark"
@@ -89,10 +84,10 @@ const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
                                 />
                             </div>
                              
-                             <hr className="my-4 border-secondary"/>
+                             <hr className="my-4"/>
 
                              <div className="mb-3">
-                                <label className="form-label small text-light">Login (Conta do Jogo)*</label>
+                                <label className="form-label small">Login (Conta do Jogo)*</label>
                                 <input 
                                     type="text" 
                                     className="form-control form-control-custom-dark" 
@@ -103,7 +98,7 @@ const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
                             </div>
                             
                             <div className="mb-3">
-                                <label className="form-label small text-light">Senha*</label>
+                                <label className="form-label small">Senha*</label>
                                 <input 
                                     type="password" 
                                     className="form-control form-control-custom-dark"
@@ -113,10 +108,10 @@ const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
                                 />
                             </div>
                              
-                             <hr className="my-4 border-secondary"/>
+                             <hr className="my-4"/>
 
                              <div className="mb-3">
-                                <label className="form-label small text-light">Caminho do Jogo (ElementClient.exe)*</label>
+                                <label className="form-label small">Caminho do Jogo (ElementClient.exe)*</label>
                                 <div className="input-group">
                                     <input 
                                         type="text" 
@@ -137,7 +132,7 @@ const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
                             </div>
                         </div>
                         
-                        <div className="modal-footer border-top border-secondary bg-dark p-3">
+                        <div className="modal-footer border-top p-3">
                             <button type="button" className="btn btn-outline-secondary" onClick={onClose}>Cancelar</button>
                             <button type="submit" className="btn btn-primary">Salvar Conta</button>
                         </div>

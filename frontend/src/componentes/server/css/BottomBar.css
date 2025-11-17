@@ -1,5 +1,3 @@
-/* frontend/src/componentes/server/BottomBar.css */
-
 .bottom-bar {
     position: fixed;
     bottom: 0;
@@ -34,6 +32,6 @@
 
 .macro-key-value {
     font-weight: 600;
-    color: #17a2b8; /* Cor info/ciano */
+    color: #17a2b8;
     margin-left: 0.25rem;
 }
