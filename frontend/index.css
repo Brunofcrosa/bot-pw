@@ -47,3 +47,26 @@ body {
     --bs-btn-bg: var(--color-bg-primary);
     --bs-btn-border-color: var(--color-bg-primary);
 }
+
+/* Exemplo de classes dark mode para inputs */
+.form-control-dark, .form-control-dark-readonly {
+    background-color: #3e444b;
+    color: #f8f9fa;
+    border-color: #4a4e54;
+}
+
+.form-control-dark:focus {
+    background-color: #3e444b;
+    color: #f8f9fa;
+    border-color: #0d6efd; /* Exemplo de cor de foco */
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.form-control-dark-readonly {
+    background-color: #343a40; /* Um pouco mais escuro para indicar readonly */
+    opacity: 0.8;
+}
+
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%); /* Torna o ícone do botão de fechar branco */
+}

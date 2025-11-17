@@ -1,6 +1,6 @@
-const { app, BrowserWindow, ipcMain, globalShortcut, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, shell, dialog } = require('electron');
 const path = require('path');
-const { exec } = require('child_process');
+const { exec, spawn } = require('child_process');
 
 const PRELOAD_SCRIPT = path.join(__dirname, 'preload.js');
 const HTML_FILE = path.join(__dirname, '..', 'frontend', 'index.html');
@@ -25,6 +25,10 @@ let background_macro_enabled = false;
 
 let current_window_index = 0;
 
+// --- NOVO: Mapa para rastrear processos filhos ---
+// Armazena <accountId, childProcess>
+const runningProcesses = new Map();
+
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 800,
@@ -38,7 +42,7 @@ function createWindow() {
 
   mainWindow.loadFile(HTML_FILE);
 
-  //mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
 }
 
 async function findPerfectWorldWindows() {
@@ -247,6 +251,104 @@ function registerGlobalHotkey(hotkeyString, callback, hotkeyType) {
     return newHandle;
 }
 
+// --- NOVO: LÓGICA DE SERVIÇO INTEGRADA ---
+
+/**
+ * Inicia um processo externo (.exe)
+ * Baseado em 'services/element-client/element-client.service.js'
+ */
+async function launchElement(args) {
+    // CAMINHO ATUALIZADO: Aponta para 'app/executaveis/open-element.exe'
+    const exeHelperPath = path.join(__dirname, '..', 'executaveis', 'open-element.exe'); 
+
+    const spawnArgs = [
+        `exe:${args.exePath}`, // Caminho para o ElementClient_64.exe
+        `user:${args.login}`,
+        `pwd:${args.password}`,
+        `role:${args.characterName}`,
+        `extra:startbypatcher${args.argument ? ` ${args.argument}` : ''}`,
+        `onlyAdd:false`
+    ];
+
+    try {
+        // Define o 'cwd' (current working directory) para a pasta do executável
+        const exeDir = path.dirname(exeHelperPath);
+
+        const child = spawn(exeHelperPath, spawnArgs, {
+            stdio: ['pipe', 'pipe', 'ignore'], // Capturamos stdout
+            windowsHide: true,
+            cwd: exeDir // Define o diretório de trabalho
+        });
+
+        // Armazena a referência do processo
+        runningProcesses.set(args.id, child); 
+
+        // Ouve o 'stdout' do helper para saber o PID do jogo
+        child.stdout.on('data', (data) => {
+            console.log(`[Launcher Helper]: ${data.toString()}`);
+            try {
+                // O serviço 'element-client.service.js' espera um JSON no stdout
+                const { status, pid } = JSON.parse(data.toString());
+                
+                if (status === "started" && pid) {
+                    console.log(`[Main] Jogo iniciado com PID: ${pid}. ID da Conta: ${args.id}`);
+                    // Informa o frontend que deu certo
+                    BrowserWindow.getAllWindows()[0].webContents.send('element-opened', { 
+                        success: true, 
+                        pid: pid, 
+                        accountId: args.id 
+                    });
+                }
+            } catch (e) {
+                console.warn('[Main] Não foi possível parsear stdout do helper:', data.toString());
+            }
+        });
+
+        child.on('error', (err) => {
+             console.error(`[Main] Falha ao iniciar processo helper (conta ${args.id}):`, err);
+             runningProcesses.delete(args.id);
+        });
+
+        child.on('close', (code) => {
+            console.log(`[Main] Processo helper (conta ${args.id}) fechado com código ${code}`);
+            runningProcesses.delete(args.id);
+            // Informa o frontend que o processo fechou
+            BrowserWindow.getAllWindows()[0].webContents.send('element-closed', { 
+                success: true, 
+                accountId: args.id 
+            });
+        });
+
+        // Retorna o PID do *helper*
+        return { success: true, pid: child.pid, accountId: args.id };
+
+    } catch (error) {
+        console.error(`[Main] Falha ao executar 'launchElement':`, error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Fecha um processo externo pelo PID
+ * Baseado em 'services/element-client/close-element-client.service.js'
+ */
+function closeElementByPid(pid) {
+    try {
+        // 'process.kill' é a função do Node.js para enviar sinais
+        // No Windows, ela força o término do processo
+        process.kill(pid); 
+        console.log(`[Main] Processo ${pid} finalizado.`);
+        return { success: true, closedPid: pid };
+    } catch (error) {
+        console.error(`[Main] Falha ao finalizar processo ${pid}: ${error.message}`);
+        // Retorna erro se o PID não existir (ex: processo já fechado)
+        return { success: false, error: error.message };
+    }
+}
+
+// --- FIM DA LÓGICA DE SERVIÇO ---
+
+
 app.whenReady().then(() => {
   createWindow();
   
@@ -261,6 +363,10 @@ app.whenReady().then(() => {
 
 app.on('will-quit', () => {
   globalShortcut.unregisterAll();
+  // Garante que todos os processos filhos sejam finalizados
+  runningProcesses.forEach((child) => {
+      child.kill();
+  });
 });
 
 app.on('window-all-closed', () => {
@@ -268,6 +374,8 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
+
+// --- HANDLERS DO IPC MAIN ---
 
 ipcMain.handle('find-pw-windows', findPerfectWorldWindows);
 ipcMain.handle('focus-window', (event, hwnd) => {
@@ -317,11 +425,29 @@ ipcMain.handle('open-external-link', async (event, url) => {
     await shell.openExternal(url);
     return true;
 });
+
+// --- ATUALIZADO: Handlers 'open' e 'close' ---
+
 ipcMain.handle('open-element', (event, args) => {
-    console.log(`[IPC MAIN] Recebido open-element para: ${args.login}`);
-    return { success: true, pid: 12345, accountId: args.id }; 
+    console.log(`[IPC MAIN] Recebido 'open-element' para: ${args.login}`);
+    return launchElement(args); 
 });
+
 ipcMain.handle('close-element', (event, pid) => {
-    console.log(`[IPC MAIN] Recebido close-element para PID: ${pid}`);
-    return { success: true, closedPid: pid };
+    console.log(`[IPC MAIN] Recebido 'close-element' para PID: ${pid}`);
+    return closeElementByPid(pid);
+});
+
+ipcMain.handle('select-exe-file', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+        title: 'Selecionar Executável (ElementClient)',
+        properties: ['openFile'],
+        filters: [
+            { name: 'Executáveis', extensions: ['exe'] }
+        ]
+    });
+    if (canceled || filePaths.length === 0) {
+        return null; // Usuário cancelou
+    }
+    return filePaths[0]; // Retorna o caminho do arquivo selecionado
 });
