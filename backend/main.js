@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, globalShortcut, shell, dialog } = require('electron');
 const path = require('path');
 const { exec, spawn } = require('child_process');
+const fs = require('fs');
 
 const PRELOAD_SCRIPT = path.join(__dirname, 'preload.js');
 const HTML_FILE = path.join(__dirname, '..', 'frontend', 'index.html');
@@ -9,8 +10,8 @@ const TARGET_PROCESS_NAME = 'ElementClient_64.exe';
 const GLOBAL_HOTKEY_CYCLE = 'Control+Shift+T';
 
 const VK_MAP = {
-    'F1': 0x70, 'F2': 0x71, 'F3': 0x72, 'F4': 0x73, 'F5': 0x74, 'F6': 0x75,
-    'F7': 0x76, 'F8': 0x77, 'enter': 0x0D
+    'F1': 0x70, 'F2': 0x71, 'F3': 0x72, 'F4': 0x73, 'F5': 0x74, 'F6': 0x75,
+    'F7': 0x76, 'F8': 0x77, 'enter': 0x0D
 };
 
 let global_cycle_hotkey_handle = null;
@@ -25,9 +26,89 @@ let background_macro_enabled = false;
 
 let current_window_index = 0;
 
-// --- NOVO: Mapa para rastrear processos filhos ---
-// Armazena <accountId, childProcess>
 const runningProcesses = new Map();
+
+// --- LÓGICA DE PERSISTÊNCIA (ATUALIZADA) ---
+
+const DATA_FOLDER_NAME = 'data'; 
+const ACCOUNTS_FILE_SUFFIX = '_accounts.json'; 
+const SERVERS_FILE_NAME = 'servers.json';
+
+function getDataFolderPath() {
+    const dataFolderPath = path.join(__dirname, DATA_FOLDER_NAME);
+    if (!fs.existsSync(dataFolderPath)) {
+        fs.mkdirSync(dataFolderPath, { recursive: true });
+    }
+    return dataFolderPath;
+}
+
+function getServersFilePath() {
+    return path.join(getDataFolderPath(), SERVERS_FILE_NAME);
+}
+
+function getAccountsFilePath(serverName) {
+    const safeServerName = serverName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    return path.join(getDataFolderPath(), `${safeServerName}${ACCOUNTS_FILE_SUFFIX}`);
+}
+
+function loadServers() {
+    const filePath = getServersFilePath();
+    try {
+        if (fs.existsSync(filePath)) {
+            const data = fs.readFileSync(filePath, 'utf8');
+            return JSON.parse(data);
+        }
+        // Retorna servidor padrão se o arquivo não existir
+        return [{ id: 'default', name: 'Servidor Padrão' }];
+    } catch (error) {
+        console.error(`[Main] Falha ao carregar a lista de servidores:`, error.message);
+        return [{ id: 'default', name: 'Servidor Padrão' }];
+    }
+}
+
+function saveServers(servers) {
+    const filePath = getServersFilePath();
+    try {
+        const data = JSON.stringify(servers, null, 2);
+        fs.writeFileSync(filePath, data, 'utf8');
+        return { success: true };
+    } catch (error) {
+        console.error(`[Main] Falha ao salvar a lista de servidores:`, error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+function loadAccounts(serverName) {
+    if (!serverName) return [];
+    
+    const filePath = getAccountsFilePath(serverName);
+    try {
+        if (fs.existsSync(filePath)) {
+            const data = fs.readFileSync(filePath, 'utf8');
+            return JSON.parse(data);
+        }
+        return []; 
+    } catch (error) {
+        console.error(`[Main] Falha ao carregar contas para ${serverName}:`, error.message);
+        return [];
+    }
+}
+
+function saveAccounts(serverName, accounts) {
+    if (!serverName) return { success: false, error: 'Server name missing' };
+    
+    const filePath = getAccountsFilePath(serverName);
+    try {
+        const data = JSON.stringify(accounts, null, 2);
+        fs.writeFileSync(filePath, data, 'utf8');
+        return { success: true };
+    } catch (error) {
+        console.error(`[Main] Falha ao salvar contas para ${serverName}:`, error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+// --- FIM DA LÓGICA DE PERSISTÊNCIA ---
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -251,18 +332,11 @@ function registerGlobalHotkey(hotkeyString, callback, hotkeyType) {
     return newHandle;
 }
 
-// --- NOVO: LÓGICA DE SERVIÇO INTEGRADA ---
-
-/**
- * Inicia um processo externo (.exe)
- * Baseado em 'services/element-client/element-client.service.js'
- */
 async function launchElement(args) {
-    // CAMINHO ATUALIZADO: Aponta para 'app/executaveis/open-element.exe'
     const exeHelperPath = path.join(__dirname, '..', 'executaveis', 'open-element.exe'); 
 
     const spawnArgs = [
-        `exe:${args.exePath}`, // Caminho para o ElementClient_64.exe
+        `exe:${args.exePath}`,
         `user:${args.login}`,
         `pwd:${args.password}`,
         `role:${args.characterName}`,
@@ -271,28 +345,23 @@ async function launchElement(args) {
     ];
 
     try {
-        // Define o 'cwd' (current working directory) para a pasta do executável
         const exeDir = path.dirname(exeHelperPath);
 
         const child = spawn(exeHelperPath, spawnArgs, {
-            stdio: ['pipe', 'pipe', 'ignore'], // Capturamos stdout
+            stdio: ['pipe', 'pipe', 'ignore'],
             windowsHide: true,
-            cwd: exeDir // Define o diretório de trabalho
+            cwd: exeDir
         });
 
-        // Armazena a referência do processo
         runningProcesses.set(args.id, child); 
 
-        // Ouve o 'stdout' do helper para saber o PID do jogo
         child.stdout.on('data', (data) => {
             console.log(`[Launcher Helper]: ${data.toString()}`);
             try {
-                // O serviço 'element-client.service.js' espera um JSON no stdout
                 const { status, pid } = JSON.parse(data.toString());
                 
                 if (status === "started" && pid) {
                     console.log(`[Main] Jogo iniciado com PID: ${pid}. ID da Conta: ${args.id}`);
-                    // Informa o frontend que deu certo
                     BrowserWindow.getAllWindows()[0].webContents.send('element-opened', { 
                         success: true, 
                         pid: pid, 
@@ -312,14 +381,12 @@ async function launchElement(args) {
         child.on('close', (code) => {
             console.log(`[Main] Processo helper (conta ${args.id}) fechado com código ${code}`);
             runningProcesses.delete(args.id);
-            // Informa o frontend que o processo fechou
             BrowserWindow.getAllWindows()[0].webContents.send('element-closed', { 
                 success: true, 
                 accountId: args.id 
             });
         });
 
-        // Retorna o PID do *helper*
         return { success: true, pid: child.pid, accountId: args.id };
 
     } catch (error) {
@@ -328,26 +395,16 @@ async function launchElement(args) {
     }
 }
 
-/**
- * Fecha um processo externo pelo PID
- * Baseado em 'services/element-client/close-element-client.service.js'
- */
 function closeElementByPid(pid) {
     try {
-        // 'process.kill' é a função do Node.js para enviar sinais
-        // No Windows, ela força o término do processo
         process.kill(pid); 
         console.log(`[Main] Processo ${pid} finalizado.`);
         return { success: true, closedPid: pid };
     } catch (error) {
         console.error(`[Main] Falha ao finalizar processo ${pid}: ${error.message}`);
-        // Retorna erro se o PID não existir (ex: processo já fechado)
         return { success: false, error: error.message };
     }
 }
-
-// --- FIM DA LÓGICA DE SERVIÇO ---
-
 
 app.whenReady().then(() => {
   createWindow();
@@ -363,7 +420,6 @@ app.whenReady().then(() => {
 
 app.on('will-quit', () => {
   globalShortcut.unregisterAll();
-  // Garante que todos os processos filhos sejam finalizados
   runningProcesses.forEach((child) => {
       child.kill();
   });
@@ -377,6 +433,24 @@ app.on('window-all-closed', () => {
 
 // --- HANDLERS DO IPC MAIN ---
 
+// Handlers de Persistência
+ipcMain.handle('load-servers', () => {
+    return loadServers();
+});
+
+ipcMain.handle('save-servers', (event, servers) => {
+    return saveServers(servers);
+});
+
+ipcMain.handle('load-accounts', (event, serverName) => {
+    return loadAccounts(serverName);
+});
+
+ipcMain.handle('save-accounts', (event, serverName, accounts) => {
+    return saveAccounts(serverName, accounts);
+});
+
+// Outros Handlers
 ipcMain.handle('find-pw-windows', findPerfectWorldWindows);
 ipcMain.handle('focus-window', (event, hwnd) => {
     focusWindow(hwnd);
@@ -426,8 +500,6 @@ ipcMain.handle('open-external-link', async (event, url) => {
     return true;
 });
 
-// --- ATUALIZADO: Handlers 'open' e 'close' ---
-
 ipcMain.handle('open-element', (event, args) => {
     console.log(`[IPC MAIN] Recebido 'open-element' para: ${args.login}`);
     return launchElement(args); 
@@ -447,7 +519,7 @@ ipcMain.handle('select-exe-file', async () => {
         ]
     });
     if (canceled || filePaths.length === 0) {
-        return null; // Usuário cancelou
+        return null;
     }
-    return filePaths[0]; // Retorna o caminho do arquivo selecionado
+    return filePaths[0];
 });

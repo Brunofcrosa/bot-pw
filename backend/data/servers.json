@@ -1,0 +1,14 @@
+[
+  {
+    "id": "default",
+    "name": "Servidor Padrão"
+  },
+  {
+    "id": "classic_pw",
+    "name": "Classic pw"
+  },
+  {
+    "id": "classic_pw_2",
+    "name": "Classic pw 2"
+  }
+]

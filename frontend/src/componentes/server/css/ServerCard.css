@@ -1,0 +1,117 @@
+/* frontend/src/componentes/server/css/ServerCard.css */
+
+.server-card {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-content {
+    padding: 1rem;
+    flex-grow: 1;
+}
+
+/* Container do Avatar + Nome/Classe */
+.card-header-info {
+    display: flex; 
+    align-items: center; 
+    margin-bottom: 0.75rem;
+}
+
+.card-avatar {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    margin-right: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--color-bg-card); /* Ajustado para ser mais visível na cor gerada */
+    border: 2px solid var(--color-accent-warning);
+}
+
+.char-name {
+    font-size: 1.125rem;
+    font-weight: bold;
+    color: var(--color-text-light);
+}
+
+.char-class {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+.card-details {
+    border-top: 1px solid var(--border-color);
+    padding-top: 0.75rem;
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-text-light);
+}
+
+/* Linha de detalhe (Status, Login, PID) */
+.detail-row {
+    display: flex; 
+    justify-content: space-between; 
+    margin-bottom: 0.25rem;
+}
+
+.detail-label {
+    color: var(--color-text-muted);
+}
+
+.detail-value-monospace {
+    color: var(--color-text-light);
+    font-family: monospace;
+    font-size: 0.75rem;
+}
+
+/* Estilos de Status (Cores específicas para badge) */
+.badge-status {
+    padding: 0.25rem 0.5rem; 
+    border-radius: 9999px; 
+    font-size: 0.75rem;
+}
+
+.badge.bg-warning {
+    background-color: var(--color-accent-warning) !important;
+    color: var(--color-bg-body) !important;
+}
+
+.badge.bg-success {
+    background-color: var(--color-accent-success) !important;
+}
+
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.card-footer {
+    padding: 0.75rem;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--color-bg-card);
+}
+
+.btn-open, .btn-close-game {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+}
+
+/* Cores específicas de botão (Removidas do inline) */
+.btn-open {
+    background-color: var(--color-accent-success);
+    color: white;
+}
+
+.btn-close-game {
+    background-color: #dc3545;
+    color: white;
+}

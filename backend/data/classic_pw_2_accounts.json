@@ -1,0 +1,38 @@
+[
+  {
+    "id": "acc-1763393249942",
+    "charName": "teste2",
+    "charClass": "teste2",
+    "login": "teste",
+    "password": "teste",
+    "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe",
+    "charAvatarBg": "#cf6b67"
+  },
+  {
+    "id": "acc-1763393604218",
+    "charName": "xxxxxxxxx",
+    "charClass": "xxxxxxxxxx",
+    "login": "xxxxxxxxxx",
+    "password": "xxxxxxxxx",
+    "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe",
+    "charAvatarBg": "#cd11d8"
+  },
+  {
+    "id": "acc-1763393616566",
+    "charName": "aaaaaaaaaaaaa",
+    "charClass": "aaaaaaaaaaaa",
+    "login": "aaaaaaaaaaa",
+    "password": "aaaaaaaaaaaaaa",
+    "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe",
+    "charAvatarBg": "#4673da"
+  },
+  {
+    "id": "acc-1763393666047",
+    "charName": "aaaaaxx",
+    "charClass": "xxxxxxxxxx",
+    "login": "xxxxxxxxxx",
+    "password": "aaaaaaaaaaaa",
+    "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe",
+    "charAvatarBg": "#e7a2f7"
+  }
+]

@@ -1,30 +1,10 @@
 import React, { useState } from 'react';
 import { FaFolderOpen } from 'react-icons/fa'; 
-import './AccountModal.css'; 
-
-// --- ESTILOS DE CONTAINER (RESTO DOS ESTILOS NO CSS) ---
-const modalStyle = {
-    display: 'block',
-    position: 'fixed',
-    zIndex: 1050,
-    left: 0,
-    top: 0,
-    width: '100%',
-    height: '100%',
-    overflow: 'hidden',
-    backgroundColor: 'rgba(0,0,0,0.85)', 
-    backdropFilter: 'blur(5px)', 
-};
-
-const modalDialog = {
-    position: 'relative',
-    margin: '3rem auto', 
-    maxWidth: '550px',
-};
+import './css/AccountModal.css'; // Path corrigido
 
 // Componente
 const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
-    // 1. ESTADOS
+    // 1. ESTADOS (inalterados)
     const [charName, setCharName] = useState('');
     const [charClass, setCharClass] = useState('');
     const [login, setLogin] = useState('');
@@ -35,8 +15,7 @@ const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
         return null;
     }
 
-    // 2. FUNÇÕES DE LÓGICA (Definidas antes do uso no JSX)
-
+    // 2. FUNÇÕES DE LÓGICA (inalteradas)
     const handleBrowseExe = async () => {
         const path = await window.electronAPI.invoke('select-exe-file');
         if (path) {
@@ -59,8 +38,8 @@ const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
             login,
             password,
             exePath,
-            // Gerar uma cor de avatar consistente
-            charAvatarBg: `#${Math.floor(Math.random()*16777215).toString(16)}` 
+            // Garantindo que a cor tem 6 dígitos para CSS correto
+            charAvatarBg: `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}` 
         });
 
         setCharName('');
@@ -71,14 +50,12 @@ const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
         onClose();
     };
 
-    // 3. RENDERIZAÇÃO (Onde handleSubmit é USADO)
+    // 3. RENDERIZAÇÃO
     return (
-        <div className="account-modal-backdrop" style={modalStyle}>
-            <div className="account-modal-dialog modal-dialog-centered" style={modalDialog}> 
-                {/* O restante do estilo vem do AccountModal.css */}
+        <div className="account-modal-backdrop">
+            <div className="account-modal-dialog modal-dialog-centered"> 
                 <div className="account-modal-content">
                     
-                    {/* Header com correção de cor do texto e botão de fechar */}
                     <div className="modal-header border-bottom border-secondary bg-dark text-light p-3">
                         <h5 className="modal-title fs-5 text-warning">
                             ✨ Adicionar Conta - **{serverName}**
@@ -87,10 +64,8 @@ const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
                     </div>
                     
                     <form onSubmit={handleSubmit}>
-                        {/* Body com correção de cor do texto (text-light) */}
-                        <div className="modal-body p-4 bg-dark text-light" style={{maxHeight: '70vh', overflowY: 'auto'}}>
+                        <div className="modal-body p-4 bg-dark text-light account-modal-body-scroll">
                             
-                            {/* Rótulos corrigidos para text-light */}
                             <div className="mb-3">
                                 <label className="form-label small text-light">Nome do Personagem*</label>
                                 <input 

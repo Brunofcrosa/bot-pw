@@ -1,25 +1,17 @@
 import React from 'react';
+import './css/BottomBar.css'; // Path corrigido
 
-const barStyle = {
-    position: 'fixed',
-    bottom: 0,
-    left: 0,
-    width: '100%',
-    height: '50px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '0 1rem',
-    backgroundColor: 'var(--color-bg-bottombar)',
-    borderTop: '1px solid var(--border-color)',
-    zIndex: 1000
-};
-
-const BottomBar = () => {
+const BottomBar = ({ runningCount }) => {
     return (
-        <div style={barStyle}>
-            <div>Status: Online</div>
-            <div>(Barra Inferior)</div>
+        <div className="bottom-bar">
+            <div>
+                <span className="running-count-label">Contas Rodando:</span> 
+                <span className="running-count-value">{runningCount}</span>
+            </div>
+            <div className="macro-key-info">
+                Macro Global: 
+                <span className="macro-key-value">Ctrl+Shift+T</span>
+            </div>
         </div>
     );
 };
