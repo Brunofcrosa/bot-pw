@@ -1,0 +1,14 @@
+// .babelrc
+{
+    "presets": [
+        "@babel/preset-react",
+        [
+            "@babel/preset-env",
+            {
+                "targets": {
+                    "electron": "18" // Versão do Electron que você está usando
+                }
+            }
+        ]
+    ]
+}

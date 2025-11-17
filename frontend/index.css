@@ -1,0 +1,49 @@
+
+:root {
+    --color-bg-body: #1e1e2d; 
+    --color-bg-sidebar: #27293d;
+    --color-bg-card: #2d3043;
+    --color-bg-highlight: #34374c; 
+    --color-bg-primary: #5e72e4; 
+    
+    --color-text-light: #e6e6e6;
+    --color-text-muted: #a0a0a0;
+    --color-accent-warning: #ffd600; 
+    --color-accent-success: #2dce89;
+    
+
+    --border-color: #3f4258;
+    
+    --bs-body-bg: var(--color-bg-body); 
+    --bs-body-color: var(--color-text-light);
+    --sidebar-bg: var(--color-bg-sidebar);
+    --card-bg: var(--color-bg-card);
+    --active-bg: var(--color-bg-primary);
+    --active-color: white;
+}
+
+html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--color-bg-body); 
+    color: var(--color-text-light);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    user-select: none; 
+}
+
+.btn-outline-secondary {
+    --bs-btn-color: var(--color-text-muted);
+    --bs-btn-border-color: var(--border-color);
+    --bs-btn-hover-bg: var(--color-bg-highlight);
+    --bs-btn-hover-border-color: var(--color-bg-highlight);
+    --bs-btn-active-bg: var(--border-color);
+}
+
+.btn-primary {
+    --bs-btn-bg: var(--color-bg-primary);
+    --bs-btn-border-color: var(--color-bg-primary);
+}

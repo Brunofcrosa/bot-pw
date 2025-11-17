@@ -1,0 +1,36 @@
+{
+  "name": "meu-app-electron",
+  "version": "1.0.0",
+  "description": "Um aplicativo Electron inicial com boas práticas.",
+  "main": "backend/main.js",
+  "scripts": {
+    "dev": "concurrently \"webpack --watch --mode development\" \"wait-on frontend/bundle.js && electron .\"",
+    "build-react": "webpack --mode production",
+    "start": "electron .",
+    "build": "npm run build-react && electron-builder"
+  },
+  "keywords": [
+    "Electron"
+  ],
+  "author": "BrunoF",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.28.5",
+    "@babel/preset-env": "^7.28.5",
+    "@babel/preset-react": "^7.28.5",
+    "babel-loader": "^10.0.0",
+    "concurrently": "^9.2.1",
+    "css-loader": "^7.1.2",
+    "electron": "^31.2.1",
+    "style-loader": "^4.0.0",
+    "wait-on": "^9.0.3",
+    "webpack": "^5.102.1",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.2"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-icons": "^5.5.0"
+  }
+}
