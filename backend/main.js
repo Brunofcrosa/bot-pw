@@ -10,8 +10,8 @@ const TARGET_PROCESS_NAME = 'ElementClient_64.exe';
 const GLOBAL_HOTKEY_CYCLE = 'Control+Shift+T';
 
 const VK_MAP = {
-    'F1': 0x70, 'F2': 0x71, 'F3': 0x72, 'F4': 0x73, 'F5': 0x74, 'F6': 0x75,
-    'F7': 0x76, 'F8': 0x77, 'enter': 0x0D
+    'F1': 0x70, 'F2': 0x71, 'F3': 0x72, 'F4': 0x73, 'F5': 0x74, 'F6': 0x75,
+    'F7': 0x76, 'F8': 0x77, 'enter': 0x0D
 };
 
 let global_cycle_hotkey_handle = null;
@@ -58,7 +58,6 @@ function loadServers() {
             const data = fs.readFileSync(filePath, 'utf8');
             return JSON.parse(data);
         }
-        // Retorna servidor padrão se o arquivo não existir
         return [{ id: 'default', name: 'Servidor Padrão' }];
     } catch (error) {
         console.error(`[Main] Falha ao carregar a lista de servidores:`, error.message);
@@ -107,6 +106,25 @@ function saveAccounts(serverName, accounts) {
         return { success: false, error: error.message };
     }
 }
+
+// NOVO: Função para excluir o arquivo de contas
+function deleteAccountsFile(serverId) {
+    if (!serverId) return { success: false, error: 'Server ID missing' };
+    
+    const filePath = getAccountsFilePath(serverId);
+    try {
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log(`[Main] Arquivo de contas para ${serverId} excluído.`);
+        }
+        // Retorna sucesso mesmo se o arquivo não existir
+        return { success: true }; 
+    } catch (error) {
+        console.error(`[Main] Falha ao excluir arquivo de contas para ${serverId}:`, error.message);
+        return { success: false, error: error.message };
+    }
+}
+
 
 // --- FIM DA LÓGICA DE PERSISTÊNCIA ---
 
@@ -448,6 +466,11 @@ ipcMain.handle('load-accounts', (event, serverName) => {
 
 ipcMain.handle('save-accounts', (event, serverName, accounts) => {
     return saveAccounts(serverName, accounts);
+});
+
+// NOVO: Handler para excluir arquivo de contas
+ipcMain.handle('delete-accounts-file', (event, serverId) => {
+    return deleteAccountsFile(serverId);
 });
 
 // Outros Handlers

@@ -1,13 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaFolderOpen } from 'react-icons/fa'; 
 import './css/AccountModal.css';
 
-const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
-    const [charName, setCharName] = useState('');
-    const [charClass, setCharClass] = useState('');
-    const [login, setLogin] = useState('');
-    const [password, setPassword] = useState('');
-    const [exePath, setExePath] = useState('');
+// Adicionado accountToEdit
+const AccountModal = ({ show, onClose, onSaveAccount, serverName, accountToEdit }) => {
+    const isEditing = !!accountToEdit;
+
+    // Inicializa o estado com os dados da conta se estiver editando
+    const [charName, setCharName] = useState(accountToEdit?.charName || '');
+    const [charClass, setCharClass] = useState(accountToEdit?.charClass || '');
+    const [login, setLogin] = useState(accountToEdit?.login || '');
+    const [password, setPassword] = useState(accountToEdit?.password || '');
+    const [exePath, setExePath] = useState(accountToEdit?.exePath || '');
+    
+    // Atualiza o estado interno quando o prop accountToEdit muda
+    useEffect(() => {
+        setCharName(accountToEdit?.charName || '');
+        setCharClass(accountToEdit?.charClass || '');
+        setLogin(accountToEdit?.login || '');
+        setPassword(accountToEdit?.password || '');
+        setExePath(accountToEdit?.exePath || '');
+    }, [accountToEdit]);
 
     if (!show) {
         return null;
@@ -27,22 +40,31 @@ const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
             alert('Preencha todos os campos obrigatórios.');
             return;
         }
-
-        onSaveAccount({
-            id: `acc-${Date.now()}`,
+        
+        // Determina o ID e a cor de fundo (mantém a existente se estiver editando)
+        const accountData = {
+            id: isEditing ? accountToEdit.id : `acc-${Date.now()}`,
             charName,
             charClass,
             login,
             password,
             exePath,
-            charAvatarBg: `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}` 
-        });
+            charAvatarBg: isEditing 
+                ? accountToEdit.charAvatarBg 
+                : `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}` 
+        };
 
-        setCharName('');
-        setCharClass('');
-        setLogin('');
-        setPassword('');
-        setExePath('');
+        onSaveAccount(accountData);
+
+        // Reseta o estado apenas se estiver adicionando uma nova conta
+        if (!isEditing) {
+            setCharName('');
+            setCharClass('');
+            setLogin('');
+            setPassword('');
+            setExePath('');
+        }
+        
         onClose();
     };
 
@@ -53,7 +75,8 @@ const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
                     
                     <div className="modal-header border-bottom p-3">
                         <h5 className="modal-title fs-5 text-warning">
-                            ✨ Adicionar Conta - **{serverName}**
+                            {/* Título dinâmico */}
+                            {isEditing ? `✏️ Editar Conta - **${serverName}**` : `✨ Adicionar Conta - **${serverName}**`}
                         </h5>
                         <button type="button" className="btn-close btn-close-white" onClick={onClose} aria-label="Close"></button>
                     </div>
@@ -134,7 +157,8 @@ const AccountModal = ({ show, onClose, onSaveAccount, serverName }) => {
                         
                         <div className="modal-footer border-top p-3">
                             <button type="button" className="btn btn-outline-secondary" onClick={onClose}>Cancelar</button>
-                            <button type="submit" className="btn btn-primary">Salvar Conta</button>
+                            {/* Texto do botão dinâmico */}
+                            <button type="submit" className="btn btn-primary">{isEditing ? 'Salvar Alterações' : 'Salvar Conta'}</button>
                         </div>
                     </form>
                 </div>
