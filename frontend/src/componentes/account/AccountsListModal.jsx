@@ -6,6 +6,22 @@ const AccountsListModal = ({ show, onClose, serverName, accounts }) => {
         return null;
     }
 
+    // --- FUNÇÃO ATUALIZADA ---
+    // Atualizado para chamar 'focus-window-by-pid'
+    const handleFocusAccount = (pid) => {
+        if (pid) {
+            console.log(`[React] Solicitando foco para PID: ${pid}`);
+            // Usa o novo handler 'focus-window-by-pid' que espera um PID
+            window.electronAPI.invoke('focus-window-by-pid', pid);
+            
+            // Opcional: fechar o modal após clicar
+            onClose(); 
+        } else {
+            console.warn('[React] Tentativa de focar conta sem PID.');
+        }
+    };
+    // --- FIM DA ATUALIZAÇÃO ---
+
     return (
         <div className="account-modal-backdrop">
             <div className="account-modal-dialog modal-dialog-centered"> 
@@ -25,6 +41,12 @@ const AccountsListModal = ({ show, onClose, serverName, accounts }) => {
                                     <li 
                                         key={account.id} 
                                         className="list-group-item d-flex justify-content-between align-items-center form-control-custom-dark mb-2 p-3"
+                                        
+                                        // --- ADIÇÕES DE INTERATIVIDADE ---
+                                        onClick={() => handleFocusAccount(account.pid)}
+                                        style={{ cursor: 'pointer' }} 
+                                        title={`Clique para focar ${account.charName} (PID: ${account.pid})`}
+                                        // --- FIM DAS ADIÇÕES ---
                                     >
                                         <div className="d-flex align-items-center gap-3">
                                             
