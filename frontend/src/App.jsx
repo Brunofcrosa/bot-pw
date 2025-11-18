@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'; 
 import ServerList from './componentes/server/ServerList';
 import AccountModal from './componentes/account/AccountModal'; 
+import AccountsListModal from './componentes/account/AccountsListModal';
 import AddServerModal from './componentes/server/AddServerModal'; 
 import ServerCard from './componentes/server/ServerCard'; 
 import BottomBar from './componentes/server/BottomBar'; 
@@ -26,6 +27,7 @@ const FolderOpenIcon = (props) => (
 const App = () => {
     const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
     const [isAddServerModalOpen, setIsAddServerModalOpen] = useState(false);
+    const [isAccountsListModalOpen, setIsAccountsListModalOpen] = useState(false);
     
     const [servers, setServers] = useState([]);
     const [currentServerId, setCurrentServerId] = useState(null); 
@@ -36,6 +38,22 @@ const App = () => {
     const currentServer = useMemo(() => {
         return servers.find(s => s.id === currentServerId) || { id: '', name: 'Selecionar Servidor' };
     }, [servers, currentServerId]);
+
+    const openedAccounts = useMemo(() => {
+        const runningIds = new Set(runningAccounts.map(r => r.accountId));
+        
+        const filteredAccounts = accounts.filter(acc => runningIds.has(acc.id));
+
+        return filteredAccounts.map(acc => {
+            const runningInstance = runningAccounts.find(r => r.accountId === acc.id);
+            return {
+                ...acc,
+                pid: runningInstance?.pid,
+                status: runningInstance?.status,
+            };
+        });
+    }, [accounts, runningAccounts]);
+
 
     useEffect(() => {
         const loadServersAndSelectFirst = async () => {
@@ -131,6 +149,16 @@ const App = () => {
         setIsAccountModalOpen(true);
     }
     const handleCloseAccountModal = () => setIsAccountModalOpen(false);
+
+    const handleOpenAccountsListModal = () => {
+        if (!currentServerId) {
+            console.warn('[React] Nenhum servidor selecionado.');
+            return;
+        }
+        setIsAccountsListModalOpen(true);
+    }
+    const handleCloseAccountsListModal = () => setIsAccountsListModalOpen(false);
+
 
     const handleSaveNewAccount = (newAccount) => {
         setAccounts(prevAccounts => {
@@ -259,7 +287,10 @@ const App = () => {
                 </div>
             </div>
             
-            <BottomBar runningCount={runningAccounts.length} />
+            <BottomBar 
+                runningCount={runningAccounts.length} 
+                onOpenAccountsList={handleOpenAccountsListModal}
+            />
 
             <AccountModal 
                 show={isAccountModalOpen} 
@@ -272,6 +303,13 @@ const App = () => {
                 show={isAddServerModalOpen}
                 onClose={handleCloseAddServerModal}
                 onSaveServer={handleSaveNewServer}
+            />
+
+            <AccountsListModal
+                show={isAccountsListModalOpen}
+                onClose={handleCloseAccountsListModal}
+                serverName={currentServer.name}
+                accounts={openedAccounts} 
             />
         </div>
     );

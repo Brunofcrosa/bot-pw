@@ -1,11 +1,38 @@
 [
   {
-    "id": "acc-1763393572029",
-    "charName": "dddddddddddd",
-    "charClass": "ddddddddd",
-    "login": "dddddddddd",
-    "password": "dddddddddddd",
+    "id": "acc-1763424342798",
+    "charName": "brusz",
+    "charClass": "arqueiro",
+    "login": "brusz",
+    "password": "10maissa10",
     "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe",
-    "charAvatarBg": "#b7a2c0"
+    "charAvatarBg": "#cda623"
+  },
+  {
+    "id": "acc-1763424353180",
+    "charName": "brusz2",
+    "charClass": "brusz2",
+    "login": "brusz2",
+    "password": "10maissa10",
+    "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe",
+    "charAvatarBg": "#afacf2"
+  },
+  {
+    "id": "acc-1763424398827",
+    "charName": "brusz3",
+    "charClass": "brusz3",
+    "login": "brusz3",
+    "password": "10maissa10",
+    "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe",
+    "charAvatarBg": "#dfc274"
+  },
+  {
+    "id": "acc-1763424424755",
+    "charName": "brusz4",
+    "charClass": "brusz4",
+    "login": "brusz4",
+    "password": "10maissa10",
+    "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe",
+    "charAvatarBg": "#064766"
   }
 ]
