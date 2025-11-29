@@ -2,26 +2,35 @@ const { exec } = require('child_process');
 
 const TARGET_PROCESS_NAME = 'ElementClient_64.exe';
 
+const VK_MAP = {
+    'F1': 0x70, 'F2': 0x71, 'F3': 0x72, 'F4': 0x73,
+    'F5': 0x74, 'F6': 0x75, 'F7': 0x76, 'F8': 0x77,
+    'F9': 0x78, 'F10': 0x79, 'F11': 0x7A, 'F12': 0x7B,
+    '0': 0x30, '1': 0x31, '2': 0x32, '3': 0x33, '4': 0x34,
+    '5': 0x35, '6': 0x36, '7': 0x37, '8': 0x38, '9': 0x39
+};
+
 class WindowService {
     constructor(processManager) {
         this.processManager = processManager;
         this.window_handles_for_cycle = [];
-        this.current_window_index = 0;
         this.last_window_handles = [];
+        this.current_window_index = 0;
     }
 
     findPerfectWorldWindows() {
         if (process.platform !== 'win32') return Promise.resolve([]);
 
-        const baseName = TARGET_PROCESS_NAME.endsWith('.exe') ? TARGET_PROCESS_NAME.slice(0, -4) : TARGET_PROCESS_NAME;
-        const command = `powershell -Command "@(Get-Process -Name '${baseName}' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object MainWindowHandle, MainWindowTitle) | ConvertTo-Json -Compress"`;
+        const baseName = TARGET_PROCESS_NAME.endsWith('.exe') 
+            ? TARGET_PROCESS_NAME.slice(0, -4) 
+            : TARGET_PROCESS_NAME;
+
+        const command = `powershell -Command "@(Get-Process -Name '${baseName}' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object Id, MainWindowHandle, MainWindowTitle) | ConvertTo-Json -Compress"`;
 
         return new Promise((resolve) => {
             exec(command, (error, stdout) => {
-                if (error) {
-                    console.error(`[WindowService] Erro ao buscar processos: ${error.message}`);
-                    return resolve([]);
-                }
+                if (error) return resolve([]);
+
                 try {
                     const stdoutTrimmed = stdout.trim();
                     if (!stdoutTrimmed) return resolve([]);
@@ -32,15 +41,27 @@ class WindowService {
                     const windows = json
                         .filter(p => p.MainWindowHandle && p.MainWindowHandle !== 0)
                         .map(p => ({
-                            title: p.MainWindowTitle && p.MainWindowTitle.trim() !== '' ? p.MainWindowTitle.trim() : `${baseName} (PID Desconhecido)`,
+                            pid: p.Id,
+                            title: p.MainWindowTitle || `${baseName} (PID ${p.Id})`,
                             hwnd: parseInt(p.MainWindowHandle)
                         }));
                     
                     resolve(windows);
                 } catch (e) {
-                    console.error('[WindowService] Erro ao analisar JSON dos processos:', e);
+                    console.error('[WindowService] Erro ao analisar JSON:', e);
                     resolve([]);
                 }
+            });
+        });
+    }
+
+    getCurrentForegroundWindow() {
+        return new Promise(resolve => {
+            const command = 'powershell -Command "[System.Runtime.InteropServices.Marshal]::GetLastWin32Error(); Add-Type -TypeDefinition \\"[DllImport(\\"user32.dll\\")] public static extern IntPtr GetForegroundWindow();\\" -Name \\"User32Funcs\\" -Namespace \\"Win32\\"; [Win32.User32Funcs]::GetForegroundWindow()"';
+            
+            exec(command, (error, stdout) => {
+                if (error) return resolve(null);
+                resolve(parseInt(stdout.trim()));
             });
         });
     }
@@ -63,16 +84,6 @@ class WindowService {
         });
     }
 
-    _updateLastWindow(hwnd) {
-        if (this.last_window_handles.includes(hwnd)) {
-            this.last_window_handles = this.last_window_handles.filter(h => h !== hwnd);
-        }
-        this.last_window_handles.unshift(hwnd);
-        if (this.last_window_handles.length > 2) {
-            this.last_window_handles.pop();
-        }
-    }
-
     focusHwnd(hwnd) {
         this.focusWindow(hwnd);
         this._updateLastWindow(hwnd);
@@ -90,6 +101,7 @@ class WindowService {
 
     async cycleWindows() {
         const windows = await this.findPerfectWorldWindows();
+        
         if (windows.length === 0) {
             this.window_handles_for_cycle = [];
             this.current_window_index = 0;
@@ -114,13 +126,56 @@ class WindowService {
         this._updateLastWindow(nextHwnd);
     }
 
-    getCurrentForegroundWindow() {
-        return new Promise(resolve => {
-            exec('powershell -Command "[System.Runtime.InteropServices.Marshal]::GetLastWin32Error(); Add-Type -TypeDefinition \\"[DllImport(\\"user32.dll\\")] public static extern IntPtr GetForegroundWindow();\\" -Name \\"User32Funcs\\" -Namespace \\"Win32\\"; [Win32.User32Funcs]::GetForegroundWindow()"', (error, stdout) => {
-                if (error) return resolve(null);
-                resolve(parseInt(stdout.trim()));
+    async sendKeySequence(pid, keys, interval = 200) {
+        const windows = await this.findPerfectWorldWindows();
+        const target = windows.find(w => w.pid === parseInt(pid));
+
+        if (!target) {
+            console.error(`[WindowService] Janela com PID ${pid} não encontrada.`);
+            return false;
+        }
+
+        const vkCodes = keys.map(k => VK_MAP[k.toUpperCase()] || null).filter(v => v !== null);
+        
+        if (vkCodes.length === 0) return false;
+
+        const scriptActions = vkCodes.map(vk => `
+            [Win32.User32]::PostMessage($hWnd, 0x0100, ${vk}, 0); 
+            Start-Sleep -Milliseconds ${Math.max(50, interval)}; 
+            [Win32.User32]::PostMessage($hWnd, 0x0101, ${vk}, 0); 
+            Start-Sleep -Milliseconds ${Math.max(50, interval)};
+        `).join('');
+
+        const psCommand = `
+            $code = '[DllImport("user32.dll")] public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);';
+            $type = Add-Type -MemberDefinition $code -Name "User32" -Namespace Win32 -PassThru;
+            $hWnd = [IntPtr]::new(${target.hwnd});
+            ${scriptActions}
+        `;
+
+        const fullCommand = `powershell -ExecutionPolicy Bypass -Command "${psCommand.replace(/"/g, '\\"')}"`;
+
+        return new Promise((resolve) => {
+            exec(fullCommand, (err) => {
+                if (err) {
+                    console.error(`[WindowService] Erro ao enviar macro: ${err.message}`);
+                    resolve(false);
+                } else {
+                    console.log(`[WindowService] Macro enviada para PID ${pid} (HWND: ${target.hwnd})`);
+                    resolve(true);
+                }
             });
         });
+    }
+
+    _updateLastWindow(hwnd) {
+        if (this.last_window_handles.includes(hwnd)) {
+            this.last_window_handles = this.last_window_handles.filter(h => h !== hwnd);
+        }
+        this.last_window_handles.unshift(hwnd);
+        if (this.last_window_handles.length > 2) {
+            this.last_window_handles.pop();
+        }
     }
 }
 

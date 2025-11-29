@@ -1,25 +1,47 @@
+// backend/Application.js
 const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
 const path = require('path');
 
+// Serviços
 const { PersistenceService } = require('./services/PersistenceService');
 const { ProcessManager } = require('./services/ProcessManager');
 const { WindowService } = require('./services/WindowService');
 const { HotkeyService } = require('./services/HotkeyService');
+const MacroService = require('./services/MacroService');
+const KeyListenerService = require('./services/KeyListenerService'); // <--- Serviço Novo
 
 const PRELOAD_SCRIPT = path.join(__dirname, 'preload.js');
 const HTML_FILE = path.join(__dirname, '..', 'frontend', 'index.html');
+const EXECUTABLES_PATH = path.join(__dirname, '..', 'executaveis'); // Pasta onde fica o key-listener.exe
 
 class Application {
     constructor() {
         this.mainWindow = null;
 
+        // 1. Serviços de Infraestrutura
+        // Gerencia dados JSON (contas, servidores)
         this.persistenceService = new PersistenceService(path.join(__dirname, 'data'));
-        this.processManager = new ProcessManager(path.join(__dirname, '..', 'executaveis'));
+        
+        // Gerencia processos do jogo (abrir/fechar)
+        this.processManager = new ProcessManager(EXECUTABLES_PATH);
+        
+        // Gerencia janelas do Windows (encontrar, focar, enviar teclas)
         this.windowService = new WindowService(this.processManager);
+        
+        // 2. Serviço de Escuta de Teclas (Executável Externo)
+        // Inicia o processo 'key-listener.exe' para capturar hooks de teclado
+        this.keyListenerService = new KeyListenerService(EXECUTABLES_PATH);
+
+        // 3. Serviços de Lógica (Injeção de Dependência)
+        // Atalhos globais do Electron (ex: Ctrl+Shift+T)
         this.hotkeyService = new HotkeyService(this.windowService);
+        
+        // O MacroService agora recebe o KeyListenerService para ouvir teclas sem depender do Electron
+        this.macroService = new MacroService(this.windowService, this.keyListenerService);
     }
 
     init() {
+        // Bloqueio de instância única
         if (!app.requestSingleInstanceLock()) {
             app.quit();
             return;
@@ -33,58 +55,53 @@ class Application {
         });
 
         app.on('window-all-closed', () => {
-            if (process.platform !== 'darwin') {
-                app.quit();
-            }
+            if (process.platform !== 'darwin') app.quit();
         });
-
+        
         app.on('will-quit', () => this.onWillQuit());
+        
         app.whenReady().then(() => this.onReady());
     }
 
     onReady() {
         this.createWindow();
-
-        // Inicia serviços
-        try {
-            this.processManager.startFocusHelpers();
-            console.log('[Main] Scripts C# de foco inicializados.');
-        } catch (e) {
-            console.error('[Main] Falha ao inicializar scripts C# auxiliares:', e);
-        }
         
-        this.hotkeyService.setupInitialHotkeys();
-        this.registerIpcHandlers();
+        // Inicia o Key Listener (spawna o .exe em background)
+        this.keyListenerService.start();
 
-        app.on('activate', () => {
-            if (BrowserWindow.getAllWindows().length === 0) {
-                this.createWindow();
-            }
-        });
+        this.registerIpcHandlers();
+        this.hotkeyService.setupInitialHotkeys();
+        
+        console.log('[Application] Sistema pronto e inicializado.');
     }
 
     onWillQuit() {
+        console.log('[Application] Encerrando...');
+        this.keyListenerService.stop(); // Mata o processo do listener para não ficar orfão
         this.hotkeyService.unregisterAll();
         this.processManager.killAll();
-        console.log('[Main] Aplicação encerrada.');
     }
 
     createWindow() {
         this.mainWindow = new BrowserWindow({
-            width: 800,
-            height: 600,
+            width: 1000,
+            height: 720,
+            minWidth: 800,
+            minHeight: 600,
+            backgroundColor: '#1e1e24',
             webPreferences: {
                 preload: PRELOAD_SCRIPT,
                 contextIsolation: true,
                 nodeIntegration: false,
             },
+            autoHideMenuBar: true,
+            show: false // Evita flash branco na inicialização
         });
 
         this.mainWindow.loadFile(HTML_FILE);
-        this.mainWindow.webContents.openDevTools();
-
-        this.mainWindow.on('closed', () => {
-            this.mainWindow = null;
+        
+        this.mainWindow.once('ready-to-show', () => {
+            this.mainWindow.show();
         });
     }
 
@@ -93,42 +110,32 @@ class Application {
     }
 
     registerIpcHandlers() {
-        // Persistência
+        // 1. Persistência
         ipcMain.handle('load-servers', () => this.persistenceService.loadServers());
-        ipcMain.handle('save-servers', (e, servers) => this.persistenceService.saveServers(servers));
-        ipcMain.handle('load-accounts', (e, serverName) => this.persistenceService.loadAccounts(serverName));
-        ipcMain.handle('save-accounts', (e, serverName, accounts) => this.persistenceService.saveAccounts(serverName, accounts));
-        ipcMain.handle('delete-accounts-file', (e, serverId) => this.persistenceService.deleteAccountsFile(serverId));
+        ipcMain.handle('save-servers', (e, s) => this.persistenceService.saveServers(s));
+        ipcMain.handle('load-accounts', (e, s) => this.persistenceService.loadAccounts(s));
+        ipcMain.handle('save-accounts', (e, s, acc) => this.persistenceService.saveAccounts(s, acc));
+        ipcMain.handle('delete-accounts-file', (e, s) => this.persistenceService.deleteAccountsFile(s));
 
-        // Foco e Janela
+        // 2. Processos e Janelas
+        ipcMain.handle('open-element', (e, args) => this.processManager.launchGame(args, this.getWebContents()));
+        ipcMain.handle('close-element', (e, pid) => this.processManager.killGameByPid(pid));
         ipcMain.handle('find-pw-windows', () => this.windowService.findPerfectWorldWindows());
-        ipcMain.handle('focus-window', (e, hwnd) => this.windowService.focusHwnd(hwnd));
-        ipcMain.handle('cycle-windows', () => this.windowService.cycleWindows());
-        ipcMain.handle('focus-window-by-pid', (e, pid) => this.windowService.focusWindowByPid(pid));
 
-        // Macro
-        ipcMain.handle('send-background-macro', (e, hwnd, keys) => this.hotkeyService.sendBackgroundMacro(hwnd, keys));
-        ipcMain.handle('set-cycle-hotkey', (e, hotkey) => this.hotkeyService.setCycleHotkey(hotkey));
-        ipcMain.handle('set-toggle-hotkey', (e, hotkey) => this.hotkeyService.setToggleHotkey(hotkey));
-        ipcMain.handle('set-macro-hotkey', (e, hotkey) => this.hotkeyService.setMacroHotkey(hotkey));
-        ipcMain.handle('set-macro-keys', (e, keys) => this.hotkeyService.setMacroKeys(keys));
-        ipcMain.handle('set-focus-on-macro', (e, state) => this.hotkeyService.setFocusOnMacro(state));
-        ipcMain.handle('set-background-macro', (e, state) => this.hotkeyService.setBackgroundMacro(state));
-
-        ipcMain.handle('open-element', (e, args) => {
-            console.log(`[IPC] Recebido 'open-element' para: ${args.login}`);
-            return this.processManager.launchGame(args, this.getWebContents());
-        });
-        ipcMain.handle('close-element', (e, pid) => {
-            console.log(`[IPC] Recebido 'close-element' para PID: ${pid}`);
-            return this.processManager.killGameByPid(pid);
+        // 3. Macros (Integração com KeyListener)
+        ipcMain.handle('register-macro', async (event, { pid, triggerKey, sequence }) => {
+            // O MacroService agora gerencia isso internamente via eventos do KeyListener
+            return this.macroService.registerMacro(pid, triggerKey, sequence);
         });
 
+        // 4. Configurações Globais
+        ipcMain.handle('set-cycle-hotkey', (e, h) => this.hotkeyService.setCycleHotkey(h));
+        
+        // 5. Utilitários
         ipcMain.handle('get-app-version', () => app.getVersion());
-        ipcMain.handle('open-external-link', (e, url) => shell.openExternal(url));
         ipcMain.handle('select-exe-file', async () => {
             const { canceled, filePaths } = await dialog.showOpenDialog({
-                title: 'Selecionar Executável (ElementClient)',
+                title: 'Selecionar Executável (ElementClient.exe)',
                 properties: ['openFile'],
                 filters: [{ name: 'Executáveis', extensions: ['exe'] }]
             });

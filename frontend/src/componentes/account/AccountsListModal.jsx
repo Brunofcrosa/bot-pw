@@ -1,91 +1,101 @@
-import React from 'react';
-import './css/AccountModal.css'; 
+import React, { useState } from 'react';
+import './css/AccountModal.css';
 
-const AccountsListModal = ({ show, onClose, serverName, accounts }) => {
-    if (!show) {
-        return null;
-    }
+const AccountsListModal = ({ isOpen, onClose, accounts, onEdit, onDelete }) => {
+    const [showPassword, setShowPassword] = useState({});
 
-    // --- FUNÇÃO ATUALIZADA ---
-    // Atualizado para chamar 'focus-window-by-pid'
-    const handleFocusAccount = (pid) => {
-        if (pid) {
-            console.log(`[React] Solicitando foco para PID: ${pid}`);
-            // Usa o novo handler 'focus-window-by-pid' que espera um PID
-            window.electronAPI.invoke('focus-window-by-pid', pid);
-            
-            // Opcional: fechar o modal após clicar
-            onClose(); 
-        } else {
-            console.warn('[React] Tentativa de focar conta sem PID.');
-        }
+    if (!isOpen) return null;
+
+    const togglePassword = (id) => {
+        setShowPassword(prev => ({ ...prev, [id]: !prev[id] }));
     };
-    // --- FIM DA ATUALIZAÇÃO ---
+
+    const copyToClipboard = (text) => {
+        navigator.clipboard.writeText(text);
+        // Opcional: Adicionar um toast de sucesso aqui
+    };
 
     return (
-        <div className="account-modal-backdrop">
-            <div className="account-modal-dialog modal-dialog-centered"> 
-                <div className="account-modal-content">
-                    
-                    <div className="modal-header border-bottom p-3">
-                        <h5 className="modal-title fs-5 text-warning">
-                            Contas Abertas - **{serverName}**
-                        </h5>
-                        <button type="button" className="btn-close btn-close-white" onClick={onClose} aria-label="Close"></button>
-                    </div>
-                    
-                    <div className="modal-body p-4 account-modal-body-scroll">
-                        {accounts && accounts.length > 0 ? (
-                            <ul className="list-group list-group-flush">
-                                {accounts.map((account) => (
-                                    <li 
-                                        key={account.id} 
-                                        className="list-group-item d-flex justify-content-between align-items-center form-control-custom-dark mb-2 p-3"
-                                        
-                                        // --- ADIÇÕES DE INTERATIVIDADE ---
-                                        onClick={() => handleFocusAccount(account.pid)}
-                                        style={{ cursor: 'pointer' }} 
-                                        title={`Clique para focar ${account.charName} (PID: ${account.pid})`}
-                                        // --- FIM DAS ADIÇÕES ---
-                                    >
-                                        <div className="d-flex align-items-center gap-3">
-                                            
-                                            <div 
-                                                className="rounded-circle text-uppercase d-flex align-items-center justify-content-center text-white fw-bold fs-5"
-                                                style={{ 
-                                                    backgroundColor: account.charAvatarBg || '#6c757d',
-                                                    width: '3rem', 
-                                                    height: '3rem',
-                                                    minWidth: '3rem'
-                                                }}
-                                            >
-                                                {account.charName.charAt(0).toUpperCase()} 
-                                            </div>
-                                            
-                                            <div>
-                                                <div className="fw-bold text-light fs-6">{account.charName}</div>
-                                                <div className="small text-muted">{account.charClass || 'Sem Classe'}</div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="d-flex flex-column align-items-end text-end">
-                                            <span className={`badge mb-1 ${account.status === 'starting' ? 'text-bg-warning' : 'text-bg-success'}`}>
-                                                {account.status === 'starting' ? 'INICIANDO...' : 'RODANDO'}
+        <div className="modal-overlay">
+            <div className="modal-container list-modal">
+                <div className="modal-header">
+                    <h2>Gerenciar Contas</h2>
+                    <button className="close-btn" onClick={onClose}>&times;</button>
+                </div>
+
+                <div className="modal-body">
+                    {accounts && accounts.length > 0 ? (
+                        <table className="accounts-table">
+                            <thead>
+                                <tr>
+                                    <th>Servidor</th>
+                                    <th>Login</th>
+                                    <th>Senha</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {accounts.map((account, index) => (
+                                    <tr key={account.id || index}>
+                                        <td>
+                                            <span className="server-badge">
+                                                {account.server || 'N/A'}
                                             </span>
-                                            <span className="small text-muted">PID: {account.pid || 'N/A'}</span>
-                                        </div>
-
-                                    </li>
+                                        </td>
+                                        <td>
+                                            <div className="text-with-copy">
+                                                {account.login}
+                                                <button 
+                                                    className="icon-btn small" 
+                                                    onClick={() => copyToClipboard(account.login)}
+                                                    title="Copiar Login"
+                                                >
+                                                    📋
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className="password-field">
+                                                <span>
+                                                    {showPassword[account.id] ? account.password : '••••••••'}
+                                                </span>
+                                                <button 
+                                                    className="icon-btn small"
+                                                    onClick={() => togglePassword(account.id)}
+                                                >
+                                                    {showPassword[account.id] ? '🙈' : '👁️'}
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className="action-buttons">
+                                                <button 
+                                                    className="btn-edit" 
+                                                    onClick={() => onEdit(account)}
+                                                >
+                                                    Editar
+                                                </button>
+                                                <button 
+                                                    className="btn-delete" 
+                                                    onClick={() => onDelete(account.id)}
+                                                >
+                                                    Remover
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 ))}
-                            </ul>
-                        ) : (
-                            <p className="text-center text-muted">Nenhuma conta está rodando neste momento para o servidor **{serverName}**.</p>
-                        )}
-                    </div>
+                            </tbody>
+                        </table>
+                    ) : (
+                        <div className="empty-state">
+                            <p>Nenhuma conta cadastrada.</p>
+                        </div>
+                    )}
+                </div>
 
-                    <div className="modal-footer border-top p-3">
-                        <button type="button" className="btn btn-outline-secondary" onClick={onClose}>Fechar</button>
-                    </div>
+                <div className="modal-footer">
+                    <button className="btn-secondary" onClick={onClose}>Fechar</button>
                 </div>
             </div>
         </div>

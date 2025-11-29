@@ -1,167 +1,115 @@
 import React, { useState, useEffect } from 'react';
-import { FaFolderOpen } from 'react-icons/fa'; 
 import './css/AccountModal.css';
 
-// Adicionado accountToEdit
-const AccountModal = ({ show, onClose, onSaveAccount, serverName, accountToEdit }) => {
-    const isEditing = !!accountToEdit;
+const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
+    const [formData, setFormData] = useState({
+        server: '',
+        login: '',
+        password: ''
+    });
+    const [showPassword, setShowPassword] = useState(false);
 
-    // Inicializa o estado com os dados da conta se estiver editando
-    const [charName, setCharName] = useState(accountToEdit?.charName || '');
-    const [charClass, setCharClass] = useState(accountToEdit?.charClass || '');
-    const [login, setLogin] = useState(accountToEdit?.login || '');
-    const [password, setPassword] = useState(accountToEdit?.password || '');
-    const [exePath, setExePath] = useState(accountToEdit?.exePath || '');
-    
-    // Atualiza o estado interno quando o prop accountToEdit muda
+    // Reseta ou popula o formulário quando o modal abre/fecha ou quando o modo de edição muda
     useEffect(() => {
-        setCharName(accountToEdit?.charName || '');
-        setCharClass(accountToEdit?.charClass || '');
-        setLogin(accountToEdit?.login || '');
-        setPassword(accountToEdit?.password || '');
-        setExePath(accountToEdit?.exePath || '');
-    }, [accountToEdit]);
-
-    if (!show) {
-        return null;
-    }
-
-    const handleBrowseExe = async () => {
-        const path = await window.electronAPI.invoke('select-exe-file');
-        if (path) {
-            setExePath(path);
+        if (isOpen) {
+            if (accountToEdit) {
+                setFormData({
+                    server: accountToEdit.server || '',
+                    login: accountToEdit.login || '',
+                    password: accountToEdit.password || ''
+                });
+            } else {
+                setFormData({ server: '', login: '', password: '' });
+            }
+            setShowPassword(false);
         }
+    }, [isOpen, accountToEdit]);
+
+    if (!isOpen) return null;
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        
-        if (!login || !password || !exePath || !charName) {
-            alert('Preencha todos os campos obrigatórios.');
-            return;
-        }
-        
-        // Determina o ID e a cor de fundo (mantém a existente se estiver editando)
-        const accountData = {
-            id: isEditing ? accountToEdit.id : `acc-${Date.now()}`,
-            charName,
-            charClass,
-            login,
-            password,
-            exePath,
-            charAvatarBg: isEditing 
-                ? accountToEdit.charAvatarBg 
-                : `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}` 
-        };
-
-        onSaveAccount(accountData);
-
-        // Reseta o estado apenas se estiver adicionando uma nova conta
-        if (!isEditing) {
-            setCharName('');
-            setCharClass('');
-            setLogin('');
-            setPassword('');
-            setExePath('');
-        }
-        
+        onSave({ ...formData, id: accountToEdit?.id });
         onClose();
     };
 
     return (
-        <div className="account-modal-backdrop">
-            <div className="account-modal-dialog modal-dialog-centered"> 
-                <div className="account-modal-content">
-                    
-                    <div className="modal-header border-bottom p-3">
-                        <h5 className="modal-title fs-5 text-warning">
-                            {/* Título dinâmico */}
-                            {isEditing ? `✏️ Editar Conta - **${serverName}**` : `✨ Adicionar Conta - **${serverName}**`}
-                        </h5>
-                        <button type="button" className="btn-close btn-close-white" onClick={onClose} aria-label="Close"></button>
-                    </div>
-                    
-                    <form onSubmit={handleSubmit}>
-                        <div className="modal-body p-4 account-modal-body-scroll">
-                            
-                            <div className="mb-3">
-                                <label className="form-label small">Nome do Personagem*</label>
-                                <input 
-                                    type="text" 
-                                    className="form-control form-control-custom-dark"
-                                    value={charName}
-                                    onChange={(e) => setCharName(e.target.value)}
-                                    placeholder="Ex: Ryuzaki-"
-                                    required
-                                />
-                            </div>
-                            
-                            <div className="mb-3">
-                                <label className="form-label small">Classe</label>
-                                <input 
-                                    type="text" 
-                                    className="form-control form-control-custom-dark"
-                                    value={charClass}
-                                    onChange={(e) => setCharClass(e.target.value)}
-                                    placeholder="Ex: Arqueiro, Feiticeira"
-                                />
-                            </div>
-                             
-                             <hr className="my-4"/>
-
-                             <div className="mb-3">
-                                <label className="form-label small">Login (Conta do Jogo)*</label>
-                                <input 
-                                    type="text" 
-                                    className="form-control form-control-custom-dark" 
-                                    value={login}
-                                    onChange={(e) => setLogin(e.target.value)}
-                                    required
-                                />
-                            </div>
-                            
-                            <div className="mb-3">
-                                <label className="form-label small">Senha*</label>
-                                <input 
-                                    type="password" 
-                                    className="form-control form-control-custom-dark"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                />
-                            </div>
-                             
-                             <hr className="my-4"/>
-
-                             <div className="mb-3">
-                                <label className="form-label small">Caminho do Jogo (ElementClient.exe)*</label>
-                                <div className="input-group">
-                                    <input 
-                                        type="text" 
-                                        className="form-control form-control-custom-readonly" 
-                                        value={exePath}
-                                        readOnly 
-                                        placeholder="Selecione o ElementClient_64.exe"
-                                        required
-                                    />
-                                    <button 
-                                        className="btn btn-outline-info" 
-                                        type="button" 
-                                        onClick={handleBrowseExe}
-                                    >
-                                        <FaFolderOpen className="me-1" /> Procurar...
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div className="modal-footer border-top p-3">
-                            <button type="button" className="btn btn-outline-secondary" onClick={onClose}>Cancelar</button>
-                            {/* Texto do botão dinâmico */}
-                            <button type="submit" className="btn btn-primary">{isEditing ? 'Salvar Alterações' : 'Salvar Conta'}</button>
-                        </div>
-                    </form>
+        <div className="modal-overlay">
+            <div className="modal-container form-modal">
+                <div className="modal-header">
+                    <h2>{accountToEdit ? 'Editar Conta' : 'Nova Conta'}</h2>
+                    <button className="close-btn" onClick={onClose}>&times;</button>
                 </div>
+
+                <form onSubmit={handleSubmit}>
+                    <div className="modal-body">
+                        <div className="form-group">
+                            <label htmlFor="server">Servidor</label>
+                            <input
+                                type="text"
+                                id="server"
+                                name="server"
+                                value={formData.server}
+                                onChange={handleChange}
+                                placeholder="Ex: Servidor Global"
+                                required
+                                className="form-input"
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="login">Login</label>
+                            <input
+                                type="text"
+                                id="login"
+                                name="login"
+                                value={formData.login}
+                                onChange={handleChange}
+                                placeholder="Digite o login"
+                                required
+                                className="form-input"
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="password">Senha</label>
+                            <div className="password-input-wrapper">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    id="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    placeholder="Digite a senha"
+                                    required
+                                    className="form-input"
+                                />
+                                <button
+                                    type="button"
+                                    className="icon-btn input-icon"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    tabIndex="-1"
+                                >
+                                    {showPassword ? '🙈' : '👁️'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="modal-footer">
+                        <button type="button" className="btn-secondary" onClick={onClose}>
+                            Cancelar
+                        </button>
+                        <button type="submit" className="btn-primary">
+                            {accountToEdit ? 'Salvar Alterações' : 'Adicionar Conta'}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );
