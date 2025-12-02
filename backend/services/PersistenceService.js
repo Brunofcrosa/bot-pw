@@ -1,10 +1,10 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 const ACCOUNTS_FILE_SUFFIX = '_accounts.json';
 const SERVERS_FILE_NAME = 'servers.json';
 
-class PersistenceService {
+export class PersistenceService {
     constructor(dataFolderPath) {
         this.dataFolderPath = dataFolderPath;
         this.initDataFolder();
@@ -94,5 +94,3 @@ class PersistenceService {
         }
     }
 }
-
-module.exports = { PersistenceService };

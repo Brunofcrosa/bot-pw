@@ -1,5 +1,5 @@
-const { globalShortcut } = require('electron');
-const { exec } = require('child_process');
+import { globalShortcut } from 'electron';
+import { exec } from 'child_process';
 
 const GLOBAL_HOTKEY_CYCLE = 'Control+Shift+T';
 
@@ -8,7 +8,7 @@ const VK_MAP = {
     'F7': 0x76, 'F8': 0x77, 'enter': 0x0D
 };
 
-class HotkeyService {
+export class HotkeyService {
     constructor(windowService) {
         this.windowService = windowService;
 
@@ -135,5 +135,3 @@ class HotkeyService {
         console.log('[HotkeyService] Todos os atalhos globais foram removidos.');
     }
 }
-
-module.exports = { HotkeyService };

@@ -3,10 +3,12 @@ import ServerList from './componentes/server/ServerList';
 import AccountModal from './componentes/account/AccountModal'; 
 import AccountsListModal from './componentes/account/AccountsListModal';
 import AddServerModal from './componentes/server/AddServerModal'; 
+import SettingsModal from './componentes/settings/SettingsModal'; // IMPORTADO
 import ServerCard from './componentes/server/ServerCard'; 
 import BottomBar from './componentes/server/BottomBar'; 
 import './App.css'; 
 
+// ... ícones existentes (PlusIcon, etc) ...
 const PlusIcon = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
 );
@@ -16,18 +18,15 @@ const PencilIcon = (props) => (
 const TrashIcon = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
 );
-const CheckSquareIcon = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2.1 0 0 1-2-2V5a2 2.1 0 0 1 2-2h11"></path></svg>
-);
 const FolderOpenIcon = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
 );
-
 
 const App = () => {
     const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
     const [isAddServerModalOpen, setIsAddServerModalOpen] = useState(false);
     const [isAccountsListModalOpen, setIsAccountsListModalOpen] = useState(false);
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false); // NOVO STATE
     
     const [servers, setServers] = useState([]);
     const [currentServerId, setCurrentServerId] = useState(null); 
@@ -42,9 +41,7 @@ const App = () => {
 
     const openedAccounts = useMemo(() => {
         const runningIds = new Set(runningAccounts.map(r => r.accountId));
-        
         const filteredAccounts = accounts.filter(acc => runningIds.has(acc.id));
-
         return filteredAccounts.map(acc => {
             const runningInstance = runningAccounts.find(r => r.accountId === acc.id);
             return {
@@ -55,14 +52,11 @@ const App = () => {
         });
     }, [accounts, runningAccounts]);
 
-
     useEffect(() => {
         const loadServersAndSelectFirst = async () => {
             const loadedServers = await window.electronAPI.invoke('load-servers'); 
-            
             if (Array.isArray(loadedServers) && loadedServers.length > 0) {
                 setServers(loadedServers);
-                
                 if (currentServerId === null || !loadedServers.some(s => s.id === currentServerId)) {
                     setCurrentServerId(loadedServers[0].id);
                 }
@@ -85,11 +79,9 @@ const App = () => {
             }
         };
 
-        
         if (servers.length === 0 && currentServerId === null) {
             loadServersAndSelectFirst();
         } else {
-            
             loadPersistedAccounts();
         }
         
@@ -113,102 +105,59 @@ const App = () => {
 
     }, [currentServerId, servers.length]); 
 
-    
-
-    const handleOpenAddServerModal = () => {
-        
-        setIsAddServerModalOpen(true);
-    };
+    const handleOpenAddServerModal = () => setIsAddServerModalOpen(true);
     const handleCloseAddServerModal = () => setIsAddServerModalOpen(false);
 
     const handleSaveNewServer = (newServer) => {
         const serverExists = servers.some(s => s.id === newServer.id);
-        if (serverExists) {
-            
-            
-            return;
-        }
+        if (serverExists) return;
 
         setServers(prevServers => {
             const updatedServers = [...prevServers, newServer];
-            
             window.electronAPI.invoke('save-servers', updatedServers)
                 .then(result => {
-                    if (!result.success) {
-                        console.error('[React] Falha ao salvar lista de servidores:', result.error);
-                    }
+                    if (!result.success) console.error('[React] Falha ao salvar lista de servidores:', result.error);
                 })
-                .catch(error => {
-                    console.error('[React] Erro de IPC ao salvar lista de servidores:', error);
-                });
-
+                .catch(error => console.error('[React] Erro de IPC ao salvar lista de servidores:', error));
             return updatedServers;
         });
-        
         setCurrentServerId(newServer.id); 
         setIsAddServerModalOpen(false);
     };
 
     const handleEditServerName = async () => {
         if (!currentServerId) return;
-
         const newName = window.prompt(`Novo nome para o servidor '${currentServer.name}':`, currentServer.name);
-        
         if (newName && newName.trim() !== currentServer.name) {
             const updatedServer = { ...currentServer, name: newName.trim() };
             const updatedServers = servers.map(s => s.id === currentServerId ? updatedServer : s);
-
             const result = await window.electronAPI.invoke('save-servers', updatedServers);
-            
-            if (result.success) {
-                setServers(updatedServers);
-            } else {
-                console.error('[React] Falha ao atualizar nome do servidor:', result.error);
-            }
+            if (result.success) setServers(updatedServers);
+            else console.error('[React] Falha ao atualizar nome do servidor:', result.error);
         }
     };
 
     const handleDeleteServer = async (serverIdToDelete) => {
-        if (!window.confirm("Tem certeza que deseja excluir este servidor e todas as contas associadas?")) {
-            return;
-        }
-
+        if (!window.confirm("Tem certeza que deseja excluir este servidor e todas as contas associadas?")) return;
         const updatedServers = servers.filter(s => s.id !== serverIdToDelete);
-        
         const result = await window.electronAPI.invoke('save-servers', updatedServers);
-        
         if (result.success) {
-            
-            
             setServers(updatedServers);
-            
-            
             if (serverIdToDelete === currentServerId) {
-                
                 const nextServerId = updatedServers.length > 0 ? updatedServers[0].id : null;
                 setCurrentServerId(nextServerId); 
             }
-            
-            
             setAccounts([]);
-            
             setRunningAccounts([]); 
-
-            
             await window.electronAPI.invoke('delete-accounts-file', serverIdToDelete);
-            
         } else {
             console.error('[React] Falha ao excluir servidor:', result.error);
         }
     };
 
     const handleSelectServer = (serverId) => {
-        if (serverId !== currentServerId) {
-            setCurrentServerId(serverId);
-        }
+        if (serverId !== currentServerId) setCurrentServerId(serverId);
     };
-    
-    
 
     const handleOpenAddAccountModal = () => {
         if (!currentServerId) {
@@ -237,23 +186,16 @@ const App = () => {
         setAccounts(prevAccounts => {
             const isEditing = prevAccounts.some(acc => acc.id === accountData.id);
             let updatedAccounts;
-            
             if (isEditing) {
                 updatedAccounts = prevAccounts.map(acc => acc.id === accountData.id ? accountData : acc);
             } else {
                 updatedAccounts = [...prevAccounts, accountData];
             }
-
             window.electronAPI.invoke('save-accounts', currentServerId, updatedAccounts)
                 .then(result => {
-                    if (!result.success) {
-                        console.error('[React] Falha ao salvar/atualizar contas:', result.error);
-                    }
+                    if (!result.success) console.error('[React] Falha ao salvar/atualizar contas:', result.error);
                 })
-                .catch(error => {
-                    console.error('[React] Erro de IPC ao salvar/atualizar contas:', error);
-                });
-
+                .catch(error => console.error('[React] Erro de IPC ao salvar/atualizar contas:', error));
             return updatedAccounts;
         });
     };
@@ -267,11 +209,8 @@ const App = () => {
             characterName: accountData.charName,
             argument: null 
         };
-
         setRunningAccounts(prev => [...prev, { accountId: args.id, pid: null, charName: args.charName, status: 'starting' }]);
-
         const result = await window.electronAPI.invoke('open-element', args);
-        
         if (!result.success) {
             console.error(`[React] Falha ao iniciar helper:`, result.error);
             setRunningAccounts(prev => prev.filter(acc => acc.accountId !== args.id));
@@ -279,12 +218,8 @@ const App = () => {
     };
 
     const handleCloseAccount = async (pid) => {
-        if (!pid) {
-            console.warn('[React] PID inválido, não é possível fechar.');
-            return;
-        }
+        if (!pid) return;
         const result = await window.electronAPI.invoke('close-element', pid);
-        
         if (!result.success) {
             console.error(`[React] Falha ao fechar PID ${pid}:`, result.error);
             setRunningAccounts(prev => prev.filter(acc => acc.pid !== pid));
@@ -297,7 +232,6 @@ const App = () => {
         
         setAccounts(prevAccounts => {
             const updatedAccounts = prevAccounts.filter(acc => acc.id !== accountId);
-
             window.electronAPI.invoke('save-accounts', currentServerId, updatedAccounts)
                 .then(result => {
                     if (!result.success) {
@@ -311,18 +245,16 @@ const App = () => {
                         }
                     }
                 })
-                .catch(error => {
-                    console.error('[React] Erro de IPC ao salvar contas após exclusão:', error);
-                });
-            
+                .catch(error => console.error('[React] Erro de IPC ao salvar contas após exclusão:', error));
             return updatedAccounts;
         });
     };
     
-    
     const handleOpenAccountsListModal = () => setIsAccountsListModalOpen(true);
     const handleCloseAccountsListModal = () => setIsAccountsListModalOpen(false);
 
+    const handleOpenSettings = () => setIsSettingsModalOpen(true);
+    const handleCloseSettings = () => setIsSettingsModalOpen(false);
 
     return (
         <div className="main-layout">
@@ -331,6 +263,7 @@ const App = () => {
                 currentServerId={currentServerId} 
                 onSelectServer={handleSelectServer} 
                 onOpenAddModal={handleOpenAddServerModal}
+                onOpenSettings={handleOpenSettings} 
             />
 
             <div className="content-area">
@@ -373,7 +306,6 @@ const App = () => {
                 </div>
 
                 <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3 card-grid-container">
-                    
                     {!currentServerId ? (
                         <div className="placeholder-message">
                             <FolderOpenIcon className="placeholder-icon" />
@@ -438,6 +370,11 @@ const App = () => {
                 onClose={handleCloseAccountsListModal}
                 serverName={currentServer.name}
                 accounts={openedAccounts} 
+            />
+
+            <SettingsModal
+                show={isSettingsModalOpen}
+                onClose={handleCloseSettings}
             />
         </div>
     );

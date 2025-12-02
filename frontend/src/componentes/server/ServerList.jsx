@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaPlus, FaServer } from 'react-icons/fa'; 
+import { FaPlus, FaServer, FaCog } from 'react-icons/fa'; 
 import './css/ServerList.css';
 
 const ServerItem = ({ server, isActive, onSelect }) => (
@@ -12,10 +12,10 @@ const ServerItem = ({ server, isActive, onSelect }) => (
     </button>
 );
 
-const ServerList = ({ servers, currentServerId, onSelectServer, onOpenAddModal }) => (
-    <div className="server-list-container">
+const ServerList = ({ servers, currentServerId, onSelectServer, onOpenAddModal, onOpenSettings }) => (
+    <div className="server-list-container d-flex flex-column">
         <h5 className="server-list-title">Servidores</h5>
-        <div className="server-item-group">
+        <div className="server-item-group flex-grow-1">
             <button 
                 className="btn btn-sm btn-outline-info btn-add-server-custom" 
                 onClick={onOpenAddModal}
@@ -31,6 +31,15 @@ const ServerList = ({ servers, currentServerId, onSelectServer, onOpenAddModal }
                     onSelect={onSelectServer}
                 />
             ))}
+        </div>
+        
+        <div className="mt-3 pt-3 border-top border-secondary">
+            <button 
+                className="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center"
+                onClick={onOpenSettings}
+            >
+                <FaCog className="me-2" /> Configurações
+            </button>
         </div>
     </div>
 );

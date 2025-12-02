@@ -1,4 +1,4 @@
-const { Application } = require('./Application.js');
+import { Application } from './Application.js';
 
 const mainApp = new Application();
 mainApp.init();

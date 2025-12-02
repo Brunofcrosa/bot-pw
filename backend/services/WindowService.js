@@ -1,8 +1,8 @@
-const { exec } = require('child_process');
+import { exec } from 'child_process';
 
 const TARGET_PROCESS_NAME = 'ElementClient_64.exe';
 
-class WindowService {
+export class WindowService {
     constructor(processManager) {
         this.processManager = processManager;
         this.window_handles_for_cycle = [];
@@ -123,5 +123,3 @@ class WindowService {
         });
     }
 }
-
-module.exports = { WindowService };

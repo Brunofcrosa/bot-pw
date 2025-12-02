@@ -9,6 +9,7 @@
     "start": "electron .",
     "build": "npm run build-react && electron-builder"
   },
+  "type": "module",
   "keywords": [
     "Electron"
   ],

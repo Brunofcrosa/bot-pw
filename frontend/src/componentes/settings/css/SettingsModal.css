@@ -1,0 +1,31 @@
+.settings-sidebar {
+    width: 200px;
+    background-color: var(--color-bg-sidebar);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.nav-link-custom {
+    text-align: left;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+}
+
+.nav-link-custom:hover {
+    background-color: var(--color-bg-highlight);
+    color: var(--color-text-light);
+}
+
+.nav-link-custom.active {
+    background-color: var(--color-bg-primary);
+    color: white;
+    font-weight: 600;
+}
+
+.settings-content {
+    background-color: var(--color-bg-card);
+}

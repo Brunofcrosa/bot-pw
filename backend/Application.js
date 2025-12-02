@@ -1,22 +1,44 @@
-const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
-const path = require('path');
+import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const { PersistenceService } = require('./services/PersistenceService');
-const { ProcessManager } = require('./services/ProcessManager');
-const { WindowService } = require('./services/WindowService');
-const { HotkeyService } = require('./services/HotkeyService');
+// Serviços Core (Usando ESM)
+import { PersistenceService } from './services/PersistenceService.js';
+import { ProcessManager } from './services/ProcessManager.js';
+import { WindowService } from './services/WindowService.js';
+import { HotkeyService } from './services/HotkeyService.js';
+
+// Utilitários e Features
+import { setMainWindow, setDirName } from './utils/shared-variables/shared-variables.js';
+
+// Importa as features para registrar os listeners IPC
+import './features/backup/backup.js';
+import './features/settings/settings.js';
+import './features/party/open-parties-window/open-parties-window.js';
+import './features/party/open-minimized-party/open-minimized-party.js'; 
+import './features/auto-forja/auto-forja.js';
+import './features/tools-bar/tools-bar.js';
+import './features/storage/storage.js';
+
+// Configuração do __dirname em ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const PRELOAD_SCRIPT = path.join(__dirname, 'preload.js');
-const HTML_FILE = path.join(__dirname, '..', 'frontend', 'index.html');
+const HTML_FILE = path.join(__dirname, '..', 'frontend', 'index.html'); 
 
-class Application {
+export class Application {
     constructor() {
         this.mainWindow = null;
 
+        // Inicializa serviços
         this.persistenceService = new PersistenceService(path.join(__dirname, 'data'));
         this.processManager = new ProcessManager(path.join(__dirname, '..', 'executaveis'));
         this.windowService = new WindowService(this.processManager);
         this.hotkeyService = new HotkeyService(this.windowService);
+        
+        // Define o diretório base para as features antigas
+        setDirName(__dirname);
     }
 
     init() {
@@ -45,7 +67,6 @@ class Application {
     onReady() {
         this.createWindow();
 
-        // Inicia serviços
         try {
             this.processManager.startFocusHelpers();
             console.log('[Main] Scripts C# de foco inicializados.');
@@ -71,8 +92,10 @@ class Application {
 
     createWindow() {
         this.mainWindow = new BrowserWindow({
-            width: 800,
-            height: 600,
+            width: 1200,
+            height: 800,
+            frame: false, 
+            backgroundColor: '#1e1e2d',
             webPreferences: {
                 preload: PRELOAD_SCRIPT,
                 contextIsolation: true,
@@ -80,12 +103,21 @@ class Application {
             },
         });
 
-        this.mainWindow.loadFile(HTML_FILE);
-        this.mainWindow.webContents.openDevTools();
+        // Carrega o HTML
+        if (process.env.NODE_ENV === 'development') {
+            this.mainWindow.loadFile(HTML_FILE); 
+            this.mainWindow.webContents.openDevTools();
+        } else {
+            this.mainWindow.loadFile(HTML_FILE);
+        }
 
         this.mainWindow.on('closed', () => {
             this.mainWindow = null;
+            setMainWindow(null);
         });
+
+        // Linka a janela com as features antigas
+        setMainWindow(this.mainWindow);
     }
 
     getWebContents() {
@@ -93,6 +125,8 @@ class Application {
     }
 
     registerIpcHandlers() {
+        // --- Handlers da Nova Arquitetura ---
+        
         // Persistência
         ipcMain.handle('load-servers', () => this.persistenceService.loadServers());
         ipcMain.handle('save-servers', (e, servers) => this.persistenceService.saveServers(servers));
@@ -115,6 +149,7 @@ class Application {
         ipcMain.handle('set-focus-on-macro', (e, state) => this.hotkeyService.setFocusOnMacro(state));
         ipcMain.handle('set-background-macro', (e, state) => this.hotkeyService.setBackgroundMacro(state));
 
+        // Launcher
         ipcMain.handle('open-element', (e, args) => {
             console.log(`[IPC] Recebido 'open-element' para: ${args.login}`);
             return this.processManager.launchGame(args, this.getWebContents());
@@ -124,8 +159,10 @@ class Application {
             return this.processManager.killGameByPid(pid);
         });
 
+        // Utils
         ipcMain.handle('get-app-version', () => app.getVersion());
         ipcMain.handle('open-external-link', (e, url) => shell.openExternal(url));
+        
         ipcMain.handle('select-exe-file', async () => {
             const { canceled, filePaths } = await dialog.showOpenDialog({
                 title: 'Selecionar Executável (ElementClient)',
@@ -134,7 +171,8 @@ class Application {
             });
             return (canceled || filePaths.length === 0) ? null : filePaths[0];
         });
+        
+        ipcMain.on('minimize-main-window', () => this.mainWindow?.minimize());
+        ipcMain.on('close-main-window', () => this.mainWindow?.close());
     }
 }
-
-module.exports = { Application };
