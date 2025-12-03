@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { FaPlus, FaUsers, FaPlay, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaUsers, FaPlay, FaTrash, FaGamepad, FaExternalLinkAlt } from 'react-icons/fa';
+import GroupControlModal from './GroupControlModal';
 import './css/GroupsView.css';
 
-const GroupsView = ({ accounts = [], groups = [], onSaveGroups, onOpenGroup }) => {
+const GroupsView = ({ accounts = [], groups = [], runningAccounts = [], onSaveGroups, onOpenGroup }) => {
     const [isCreatingGroup, setIsCreatingGroup] = useState(false);
     const [newGroupName, setNewGroupName] = useState('');
     const [selectedAccounts, setSelectedAccounts] = useState([]);
+    const [controlGroup, setControlGroup] = useState(null);
 
     const handleCreateGroup = () => {
         if (!newGroupName.trim() || selectedAccounts.length === 0) {
@@ -140,7 +142,22 @@ const GroupsView = ({ accounts = [], groups = [], onSaveGroups, onOpenGroup }) =
                                             className="btn-play-group"
                                             onClick={() => onOpenGroup(groupAccounts)}
                                         >
-                                            <FaPlay /> Iniciar Todas
+                                            <FaPlay /> Iniciar
+                                        </button>
+                                        <button
+                                            className="btn-control-group"
+                                            onClick={() => setControlGroup(group)}
+                                            title="Painel de Controle"
+                                        >
+                                            <FaGamepad />
+                                        </button>
+                                        <button
+                                            className="btn-control-group"
+                                            onClick={() => window.electronAPI.invoke('open-group-overlay', group.id)}
+                                            title="Abrir Painel Flutuante"
+                                            style={{ marginLeft: '0.5rem' }}
+                                        >
+                                            <FaExternalLinkAlt />
                                         </button>
                                         <button
                                             className="btn-icon-action"
@@ -155,6 +172,14 @@ const GroupsView = ({ accounts = [], groups = [], onSaveGroups, onOpenGroup }) =
                     })
                 )}
             </div>
+
+            <GroupControlModal
+                isOpen={!!controlGroup}
+                onClose={() => setControlGroup(null)}
+                group={controlGroup}
+                accounts={accounts}
+                runningAccounts={runningAccounts}
+            />
         </div>
     );
 };

@@ -106,6 +106,7 @@ class Application {
         ipcMain.handle('open-element', (e, args) => this.processManager.launchGame(args, this.getWebContents()));
         ipcMain.handle('close-element', (e, pid) => this.processManager.killGameByPid(pid));
         ipcMain.handle('find-pw-windows', () => this.windowService.findPerfectWorldWindows());
+        ipcMain.handle('focus-window', (e, pid) => this.windowService.focusWindowByPid(pid));
 
         ipcMain.handle('register-macro', async (event, { pid, triggerKey, sequence }) => {
             return this.macroService.registerMacro(pid, triggerKey, sequence);
@@ -124,6 +125,36 @@ class Application {
                 filters: [{ name: 'Executáveis', extensions: ['exe'] }]
             });
             return (canceled || filePaths.length === 0) ? null : filePaths[0];
+        });
+
+        ipcMain.handle('open-group-overlay', (e, groupId) => this.createOverlayWindow(groupId));
+    }
+
+    createOverlayWindow(groupId) {
+        if (this.overlayWindow) {
+            this.overlayWindow.close();
+            this.overlayWindow = null;
+        }
+
+        this.overlayWindow = new BrowserWindow({
+            width: 600,
+            height: 200,
+            frame: false,
+            transparent: true,
+            alwaysOnTop: true,
+            resizable: false,
+            webPreferences: {
+                preload: PRELOAD_SCRIPT,
+                contextIsolation: true,
+                nodeIntegration: false,
+            }
+        });
+
+        // Carrega a mesma página mas com parâmetro para indicar modo overlay
+        this.overlayWindow.loadURL(`file://${HTML_FILE}?overlay=true&groupId=${groupId}`);
+
+        this.overlayWindow.on('closed', () => {
+            this.overlayWindow = null;
         });
     }
 }

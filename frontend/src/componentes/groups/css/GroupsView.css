@@ -301,6 +301,21 @@
     box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
 }
 
+.btn-control-group {
+    padding: 0.75rem;
+    background: #3a3f52;
+    color: #ffd600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-control-group:hover {
+    background: #ffd600;
+    color: #1e2028;
+}
+
 .btn-icon-action {
     padding: 0.75rem;
     background: #3a3f52;

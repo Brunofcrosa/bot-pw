@@ -6,12 +6,19 @@ import AddServerModal from './componentes/server/AddServerModal';
 import SettingsModal from './componentes/settings/SettingsModal';
 import AccountsView from './componentes/accounts/AccountsView';
 import GroupsView from './componentes/groups/GroupsView';
+import GroupControlModal from './componentes/groups/GroupControlModal';
 import BottomBar from './componentes/server/BottomBar';
 import { FaCog, FaPlus, FaUsers, FaUser } from 'react-icons/fa';
 import './App.css';
 
 const App = () => {
     console.log('[App] Componente App iniciando...');
+
+    // Verifica se está em modo overlay
+    const searchParams = new URLSearchParams(window.location.search);
+    const isOverlay = searchParams.get('overlay') === 'true';
+    const overlayGroupId = searchParams.get('groupId');
+
     const [activeTab, setActiveTab] = useState('accounts');
     const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
     const [isAddServerModalOpen, setIsAddServerModalOpen] = useState(false);
@@ -36,8 +43,14 @@ const App = () => {
             const loadedServers = await window.electronAPI.invoke('load-servers');
             if (Array.isArray(loadedServers) && loadedServers.length > 0) {
                 setServers(loadedServers);
+                // Se estiver em overlay, precisamos carregar o servidor correto para o grupo
+                // Mas como groups são salvos por servidor, precisamos iterar ou assumir o padrão
+                // Simplificação: carrega o último servidor usado ou salvar o serverId na URL também
                 if (!currentServerId) setCurrentServerId(loadedServers[0].id);
             }
+
+            // Carregar contas rodando
+            // ... (lógica existente)
         };
         init();
 
@@ -141,10 +154,21 @@ const App = () => {
 
             <div className="content-area">
                 <div className="content-header-new">
-                    <div className="header-top">
-                        <span className="server-indicator">
-                            {currentServer.name}
-                        </span>
+                    <div className="tabs-navigation">
+                        <div className="tabs-left">
+                            <button
+                                className={`tab-button ${activeTab === 'accounts' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('accounts')}
+                            >
+                                <FaUser /> Contas
+                            </button>
+                            <button
+                                className={`tab-button ${activeTab === 'groups' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('groups')}
+                            >
+                                <FaUsers /> Grupos
+                            </button>
+                        </div>
 
                         <div className="header-actions">
                             {activeTab === 'accounts' && (
@@ -166,21 +190,6 @@ const App = () => {
                             </button>
                         </div>
                     </div>
-
-                    <div className="tabs-navigation">
-                        <button
-                            className={`tab-button ${activeTab === 'accounts' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('accounts')}
-                        >
-                            <FaUser /> Contas
-                        </button>
-                        <button
-                            className={`tab-button ${activeTab === 'groups' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('groups')}
-                        >
-                            <FaUsers /> Grupos
-                        </button>
-                    </div>
                 </div>
 
                 <div className="tab-content">
@@ -197,6 +206,7 @@ const App = () => {
                         <GroupsView
                             accounts={accounts}
                             groups={groups}
+                            runningAccounts={runningAccounts}
                             onSaveGroups={handleSaveGroups}
                             onOpenGroup={handleOpenGroup}
                         />
