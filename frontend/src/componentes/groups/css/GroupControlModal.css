@@ -13,12 +13,12 @@
 }
 
 .group-control-modal {
-    background: #2a2d3a;
+    background: var(--bg-card);
     border-radius: 16px;
     padding: 1.5rem;
     width: 90%;
     max-width: 600px;
-    border: 1px solid #3a3f52;
+    border: 1px solid var(--border-color);
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -40,7 +40,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
-    border-bottom: 1px solid #3a3f52;
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 1rem;
 }
 
@@ -53,7 +53,7 @@
 .btn-close {
     background: transparent;
     border: none;
-    color: #888;
+    color: var(--text-secondary);
     font-size: 1.2rem;
     cursor: pointer;
     transition: color 0.2s;
@@ -74,8 +74,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: #1e2028;
-    border: 2px solid #3a3f52;
+    background: var(--bg-input);
+    border: 2px solid var(--border-color);
     border-radius: 12px;
     padding: 1rem;
     cursor: pointer;
@@ -85,19 +85,19 @@
 
 .control-btn:hover:not(:disabled) {
     transform: translateY(-4px);
-    border-color: #667eea;
-    background: #252836;
+    border-color: var(--accent-primary);
+    background: var(--bg-hover);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
 .control-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    border-color: #2a2d3a;
+    border-color: var(--bg-card);
 }
 
 .control-btn.running {
-    border-color: #2dce89;
+    border-color: var(--accent-success);
 }
 
 .control-btn.running:hover {
@@ -108,7 +108,7 @@
     font-size: 1.5rem;
     font-weight: 800;
     color: #fff;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-hover) 100%);
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -120,7 +120,7 @@
 
 .char-name {
     font-size: 0.85rem;
-    color: #ddd;
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -142,11 +142,13 @@
     border-radius: 0;
     background: rgba(0, 0, 0, 0.2);
     /* Fundo muito sutil apenas para hover */
-    border: 2px solid #667eea;
+    border: 2px solid var(--accent-primary);
     box-shadow: none;
     animation: none;
     display: flex;
     flex-direction: column;
+    -webkit-app-region: drag;
+    /* Permite arrastar a janela */
 }
 
 .group-control-modal.overlay-mode:hover {
@@ -154,16 +156,30 @@
     /* Fica mais opaco ao passar o mouse */
 }
 
+.group-control-modal.overlay-mode .control-header {
+    -webkit-app-region: drag;
+    /* Header também pode arrastar */
+}
+
+.group-control-modal.overlay-mode .btn-close {
+    -webkit-app-region: no-drag;
+    /* Botão de fechar deve ser clicável */
+}
+
 .group-control-modal.overlay-mode .control-grid {
     flex: 1;
     overflow-y: auto;
     /* Ajuste para ícones menores no overlay se necessário */
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    -webkit-app-region: no-drag;
+    /* Grid não deve bloquear drag */
 }
 
 .group-control-modal.overlay-mode .control-btn {
     height: 80px;
     padding: 0.5rem;
+    -webkit-app-region: no-drag;
+    /* Botões devem ser clicáveis */
 }
 
 .group-control-modal.overlay-mode .class-icon {

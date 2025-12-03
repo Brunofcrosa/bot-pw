@@ -135,6 +135,25 @@ const App = () => {
         await window.electronAPI.invoke('close-element', pid);
     };
 
+    const overlayGroup = useMemo(() => {
+        if (!isOverlay || !groups.length) return null;
+        return groups.find(g => g.id === overlayGroupId);
+    }, [isOverlay, groups, overlayGroupId]);
+
+    if (isOverlay) {
+        if (!overlayGroup) return <div style={{ color: 'white', padding: '10px' }}>Carregando grupo...</div>;
+        return (
+            <GroupControlModal
+                isOpen={true}
+                onClose={() => window.close()}
+                group={overlayGroup}
+                accounts={accounts}
+                runningAccounts={runningAccounts}
+                isOverlayMode={true}
+            />
+        );
+    }
+
     const handleOpenGroup = async (groupAccounts) => {
         for (const acc of groupAccounts) {
             await handleOpenGame(acc);

@@ -59,6 +59,8 @@ class Application {
         this.registerIpcHandlers();
         this.hotkeyService.setupInitialHotkeys();
 
+        this.processManager.startFocusHelpers();
+
         console.log('[Application] Sistema pronto e inicializado.');
     }
 

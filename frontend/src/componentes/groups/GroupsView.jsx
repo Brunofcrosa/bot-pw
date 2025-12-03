@@ -19,7 +19,8 @@ const GroupsView = ({ accounts = [], groups = [], runningAccounts = [], onSaveGr
             id: Date.now().toString(),
             name: newGroupName,
             accountIds: selectedAccounts,
-            color: `hsl(${Math.random() * 360}, 70%, 60%)`
+            accountIds: selectedAccounts,
+            color: 'var(--accent-secondary)'
         };
 
         const updatedGroups = [...groups, newGroup];

@@ -2,7 +2,7 @@
     padding: 1.5rem;
     height: 100%;
     overflow-y: auto;
-    background: #1e2028;
+    background: var(--bg-body);
 }
 
 .groups-header {
@@ -26,7 +26,7 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-hover) 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -55,12 +55,12 @@
 }
 
 .group-creator {
-    background: #2a2d3a;
+    background: var(--bg-card);
     border-radius: 12px;
     padding: 1.5rem;
     width: 90%;
     max-width: 500px;
-    border: 1px solid #3a3f52;
+    border: 1px solid var(--border-color);
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     animation: modalSlideIn 0.3s ease;
 }
@@ -92,7 +92,7 @@
 .creator-header button {
     background: transparent;
     border: none;
-    color: #999;
+    color: var(--text-secondary);
     font-size: 1.5rem;
     cursor: pointer;
     transition: color 0.2s;
@@ -105,8 +105,8 @@
 .group-name-input {
     width: 100%;
     padding: 0.75rem;
-    background: #1e2028;
-    border: 1px solid #3a3f52;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     color: #fff;
     font-size: 1rem;
@@ -115,11 +115,11 @@
 
 .group-name-input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: var(--accent-primary);
 }
 
 .accounts-selector h4 {
-    color: #aaa;
+    color: var(--text-secondary);
     font-size: 0.9rem;
     margin-bottom: 0.75rem;
 }
@@ -131,7 +131,7 @@
     max-height: 200px;
     overflow-y: auto;
     padding: 0.5rem;
-    background: #1e2028;
+    background: var(--bg-input);
     border-radius: 8px;
     margin-bottom: 1rem;
 }
@@ -141,14 +141,14 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem;
-    background: #2a2d3a;
+    background: var(--bg-sidebar);
     border-radius: 6px;
     cursor: pointer;
     transition: background 0.2s;
 }
 
 .account-checkbox:hover {
-    background: #3a3f52;
+    background: var(--bg-hover);
 }
 
 .account-checkbox input[type="checkbox"] {
@@ -156,15 +156,15 @@
 }
 
 .account-checkbox span {
-    color: #ddd;
+    color: var(--text-primary);
     font-size: 0.9rem;
 }
 
 .btn-save-group {
     width: 100%;
     padding: 0.75rem;
-    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-    color: #1e2028;
+    background: linear-gradient(135deg, #43e97b 0%, var(--accent-secondary) 100%);
+    color: var(--bg-body);
     border: none;
     border-radius: 8px;
     font-weight: 600;
@@ -193,15 +193,15 @@
     min-height: 400px;
     background: rgba(42, 45, 58, 0.3);
     border-radius: 12px;
-    border: 2px dashed #3a3f52;
-    color: #ccc;
+    border: 2px dashed var(--border-color);
+    color: var(--text-secondary);
     text-align: center;
 }
 
 .empty-groups svg {
     margin-bottom: 1.5rem;
     opacity: 0.7;
-    color: #667eea;
+    color: var(--accent-primary);
 }
 
 .empty-groups p {
@@ -212,22 +212,22 @@
 }
 
 .empty-groups small {
-    color: #aaa;
+    color: var(--text-secondary);
     font-size: 1rem;
 }
 
 .group-card {
-    background: #2a2d3a;
+    background: var(--bg-card);
     border-radius: 12px;
     overflow: hidden;
-    border: 1px solid #3a3f52;
+    border: 1px solid var(--border-color);
     transition: all 0.3s ease;
 }
 
 .group-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
-    border-color: #667eea;
+    border-color: var(--accent-primary);
 }
 
 .group-header-bar {
@@ -246,7 +246,7 @@
 }
 
 .group-count {
-    color: #888;
+    color: var(--text-secondary);
     font-size: 0.9rem;
     margin: 0 0 1rem 0;
 }
@@ -259,15 +259,15 @@
 }
 
 .preview-account {
-    background: #1e2028;
+    background: var(--bg-input);
     padding: 0.4rem 0.8rem;
     border-radius: 6px;
     font-size: 0.85rem;
-    color: #ddd;
+    color: var(--text-primary);
 }
 
 .preview-more {
-    background: #667eea;
+    background: var(--accent-primary);
     padding: 0.4rem 0.8rem;
     border-radius: 6px;
     font-size: 0.85rem;
@@ -304,7 +304,7 @@
 .btn-control-group {
     padding: 0.75rem;
     background: #3a3f52;
-    color: #ffd600;
+    color: var(--color-accent-active);
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -312,14 +312,14 @@
 }
 
 .btn-control-group:hover {
-    background: #ffd600;
+    background: var(--color-accent-active);
     color: #1e2028;
 }
 
 .btn-icon-action {
     padding: 0.75rem;
-    background: #3a3f52;
-    color: #ff6b6b;
+    background: var(--bg-hover);
+    color: var(--accent-danger);
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -327,6 +327,6 @@
 }
 
 .btn-icon-action:hover {
-    background: #ff6b6b;
+    background: var(--accent-danger);
     color: white;
 }

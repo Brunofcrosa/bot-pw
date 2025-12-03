@@ -1,9 +1,9 @@
 .account-card {
-    background-color: #2f3136;
+    background-color: var(--bg-card);
     border-radius: 8px;
     overflow: hidden;
     transition: transform 0.2s, box-shadow 0.2s;
-    border: 1px solid #202225;
+    border: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     position: relative;
@@ -12,12 +12,12 @@
 
 .account-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
-    border-color: #7289da;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    border-color: var(--accent-primary);
 }
 
 .account-card.running {
-    border-color: #43b581;
+    border-color: var(--accent-success);
 }
 
 .card-status-bar {
@@ -41,14 +41,14 @@
 .char-avatar {
     width: 48px;
     height: 48px;
-    background-color: #40444b;
+    background-color: var(--bg-hover);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
     font-weight: bold;
-    color: #dcddde;
+    color: var(--text-primary);
     flex-shrink: 0;
 }
 
@@ -68,7 +68,7 @@
 
 .char-class {
     font-size: 0.85rem;
-    color: #b9bbbe;
+    color: var(--text-secondary);
 }
 
 .status-dot {
@@ -99,15 +99,15 @@
 }
 
 .btn-control.start {
-    background-color: #7289da;
+    background-color: var(--accent-primary);
 }
 
 .btn-control.start:hover {
-    background-color: #5b6eae;
+    background-color: var(--accent-hover);
 }
 
 .btn-control.stop {
-    background-color: #ed4245;
+    background-color: var(--accent-danger);
 }
 
 .btn-control.stop:hover {
@@ -122,7 +122,7 @@
 .btn-icon {
     background: transparent;
     border: none;
-    color: #b9bbbe;
+    color: var(--text-secondary);
     cursor: pointer;
     padding: 8px;
     border-radius: 4px;
@@ -133,10 +133,10 @@
 }
 
 .btn-icon:hover {
-    color: #dcddde;
-    background-color: #40444b;
+    color: var(--text-primary);
+    background-color: var(--bg-hover);
 }
 
 .btn-icon.delete:hover {
-    color: #ed4245;
+    color: var(--accent-danger);
 }

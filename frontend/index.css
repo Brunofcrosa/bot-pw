@@ -1,40 +1,77 @@
 :root {
-    --color-bg-body: #1e1e2d; 
-    --color-bg-sidebar: #27293d;
-    --color-bg-card: #2d3043;
-    --color-bg-highlight: #34374c; 
-    --color-bg-primary: #5e72e4; 
-    
-    --color-text-light: #e6e6e6;
-    --color-text-muted: #a0a0a0;
-    --color-accent-warning: #ffd600; 
-    --color-accent-success: #2dce89;
-    
-    --border-color: #3f4258;
-    
-    --bs-body-bg: var(--color-bg-body); 
-    --bs-body-color: var(--color-text-light);
-    --sidebar-bg: var(--color-bg-sidebar);
-    --card-bg: var(--color-bg-card);
-    --active-bg: var(--color-bg-primary);
+    /* Main Backgrounds - Balanced Dark Blue Theme */
+    --bg-body: #263238;
+    --bg-sidebar: #2f3d4a;
+    --bg-card: #3a4f5f;
+    --bg-hover: #455a6d;
+    --bg-input: #2f3d4a;
+    --bg-modal: #2f3d4a;
+    --bg-modal-header: #3a4f5f;
+
+    /* Text Colors */
+    --text-primary: #ecf0f1;
+    --text-secondary: #bdc3c7;
+    --text-muted: #95a5a6;
+
+    /* Brand & Accents */
+    --accent-primary: #5e72e4;
+    /* Purple/Blue */
+    --accent-secondary: #38f9d7;
+    /* Teal */
+    --accent-hover: #4854e0;
+    /* Darker Purple/Blue */
+
+    /* Status Colors */
+    --accent-success: #2ecc71;
+    /* Green */
+    --accent-warning: #f39c12;
+    /* Orange */
+    --accent-danger: #e74c3c;
+    /* Red */
+    --accent-info: #3498db;
+    /* Light Blue */
+
+    /* Borders & UI */
+    --border-color: #4a6fa5;
+    --table-stripe: #25252c;
+
+    /* Legacy/Bootstrap Mappings (to ensure compatibility) */
+    --color-bg-body: var(--bg-body);
+    --color-bg-sidebar: var(--bg-sidebar);
+    --color-bg-card: var(--bg-card);
+    --color-bg-highlight: var(--bg-hover);
+    --color-bg-primary: var(--accent-primary);
+    --color-text-light: var(--text-primary);
+    --color-text-muted: var(--text-secondary);
+    --color-accent-warning: var(--accent-warning);
+    --color-accent-success: var(--accent-success);
+    --color-accent-active: var(--accent-secondary);
+
+    --bs-body-bg: var(--bg-body);
+    --bs-body-color: var(--text-primary);
+    --sidebar-bg: var(--bg-sidebar);
+    --card-bg: var(--bg-card);
+    --active-bg: var(--accent-primary);
     --active-color: white;
 }
 
-html, body, #root {
+html,
+body,
+#root {
     height: 100%;
     margin: 0;
     padding: 0;
 }
 
 body {
-    background-color: var(--color-bg-body); 
+    background-color: var(--color-bg-body);
     color: var(--color-text-light);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    user-select: none; 
+    user-select: none;
 }
 
 .btn-outline-secondary {
-    --bs-btn-color: var(--color-text-light); 
+    --bs-btn-color: var(--color-text-light);
     --bs-btn-border-color: var(--border-color);
     --bs-btn-hover-bg: var(--color-bg-highlight);
     --bs-btn-hover-border-color: var(--color-bg-highlight);
@@ -47,7 +84,7 @@ body {
 }
 
 .btn-close-white {
-    filter: invert(1) grayscale(100%) brightness(200%); 
+    filter: invert(1) grayscale(100%) brightness(200%);
 }
 
 .btn-outline-info {
@@ -57,21 +94,21 @@ body {
     --bs-btn-hover-color: var(--color-bg-body);
     --bs-btn-active-bg: #17a2b8;
     --bs-btn-active-border-color: #17a2b8;
-    --bs-btn-disabled-color: #17a2b8; 
+    --bs-btn-disabled-color: #17a2b8;
 }
 
 .modal-content {
-    background-color: var(--color-bg-card); 
-    border-color: var(--border-color); 
+    background-color: var(--color-bg-card);
+    border-color: var(--border-color);
 }
 
 .modal-header,
 .modal-footer {
-    border-color: var(--border-color); 
+    border-color: var(--border-color);
 }
 
 .card {
-    background-color: var(--color-bg-card); 
-    border-color: var(--border-color); 
-    color: var(--color-text-light); 
+    background-color: var(--color-bg-card);
+    border-color: var(--border-color);
+    color: var(--color-text-light);
 }

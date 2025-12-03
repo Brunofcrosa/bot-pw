@@ -16,7 +16,7 @@ const ServerCard = ({
 }) => {
 
     const statusColor = isRunning
-        ? (status === 'running' ? '#43b581' : '#faa61a')
+        ? (status === 'running' ? '#43b581' : '#5e72e4')
         : '#747f8d';
 
     const handlePlayStop = (e) => {

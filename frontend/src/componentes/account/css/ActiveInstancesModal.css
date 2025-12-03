@@ -2,7 +2,7 @@
     width: 900px;
     max-width: 95%;
     height: 600px;
-    background-color: #1e1e24;
+    background-color: var(--bg-modal);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -24,8 +24,8 @@
 
 .macro-config-panel {
     width: 350px;
-    background-color: #26262d;
-    border-left: 1px solid #3f3f46;
+    background-color: var(--bg-sidebar);
+    border-left: 1px solid var(--border-color);
     padding: 20px;
     display: flex;
     flex-direction: column;
@@ -33,29 +33,34 @@
 }
 
 @keyframes slideIn {
-    from { transform: translateX(100%); }
-    to { transform: translateX(0); }
+    from {
+        transform: translateX(100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
 }
 
 /* Tabela Dark */
 .dark-table {
     width: 100%;
     border-collapse: collapse;
-    color: #e0e0e0;
+    color: var(--text-primary);
 }
 
 .dark-table th {
     text-align: left;
     padding: 10px;
-    color: #a0a0a0;
-    border-bottom: 2px solid #3f3f46;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border-color);
     font-size: 0.8rem;
     text-transform: uppercase;
 }
 
 .dark-table td {
     padding: 12px 10px;
-    border-bottom: 1px solid #3f3f46;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .dark-table tr:hover {
@@ -63,23 +68,23 @@
 }
 
 .selected-row {
-    background-color: rgba(114, 137, 218, 0.1) !important;
+    background-color: rgba(94, 114, 228, 0.1) !important;
 }
 
 .status-dot.online {
     display: inline-block;
     width: 8px;
     height: 8px;
-    background-color: #43b581;
+    background-color: var(--accent-success);
     border-radius: 50%;
     margin-right: 8px;
-    box-shadow: 0 0 5px #43b581;
+    box-shadow: 0 0 5px var(--accent-success);
 }
 
 .btn-config-macro {
     background: transparent;
-    border: 1px solid #7289da;
-    color: #7289da;
+    border: 1px solid var(--accent-primary);
+    color: var(--accent-primary);
     padding: 6px 12px;
     border-radius: 4px;
     cursor: pointer;
@@ -91,15 +96,15 @@
 }
 
 .btn-config-macro:hover {
-    background: #7289da;
+    background: var(--accent-primary);
     color: white;
 }
 
 /* Painel Inputs */
 .dark-input {
     width: 100%;
-    background-color: #16161a;
-    border: 1px solid #3f3f46;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
     color: white;
     padding: 10px;
     border-radius: 4px;
@@ -111,20 +116,20 @@
 }
 
 .form-group label {
-    color: #a0a0a0;
+    color: var(--text-secondary);
     font-size: 0.9rem;
 }
 
 .form-group small {
     display: block;
     margin-top: 4px;
-    color: #72767d;
+    color: var(--text-muted);
     font-size: 0.8rem;
 }
 
 .btn-save {
     width: 100%;
-    background-color: #43b581;
+    background-color: var(--accent-success);
     color: white;
     border: none;
     padding: 12px;
@@ -135,23 +140,23 @@
 }
 
 .btn-save:hover {
-    background-color: #3ca374;
+    background-color: #24a16d;
 }
 
 .pid-badge {
-    background: #202225;
+    background: var(--bg-input);
     padding: 2px 6px;
     border-radius: 4px;
     font-family: monospace;
     font-size: 0.8rem;
-    color: #72767d;
+    color: var(--text-muted);
 }
 
 .panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #3f3f46;
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 10px;
     margin-bottom: 15px;
 }
@@ -159,6 +164,6 @@
 .btn-close-panel {
     background: none;
     border: none;
-    color: #a0a0a0;
+    color: var(--text-secondary);
     cursor: pointer;
 }

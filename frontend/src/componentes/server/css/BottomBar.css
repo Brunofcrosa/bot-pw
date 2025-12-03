@@ -8,7 +8,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0 1rem;
-    background-color: var(--color-bg-body); 
+    background-color: var(--color-bg-body);
     border-top: 1px solid var(--border-color);
     z-index: 1000;
     color: var(--color-text-light);
@@ -32,6 +32,6 @@
 
 .macro-key-value {
     font-weight: 600;
-    color: #17a2b8;
+    color: var(--accent-info);
     margin-left: 0.25rem;
 }

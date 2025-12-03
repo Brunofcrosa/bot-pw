@@ -5,7 +5,7 @@ const fs = require('fs');
 class ProcessManager {
     constructor(executablesPath) {
         this.executablesPath = executablesPath;
-        this.runningProcesses = new Map(); 
+        this.runningProcesses = new Map();
         this.runningFocusByPidProcess = null;
         this.runningFocusBatchProcess = null;
         this.runningBackgroundFocusBatchProcess = null;
@@ -26,22 +26,26 @@ class ProcessManager {
         process.stdout.on('data', (data) => {
             const lines = data.toString().split(/\r?\n/).filter(Boolean);
             for (const line of lines) {
+                const trimmedLine = line.trim();
+                if (trimmedLine === '[OK]') {
+                    continue;
+                }
                 try {
                     const msg = JSON.parse(line);
                     if (onDataCallback) onDataCallback(msg);
                 } catch (err) {
-                    console.error(`[ProcessManager - ${exeName} parse error]`, err, line);
+                    console.warn(`[ProcessManager] ${exeName} output (raw):`, line);
                 }
             }
         });
-        
+
         console.log(`[ProcessManager] Script C# "${exeName}" iniciado.`);
         return process;
     }
 
     startFocusBatchScript() {
         this.runningFocusBatchProcess = this._spawnHelper(
-            'focus-window-batch.exe', 
+            'focus-window-batch.exe',
             (msg) => console.log('[focus-batch]', msg)
         );
     }
@@ -111,8 +115,8 @@ class ProcessManager {
             });
 
             child.on('error', (err) => {
-                 console.error(`[ProcessManager] Falha ao iniciar processo helper (conta ${args.id}):`, err);
-                 this.runningProcesses.delete(args.id);
+                console.error(`[ProcessManager] Falha ao iniciar processo helper (conta ${args.id}):`, err);
+                this.runningProcesses.delete(args.id);
             });
 
             child.on('close', (code) => {
@@ -135,7 +139,7 @@ class ProcessManager {
         try {
             process.kill(pid);
             console.log(`[ProcessManager] Processo ${pid} finalizado.`);
-            
+
             for (const [id, child] of this.runningProcesses.entries()) {
                 if (child.pid === pid) {
                     this.runningProcesses.delete(id);
