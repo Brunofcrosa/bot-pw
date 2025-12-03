@@ -9,7 +9,6 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
     });
     const [showPassword, setShowPassword] = useState(false);
 
-    // Reseta ou popula o formulário quando o modal abre/fecha ou quando o modo de edição muda
     useEffect(() => {
         if (isOpen) {
             if (accountToEdit) {

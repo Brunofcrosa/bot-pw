@@ -8,25 +8,22 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts }) =>
 
     if (!isOpen) return null;
 
-    // Cruza os dados: Pega o PID (do processo) e junta com o Nome (da conta salva)
     const activeInstances = runningAccounts.map(run => {
         const accDetails = accounts.find(a => a.id === run.accountId);
         return {
-            ...run, // pid, status
-            ...accDetails, // login, charName, server
+            ...run,
+            ...accDetails,
         };
     });
 
     const handleOpenConfig = (instance) => {
         setSelectedInstance(instance);
-        // Reset ou carregar config padrão
         setMacroConfig({ trigger: 'F12', sequence: '', interval: 200 });
     };
 
     const handleSaveMacro = async () => {
         if (!selectedInstance || !selectedInstance.pid) return;
 
-        // Transforma "1, 2, F1" em array ["1", "2", "F1"]
         const sequenceArray = macroConfig.sequence.split(',').map(s => s.trim());
 
         const result = await window.electronAPI.invoke('register-macro', {
@@ -47,12 +44,11 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts }) =>
         <div className="modal-overlay">
             <div className="modal-container instance-modal">
                 <div className="modal-header">
-                    <h2><FaRobot className="me-2"/> Instâncias Ativas</h2>
+                    <h2><FaRobot className="me-2" /> Instâncias Ativas</h2>
                     <button className="close-btn" onClick={onClose}>&times;</button>
                 </div>
 
                 <div className="modal-body-split">
-                    {/* ESQUERDA: Lista de Contas Rodando */}
                     <div className="instance-list">
                         {activeInstances.length > 0 ? (
                             <table className="dark-table">
@@ -76,7 +72,7 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts }) =>
                                             </td>
                                             <td>{inst.server || '-'}</td>
                                             <td>
-                                                <button 
+                                                <button
                                                     className="btn-config-macro"
                                                     onClick={() => handleOpenConfig(inst)}
                                                 >
@@ -95,27 +91,26 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts }) =>
                         )}
                     </div>
 
-                    {/* DIREITA: Painel de Configuração (Só aparece se clicar em Configurar) */}
                     {selectedInstance && (
                         <div className="macro-config-panel">
                             <div className="panel-header">
                                 <h3>Configurar Combo</h3>
-                                <button className="btn-close-panel" onClick={() => setSelectedInstance(null)}><FaTimes/></button>
+                                <button className="btn-close-panel" onClick={() => setSelectedInstance(null)}><FaTimes /></button>
                             </div>
-                            
+
                             <p className="target-info">
                                 Alvo: <strong>{selectedInstance.charName || selectedInstance.login}</strong>
-                                <br/>
+                                <br />
                                 <span className="pid-badge">PID: {selectedInstance.pid}</span>
                             </p>
-                            
+
                             <div className="form-group">
                                 <label>Tecla de Ativação (Gatilho)</label>
-                                <input 
-                                    type="text" 
-                                    className="dark-input" 
+                                <input
+                                    type="text"
+                                    className="dark-input"
                                     value={macroConfig.trigger}
-                                    onChange={(e) => setMacroConfig({...macroConfig, trigger: e.target.value.toUpperCase()})}
+                                    onChange={(e) => setMacroConfig({ ...macroConfig, trigger: e.target.value.toUpperCase() })}
                                     placeholder="Ex: F12"
                                 />
                                 <small>Tecla global que inicia o combo.</small>
@@ -123,11 +118,11 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts }) =>
 
                             <div className="form-group">
                                 <label>Sequência (Skills/Teclas)</label>
-                                <input 
-                                    type="text" 
-                                    className="dark-input" 
+                                <input
+                                    type="text"
+                                    className="dark-input"
                                     value={macroConfig.sequence}
-                                    onChange={(e) => setMacroConfig({...macroConfig, sequence: e.target.value})}
+                                    onChange={(e) => setMacroConfig({ ...macroConfig, sequence: e.target.value })}
                                     placeholder="Ex: 1, 2, F1, 3"
                                 />
                                 <small>Separe as teclas por vírgula.</small>
@@ -135,11 +130,11 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts }) =>
 
                             <div className="form-group">
                                 <label>Intervalo entre teclas (ms)</label>
-                                <input 
-                                    type="number" 
-                                    className="dark-input" 
+                                <input
+                                    type="number"
+                                    className="dark-input"
                                     value={macroConfig.interval}
-                                    onChange={(e) => setMacroConfig({...macroConfig, interval: parseInt(e.target.value)})}
+                                    onChange={(e) => setMacroConfig({ ...macroConfig, interval: parseInt(e.target.value) })}
                                 />
                             </div>
 

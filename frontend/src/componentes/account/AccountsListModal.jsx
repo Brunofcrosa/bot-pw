@@ -12,7 +12,6 @@ const AccountsListModal = ({ isOpen, onClose, accounts, onEdit, onDelete }) => {
 
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text);
-        // Opcional: Adicionar um toast de sucesso aqui
     };
 
     return (
@@ -45,8 +44,8 @@ const AccountsListModal = ({ isOpen, onClose, accounts, onEdit, onDelete }) => {
                                         <td>
                                             <div className="text-with-copy">
                                                 {account.login}
-                                                <button 
-                                                    className="icon-btn small" 
+                                                <button
+                                                    className="icon-btn small"
                                                     onClick={() => copyToClipboard(account.login)}
                                                     title="Copiar Login"
                                                 >
@@ -59,7 +58,7 @@ const AccountsListModal = ({ isOpen, onClose, accounts, onEdit, onDelete }) => {
                                                 <span>
                                                     {showPassword[account.id] ? account.password : '••••••••'}
                                                 </span>
-                                                <button 
+                                                <button
                                                     className="icon-btn small"
                                                     onClick={() => togglePassword(account.id)}
                                                 >
@@ -69,14 +68,14 @@ const AccountsListModal = ({ isOpen, onClose, accounts, onEdit, onDelete }) => {
                                         </td>
                                         <td>
                                             <div className="action-buttons">
-                                                <button 
-                                                    className="btn-edit" 
+                                                <button
+                                                    className="btn-edit"
                                                     onClick={() => onEdit(account)}
                                                 >
                                                     Editar
                                                 </button>
-                                                <button 
-                                                    className="btn-delete" 
+                                                <button
+                                                    className="btn-delete"
                                                     onClick={() => onDelete(account.id)}
                                                 >
                                                     Remover

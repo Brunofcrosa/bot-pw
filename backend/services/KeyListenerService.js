@@ -1,4 +1,3 @@
-// backend/services/KeyListenerService.js
 const { spawn } = require('child_process');
 const path = require('path');
 const EventEmitter = require('events');
@@ -8,22 +7,19 @@ class KeyListenerService extends EventEmitter {
         super();
         this.executablesPath = executablesPath;
         this.process = null;
-        this.buffer = ''; // Para lidar com fragmentação de dados do stdout
+        this.buffer = '';
     }
 
     start() {
         if (this.process) return;
 
-        // Check if platform is Windows
         if (process.platform !== 'win32') {
             console.warn('[KeyListener] Skipping key listener service: Not running on Windows.');
             return;
         }
 
-        // Caminho para o executável fornecido pelo usuário
         const exePath = path.join(this.executablesPath, 'key-listener.exe');
-        
-        // Check if file exists
+
         const fs = require('fs');
         if (!fs.existsSync(exePath)) {
             console.warn(`[KeyListener] Skipping key listener service: Executable not found at ${exePath}`);
@@ -46,8 +42,6 @@ class KeyListenerService extends EventEmitter {
             this.process.on('close', (code) => {
                 console.log(`[KeyListener] Processo encerrado com código ${code}`);
                 this.process = null;
-                // Opcional: Reiniciar automaticamente se cair inesperadamente
-                // setTimeout(() => this.start(), 1000); 
             });
 
         } catch (error) {
@@ -63,12 +57,10 @@ class KeyListenerService extends EventEmitter {
     }
 
     handleData(chunk) {
-        // Concatena o chunk atual ao buffer
         this.buffer += chunk.toString();
 
-        // Tenta encontrar quebras de linha que indicam fim de um JSON
         let boundary = this.buffer.indexOf('\n');
-        
+
         while (boundary !== -1) {
             const jsonStr = this.buffer.substring(0, boundary).trim();
             this.buffer = this.buffer.substring(boundary + 1);
@@ -76,11 +68,8 @@ class KeyListenerService extends EventEmitter {
             if (jsonStr) {
                 try {
                     const event = JSON.parse(jsonStr);
-                    // Emite o evento para quem estiver ouvindo (MacroService)
-                    // Formato esperado do exe: { state: 'down'|'up', vk: 123, ... }
                     this.emit('key-event', event);
                 } catch (e) {
-                    // Ignora linhas que não são JSON válidos
                 }
             }
             boundary = this.buffer.indexOf('\n');
