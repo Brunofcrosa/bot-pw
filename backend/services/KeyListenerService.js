@@ -14,9 +14,22 @@ class KeyListenerService extends EventEmitter {
     start() {
         if (this.process) return;
 
+        // Check if platform is Windows
+        if (process.platform !== 'win32') {
+            console.warn('[KeyListener] Skipping key listener service: Not running on Windows.');
+            return;
+        }
+
         // Caminho para o executável fornecido pelo usuário
         const exePath = path.join(this.executablesPath, 'key-listener.exe');
         
+        // Check if file exists
+        const fs = require('fs');
+        if (!fs.existsSync(exePath)) {
+            console.warn(`[KeyListener] Skipping key listener service: Executable not found at ${exePath}`);
+            return;
+        }
+
         console.log(`[KeyListener] Iniciando serviço de escuta: ${exePath}`);
 
         try {
