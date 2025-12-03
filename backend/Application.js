@@ -113,6 +113,9 @@ class Application {
 
         ipcMain.handle('set-cycle-hotkey', (e, h) => this.hotkeyService.setCycleHotkey(h));
 
+        ipcMain.handle('load-groups', (e, s) => this.persistenceService.loadGroups(s));
+        ipcMain.handle('save-groups', (e, s, groups) => this.persistenceService.saveGroups(s, groups));
+
         ipcMain.handle('get-app-version', () => app.getVersion());
         ipcMain.handle('select-exe-file', async () => {
             const { canceled, filePaths } = await dialog.showOpenDialog({

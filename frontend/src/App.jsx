@@ -4,22 +4,27 @@ import AccountModal from './componentes/account/AccountModal';
 import ActiveInstancesModal from './componentes/account/ActiveInstancesModal';
 import AddServerModal from './componentes/server/AddServerModal';
 import SettingsModal from './componentes/settings/SettingsModal';
-import ServerCard from './componentes/server/ServerCard';
+import AccountsView from './componentes/accounts/AccountsView';
+import GroupsView from './componentes/groups/GroupsView';
 import BottomBar from './componentes/server/BottomBar';
-import { FaCog, FaPlus, FaFolderOpen } from 'react-icons/fa';
+import { FaCog, FaPlus, FaUsers, FaUser } from 'react-icons/fa';
 import './App.css';
 
 const App = () => {
+    console.log('[App] Componente App iniciando...');
+    const [activeTab, setActiveTab] = useState('accounts');
     const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
     const [isAddServerModalOpen, setIsAddServerModalOpen] = useState(false);
     const [isAccountsListModalOpen, setIsAccountsListModalOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+    const [serverToEdit, setServerToEdit] = useState(null);
 
     const [servers, setServers] = useState([]);
     const [currentServerId, setCurrentServerId] = useState(null);
 
     const [runningAccounts, setRunningAccounts] = useState([]);
     const [accounts, setAccounts] = useState([]);
+    const [groups, setGroups] = useState([]);
     const [accountToEdit, setAccountToEdit] = useState(null);
 
     const currentServer = useMemo(() => {
@@ -53,21 +58,36 @@ const App = () => {
     }, []);
 
     useEffect(() => {
-        const loadAccounts = async () => {
+        const loadData = async () => {
             if (currentServerId) {
                 const accs = await window.electronAPI.invoke('load-accounts', currentServerId);
                 setAccounts(Array.isArray(accs) ? accs : []);
+
+                const grps = await window.electronAPI.invoke('load-groups', currentServerId);
+                setGroups(Array.isArray(grps) ? grps : []);
             }
         };
-        loadAccounts();
+        loadData();
     }, [currentServerId]);
 
-    const handleSaveNewServer = (srv) => {
-        const newServers = [...servers, srv];
-        setServers(newServers);
-        window.electronAPI.invoke('save-servers', newServers);
-        setCurrentServerId(srv.id);
+    const handleSaveServer = (srv) => {
+        if (serverToEdit) {
+            const updatedServers = servers.map(s => s.id === srv.id ? srv : s);
+            setServers(updatedServers);
+            window.electronAPI.invoke('save-servers', updatedServers);
+        } else {
+            const newServers = [...servers, srv];
+            setServers(newServers);
+            window.electronAPI.invoke('save-servers', newServers);
+            setCurrentServerId(srv.id);
+        }
+        setServerToEdit(null);
         setIsAddServerModalOpen(false);
+    };
+
+    const handleSaveGroups = (updatedGroups) => {
+        setGroups(updatedGroups);
+        window.electronAPI.invoke('save-groups', currentServerId, updatedGroups);
     };
 
     const handleSaveAccount = (accData) => {
@@ -88,9 +108,10 @@ const App = () => {
 
     const handleOpenGame = async (acc) => {
         setRunningAccounts(prev => [...prev, { accountId: acc.id, status: 'starting' }]);
+        const exePath = acc.exePath || currentServer.exePath || '';
         await window.electronAPI.invoke('open-element', {
             id: acc.id,
-            exePath: acc.exePath,
+            exePath: exePath,
             login: acc.login,
             password: acc.password,
             characterName: acc.charName
@@ -101,57 +122,84 @@ const App = () => {
         await window.electronAPI.invoke('close-element', pid);
     };
 
+    const handleOpenGroup = async (groupAccounts) => {
+        for (const acc of groupAccounts) {
+            await handleOpenGame(acc);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+    };
+
     return (
         <div className="main-layout">
             <ServerList
                 servers={servers}
                 currentServerId={currentServerId}
                 onSelectServer={setCurrentServerId}
-                onOpenAddModal={() => setIsAddServerModalOpen(true)}
+                onOpenAddModal={() => { setServerToEdit(null); setIsAddServerModalOpen(true); }}
+                onEditServer={(server) => { setServerToEdit(server); setIsAddServerModalOpen(true); }}
             />
 
             <div className="content-area">
-                <div className="content-header">
-                    <div className="d-flex align-items-center gap-3">
-                        <span className="server-indicator badge bg-primary">
+                <div className="content-header-new">
+                    <div className="header-top">
+                        <span className="server-indicator">
                             {currentServer.name}
                         </span>
 
-                        <button className="btn btn-primary" onClick={() => { setAccountToEdit(null); setIsAccountModalOpen(true); }} disabled={!currentServerId}>
-                            <FaPlus className="me-1" /> Conta
-                        </button>
+                        <div className="header-actions">
+                            {activeTab === 'accounts' && (
+                                <button
+                                    className="btn-add-account"
+                                    onClick={() => { setAccountToEdit(null); setIsAccountModalOpen(true); }}
+                                    disabled={!currentServerId}
+                                >
+                                    <FaPlus /> Nova Conta
+                                </button>
+                            )}
 
-                        <button className="btn btn-outline-secondary" onClick={() => setIsSettingsModalOpen(true)} title="Configurações Globais">
-                            <FaCog />
+                            <button
+                                className="btn-settings"
+                                onClick={() => setIsSettingsModalOpen(true)}
+                                title="Configurações"
+                            >
+                                <FaCog />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="tabs-navigation">
+                        <button
+                            className={`tab-button ${activeTab === 'accounts' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('accounts')}
+                        >
+                            <FaUser /> Contas
+                        </button>
+                        <button
+                            className={`tab-button ${activeTab === 'groups' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('groups')}
+                        >
+                            <FaUsers /> Grupos
                         </button>
                     </div>
                 </div>
 
-                <div className="card-grid-container">
-                    {accounts.length === 0 ? (
-                        <div className="placeholder-message">
-                            <FaFolderOpen size={40} />
-                            <p>Sem contas neste servidor.</p>
-                        </div>
+                <div className="tab-content">
+                    {activeTab === 'accounts' ? (
+                        <AccountsView
+                            accounts={accounts}
+                            runningAccounts={runningAccounts}
+                            onOpenGame={handleOpenGame}
+                            onCloseGame={handleCloseGame}
+                            onEdit={(a) => { setAccountToEdit(a); setIsAccountModalOpen(true); }}
+                            onDelete={handleDeleteAccount}
+                        />
                     ) : (
-                        accounts.map(acc => {
-                            const run = runningAccounts.find(r => r.accountId === acc.id);
-                            return (
-                                <ServerCard
-                                    key={acc.id}
-                                    charName={acc.charName}
-                                    charClass={acc.charClass}
-                                    isRunning={!!run}
-                                    pid={run?.pid}
-                                    status={run?.status}
-                                    accountData={acc}
-                                    onOpen={handleOpenGame}
-                                    onClose={handleCloseGame}
-                                    onEdit={(a) => { setAccountToEdit(a); setIsAccountModalOpen(true); }}
-                                    onDelete={handleDeleteAccount}
-                                />
-                            );
-                        })
+                        <GroupsView
+                            accounts={accounts}
+                            groups={groups}
+                            onSaveGroups={handleSaveGroups}
+                            onOpenGroup={handleOpenGroup}
+                        />
                     )}
                 </div>
             </div>
@@ -170,8 +218,9 @@ const App = () => {
 
             <AddServerModal
                 show={isAddServerModalOpen}
-                onClose={() => setIsAddServerModalOpen(false)}
-                onSaveServer={handleSaveNewServer}
+                onClose={() => { setServerToEdit(null); setIsAddServerModalOpen(false); }}
+                onSaveServer={handleSaveServer}
+                serverToEdit={serverToEdit}
             />
 
             <ActiveInstancesModal

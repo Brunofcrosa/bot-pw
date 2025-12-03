@@ -16,5 +16,12 @@
     "password": "10maissa10",
     "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe",
     "charAvatarBg": "#afacf2"
+  },
+  {
+    "login": "teste",
+    "password": "teste",
+    "charName": "teste",
+    "charClass": "teste",
+    "exePath": ""
   }
 ]

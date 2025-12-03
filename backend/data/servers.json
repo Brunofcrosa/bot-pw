@@ -1,6 +1,11 @@
 [
   {
     "id": "default",
-    "name": "Servidor Padrão"
+    "name": "Servidor Padrão",
+    "exePath": ""
+  },
+  {
+    "id": "teste",
+    "name": "teste"
   }
 ]

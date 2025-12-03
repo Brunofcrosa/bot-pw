@@ -3,9 +3,11 @@ import './css/AccountModal.css';
 
 const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
     const [formData, setFormData] = useState({
-        server: '',
         login: '',
-        password: ''
+        password: '',
+        charName: '',
+        charClass: '',
+        exePath: ''
     });
     const [showPassword, setShowPassword] = useState(false);
 
@@ -13,12 +15,14 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
         if (isOpen) {
             if (accountToEdit) {
                 setFormData({
-                    server: accountToEdit.server || '',
                     login: accountToEdit.login || '',
-                    password: accountToEdit.password || ''
+                    password: accountToEdit.password || '',
+                    charName: accountToEdit.charName || '',
+                    charClass: accountToEdit.charClass || '',
+                    exePath: accountToEdit.exePath || ''
                 });
             } else {
-                setFormData({ server: '', login: '', password: '' });
+                setFormData({ login: '', password: '', charName: '', charClass: '', exePath: '' });
             }
             setShowPassword(false);
         }
@@ -29,6 +33,13 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSelectExe = async () => {
+        const selectedPath = await window.electronAPI.invoke('select-exe-file');
+        if (selectedPath) {
+            setFormData(prev => ({ ...prev, exePath: selectedPath }));
+        }
     };
 
     const handleSubmit = (e) => {
@@ -48,21 +59,7 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
                 <form onSubmit={handleSubmit}>
                     <div className="modal-body">
                         <div className="form-group">
-                            <label htmlFor="server">Servidor</label>
-                            <input
-                                type="text"
-                                id="server"
-                                name="server"
-                                value={formData.server}
-                                onChange={handleChange}
-                                placeholder="Ex: Servidor Global"
-                                required
-                                className="form-input"
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="login">Login</label>
+                            <label htmlFor="login">Login*</label>
                             <input
                                 type="text"
                                 id="login"
@@ -76,7 +73,7 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="password">Senha</label>
+                            <label htmlFor="password">Senha*</label>
                             <div className="password-input-wrapper">
                                 <input
                                     type={showPassword ? "text" : "password"}
@@ -97,6 +94,60 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
                                     {showPassword ? '🙈' : '👁️'}
                                 </button>
                             </div>
+                        </div>
+
+                        <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                            <div className="form-group" style={{ flex: 1 }}>
+                                <label htmlFor="charName">Nome do Personagem</label>
+                                <input
+                                    type="text"
+                                    id="charName"
+                                    name="charName"
+                                    value={formData.charName}
+                                    onChange={handleChange}
+                                    placeholder="Opcional"
+                                    className="form-input"
+                                />
+                            </div>
+                            <div className="form-group" style={{ flex: 1 }}>
+                                <label htmlFor="charClass">Classe</label>
+                                <input
+                                    type="text"
+                                    id="charClass"
+                                    name="charClass"
+                                    value={formData.charClass}
+                                    onChange={handleChange}
+                                    placeholder="Ex: Arqueiro"
+                                    className="form-input"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="exePath">Executável Específico (Opcional)</label>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <input
+                                    type="text"
+                                    id="exePath"
+                                    name="exePath"
+                                    value={formData.exePath}
+                                    onChange={handleChange}
+                                    placeholder="Use o padrão do servidor se vazio"
+                                    className="form-input"
+                                    style={{ flex: 1 }}
+                                />
+                                <button
+                                    type="button"
+                                    className="btn-secondary"
+                                    onClick={handleSelectExe}
+                                    style={{ padding: '0 1rem' }}
+                                >
+                                    📂
+                                </button>
+                            </div>
+                            <small style={{ color: '#888', fontSize: '0.8rem' }}>
+                                Deixe vazio para usar o executável configurado no servidor.
+                            </small>
                         </div>
                     </div>
 

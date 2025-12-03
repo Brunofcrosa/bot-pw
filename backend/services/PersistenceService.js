@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ACCOUNTS_FILE_SUFFIX = '_accounts.json';
+const GROUPS_FILE_SUFFIX = '_groups.json';
 const SERVERS_FILE_NAME = 'servers.json';
 
 class PersistenceService {
@@ -23,6 +24,11 @@ class PersistenceService {
     getAccountsFilePath(serverName) {
         const safeServerName = serverName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
         return path.join(this.dataFolderPath, `${safeServerName}${ACCOUNTS_FILE_SUFFIX}`);
+    }
+
+    getGroupsFilePath(serverName) {
+        const safeServerName = serverName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        return path.join(this.dataFolderPath, `${safeServerName}${GROUPS_FILE_SUFFIX}`);
     }
 
     loadServers() {
@@ -90,6 +96,34 @@ class PersistenceService {
             return { success: true };
         } catch (error) {
             console.error(`[Persistence] Falha ao excluir arquivo de contas para ${serverId}:`, error.message);
+            return { success: false, error: error.message };
+        }
+    }
+
+    loadGroups(serverName) {
+        if (!serverName) return [];
+        const filePath = this.getGroupsFilePath(serverName);
+        try {
+            if (fs.existsSync(filePath)) {
+                const data = fs.readFileSync(filePath, 'utf8');
+                return JSON.parse(data);
+            }
+            return [];
+        } catch (error) {
+            console.error(`[Persistence] Falha ao carregar grupos para ${serverName}:`, error.message);
+            return [];
+        }
+    }
+
+    saveGroups(serverName, groups) {
+        if (!serverName) return { success: false, error: 'Server name missing' };
+        const filePath = this.getGroupsFilePath(serverName);
+        try {
+            const data = JSON.stringify(groups, null, 2);
+            fs.writeFileSync(filePath, data, 'utf8');
+            return { success: true };
+        } catch (error) {
+            console.error(`[Persistence] Falha ao salvar grupos para ${serverName}:`, error.message);
             return { success: false, error: error.message };
         }
     }
