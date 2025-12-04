@@ -139,12 +139,12 @@ class Application {
         }
 
         this.overlayWindow = new BrowserWindow({
-            width: 600,
-            height: 200,
+            width: 300,
+            height: 150,
             frame: false,
             transparent: true,
             alwaysOnTop: true,
-            resizable: false,
+            resizable: true,
             webPreferences: {
                 preload: PRELOAD_SCRIPT,
                 contextIsolation: true,

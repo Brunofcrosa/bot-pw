@@ -7,16 +7,25 @@ const GroupControlModal = ({ isOpen, onClose, group, accounts, runningAccounts, 
 
     const groupAccounts = accounts.filter(acc => group.accountIds.includes(acc.id));
 
-    // Se estiver em modo overlay, mostra apenas as contas que estão rodando
-    const displayedAccounts = isOverlayMode
-        ? groupAccounts.filter(acc => runningAccounts.some(r => r.accountId === acc.id && r.pid))
-        : groupAccounts;
+    // No modo overlay, mostra todas as contas do grupo
+    // (as que não estão rodando ficam desabilitadas)
+    const displayedAccounts = groupAccounts;
 
     const handleFocus = async (accountId) => {
         const running = runningAccounts.find(r => r.accountId === accountId);
+        console.log('[GroupControlModal] handleFocus called', { accountId, running, isOverlayMode });
+
         if (running && running.pid) {
-            await window.electronAPI.invoke('focus-window', running.pid);
+            try {
+                console.log('[GroupControlModal] Attempting to focus window with PID:', running.pid);
+                await window.electronAPI.invoke('focus-window', running.pid);
+                console.log('[GroupControlModal] Focus command sent successfully');
+            } catch (error) {
+                console.error('[GroupControlModal] Error focusing window:', error);
+                if (!isOverlayMode) alert('Erro ao focar janela: ' + error.message);
+            }
         } else {
+            console.warn('[GroupControlModal] Account not running or no PID');
             // Em modo overlay, talvez não queiramos alertas intrusivos
             if (!isOverlayMode) alert('Esta conta não parece estar rodando.');
         }

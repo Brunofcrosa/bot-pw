@@ -170,20 +170,28 @@
     flex: 1;
     overflow-y: auto;
     /* Ajuste para ícones menores no overlay se necessário */
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 0.5rem;
     -webkit-app-region: no-drag;
     /* Grid não deve bloquear drag */
 }
 
 .group-control-modal.overlay-mode .control-btn {
-    height: 80px;
-    padding: 0.5rem;
+    height: 50px;
+    width: 50px;
+    padding: 0.25rem;
     -webkit-app-region: no-drag;
     /* Botões devem ser clicáveis */
 }
 
 .group-control-modal.overlay-mode .class-icon {
-    width: 32px;
-    height: 32px;
-    font-size: 1.2rem;
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    margin-bottom: 0;
+}
+
+.group-control-modal.overlay-mode .char-name {
+    display: none;
+    /* Esconde o nome no modo overlay */
 }
