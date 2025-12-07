@@ -16,7 +16,7 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    color: #fff;
+    color: var(--text-primary);
     font-size: 1.5rem;
     margin: 0;
 }
@@ -85,7 +85,7 @@
 }
 
 .creator-header h3 {
-    color: #fff;
+    color: var(--text-primary);
     margin: 0;
 }
 
@@ -99,16 +99,16 @@
 }
 
 .creator-header button:hover {
-    color: #fff;
+    color: var(--text-primary);
 }
 
 .group-name-input {
     width: 100%;
     padding: 0.75rem;
     background: var(--bg-input);
-    border: 1px solid var(--border-color);
+    border: 1px solid #ced4da;
     border-radius: 8px;
-    color: #fff;
+    color: var(--text-primary);
     font-size: 1rem;
     margin-bottom: 1rem;
 }

@@ -49,66 +49,63 @@ const AddServerModal = ({ show, onClose, onSaveServer, serverToEdit }) => {
     };
 
     return (
-        <div className="account-modal-backdrop" style={{ zIndex: 1060 }}>
-            <div className="account-modal-dialog modal-dialog-centered" style={{ margin: '10rem auto', maxWidth: '500px' }}>
-                <div className="account-modal-content">
+        <div className="modal-overlay">
+            <div className="modal-container form-modal">
+                <div className="modal-header">
+                    <h2>
+                        <FaServer className="me-2" style={{ marginRight: '8px' }} />
+                        {serverToEdit ? 'Editar Servidor' : 'Adicionar Novo Servidor'}
+                    </h2>
+                    <button className="close-btn" onClick={onClose}>&times;</button>
+                </div>
 
-                    <div className="modal-header border-bottom p-3">
-                        <h5 className="modal-title fs-5 text-info">
-                            <FaServer className="me-2" /> {serverToEdit ? 'Editar Servidor' : 'Adicionar Novo Servidor'}
-                        </h5>
-                        <button type="button" className="btn-close btn-close-white" onClick={onClose} aria-label="Close"></button>
-                    </div>
+                <form onSubmit={handleSubmit}>
+                    <div className="modal-body">
+                        <div className="form-group">
+                            <label>Nome do Servidor*</label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                value={serverName}
+                                onChange={(e) => setServerName(e.target.value)}
+                                placeholder="Ex: Novo PW"
+                                required
+                            />
+                        </div>
 
-                    <form onSubmit={handleSubmit}>
-                        <div className="modal-body p-4">
-
-                            <div className="mb-3">
-                                <label className="form-label small">Nome do Servidor*</label>
+                        <div className="form-group">
+                            <label>Caminho do Executável (Combine com ElementClient.exe)</label>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
                                 <input
                                     type="text"
-                                    className="form-control form-control-custom-dark"
-                                    value={serverName}
-                                    onChange={(e) => setServerName(e.target.value)}
-                                    placeholder="Ex: Novo PW"
-                                    required
+                                    className="form-input"
+                                    value={exePath}
+                                    onChange={(e) => setExePath(e.target.value)}
+                                    placeholder="Selecione o executável do jogo"
+                                    style={{ flex: 1 }}
                                 />
+                                <button
+                                    type="button"
+                                    className="btn-secondary"
+                                    onClick={handleSelectExe}
+                                    style={{ padding: '0 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                >
+                                    <FaFolder /> Procurar
+                                </button>
                             </div>
-
-                            <div className="mb-3">
-                                <label className="form-label small">Caminho do Executável (ElementClient.exe)</label>
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <input
-                                        type="text"
-                                        className="form-control form-control-custom-dark"
-                                        value={exePath}
-                                        onChange={(e) => setExePath(e.target.value)}
-                                        placeholder="Selecione o executável do jogo"
-                                        style={{ flex: 1 }}
-                                    />
-                                    <button
-                                        type="button"
-                                        className="btn btn-outline-secondary"
-                                        onClick={handleSelectExe}
-                                        style={{ whiteSpace: 'nowrap' }}
-                                    >
-                                        <FaFolder /> Procurar
-                                    </button>
-                                </div>
-                                <small style={{ color: '#888', fontSize: '0.85rem' }}>
-                                    Opcional: Selecione o ElementClient.exe para este servidor
-                                </small>
-                            </div>
+                            <small style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>
+                                Opcional: Selecione o ElementClient.exe para este servidor
+                            </small>
                         </div>
+                    </div>
 
-                        <div className="modal-footer border-top p-3">
-                            <button type="button" className="btn btn-outline-secondary" onClick={onClose}>Cancelar</button>
-                            <button type="submit" className="btn btn-primary">
-                                {serverToEdit ? 'Salvar Alterações' : 'Adicionar Servidor'}
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    <div className="modal-footer">
+                        <button type="button" className="btn-secondary" onClick={onClose}>Cancelar</button>
+                        <button type="submit" className="btn-primary">
+                            {serverToEdit ? 'Salvar Alterações' : 'Adicionar Servidor'}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );

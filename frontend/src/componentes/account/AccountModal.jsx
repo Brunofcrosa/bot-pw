@@ -59,7 +59,7 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
                 <form onSubmit={handleSubmit}>
                     <div className="modal-body">
                         <div className="form-group">
-                            <label htmlFor="login">Login*</label>
+                            <label htmlFor="login">Login <span style={{ color: 'var(--accent-danger)' }}>*</span></label>
                             <input
                                 type="text"
                                 id="login"
@@ -69,11 +69,12 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
                                 placeholder="Digite o login"
                                 required
                                 className="form-input"
+                                autoComplete="off"
                             />
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="password">Senha*</label>
+                            <label htmlFor="password">Senha <span style={{ color: 'var(--accent-danger)' }}>*</span></label>
                             <div className="password-input-wrapper">
                                 <input
                                     type={showPassword ? "text" : "password"}
@@ -84,6 +85,7 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
                                     placeholder="Digite a senha"
                                     required
                                     className="form-input"
+                                    autoComplete="off"
                                 />
                                 <button
                                     type="button"
@@ -98,14 +100,14 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
 
                         <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
                             <div className="form-group" style={{ flex: 1 }}>
-                                <label htmlFor="charName">Nome do Personagem</label>
+                                <label htmlFor="charName">Personagem</label>
                                 <input
                                     type="text"
                                     id="charName"
                                     name="charName"
                                     value={formData.charName}
                                     onChange={handleChange}
-                                    placeholder="Opcional"
+                                    placeholder="Nome (Opcional)"
                                     className="form-input"
                                 />
                             </div>
@@ -117,14 +119,14 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
                                     name="charClass"
                                     value={formData.charClass}
                                     onChange={handleChange}
-                                    placeholder="Ex: Arqueiro"
+                                    placeholder="Ex: Merc"
                                     className="form-input"
                                 />
                             </div>
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="exePath">Executável Específico (Opcional)</label>
+                            <label htmlFor="exePath">Executável Específico</label>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                 <input
                                     type="text"
@@ -132,30 +134,31 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
                                     name="exePath"
                                     value={formData.exePath}
                                     onChange={handleChange}
-                                    placeholder="Use o padrão do servidor se vazio"
+                                    placeholder="Padrão do servidor (vazio)"
                                     className="form-input"
                                     style={{ flex: 1 }}
                                 />
                                 <button
                                     type="button"
-                                    className="btn-secondary"
+                                    className="btn-cancel"
                                     onClick={handleSelectExe}
-                                    style={{ padding: '0 1rem' }}
+                                    style={{ padding: '0 12px' }}
+                                    title="Selecionar arquivo"
                                 >
                                     📂
                                 </button>
                             </div>
-                            <small style={{ color: '#888', fontSize: '0.8rem' }}>
-                                Deixe vazio para usar o executável configurado no servidor.
+                            <small style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '5px', display: 'block' }}>
+                                Apenas se diferente do servidor.
                             </small>
                         </div>
                     </div>
 
                     <div className="modal-footer">
-                        <button type="button" className="btn-secondary" onClick={onClose}>
+                        <button type="button" className="btn-cancel" onClick={onClose}>
                             Cancelar
                         </button>
-                        <button type="submit" className="btn-primary">
+                        <button type="submit" className="btn-confirm">
                             {accountToEdit ? 'Salvar Alterações' : 'Adicionar Conta'}
                         </button>
                     </div>

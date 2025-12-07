@@ -1,41 +1,53 @@
 :root {
-    /* Main Backgrounds - Balanced Dark Blue Theme */
-    --bg-body: #263238;
-    --bg-sidebar: #2f3d4a;
-    --bg-card: #3a4f5f;
-    --bg-hover: #455a6d;
-    --bg-input: #2f3d4a;
-    --bg-modal: #2f3d4a;
-    --bg-modal-header: #3a4f5f;
+    /* Main Backgrounds - Light/Clean Theme */
+    --bg-body: #f4f6f9;
+    /* Light gray background */
+    --bg-sidebar: #ffffff;
+    /* White sidebar */
+    --bg-card: #ffffff;
+    /* White cards */
+    --bg-hover: #e9ecef;
+    /* Light gray hover */
+    --bg-input: #ffffff;
+    /* White input for standard form look */
+    --bg-modal: #ffffff;
+    /* White modal */
+    --bg-modal-header: #f8f9fa;
+    /* Very light gray header */
 
     /* Text Colors */
-    --text-primary: #ecf0f1;
-    --text-secondary: #bdc3c7;
-    --text-muted: #95a5a6;
+    --text-primary: #212529;
+    /* Dark gray/black text */
+    --text-secondary: #495057;
+    /* Medium dark text */
+    --text-muted: #6c757d;
+    /* Muted text */
 
     /* Brand & Accents */
     --accent-primary: #5e72e4;
-    /* Purple/Blue */
-    --accent-secondary: #38f9d7;
-    /* Teal */
+    /* Keep primary blue/purple */
+    --accent-secondary: #11cdef;
+    /* Cyan */
     --accent-hover: #4854e0;
-    /* Darker Purple/Blue */
+    /* Darker primary on hover */
 
     /* Status Colors */
-    --accent-success: #2ecc71;
+    --accent-success: #2dce89;
     /* Green */
-    --accent-warning: #f39c12;
+    --accent-warning: #fb6340;
     /* Orange */
-    --accent-danger: #e74c3c;
+    --accent-danger: #f5365c;
     /* Red */
-    --accent-info: #3498db;
-    /* Light Blue */
+    --accent-info: #11cdef;
+    /* Info Cyan */
 
     /* Borders & UI */
-    --border-color: #4a6fa5;
-    --table-stripe: #25252c;
+    --border-color: #dee2e6;
+    /* Light border */
+    --table-stripe: #f8f9fa;
+    /* Zebra striping */
 
-    /* Legacy/Bootstrap Mappings (to ensure compatibility) */
+    /* Legacy/Bootstrap Mappings */
     --color-bg-body: var(--bg-body);
     --color-bg-sidebar: var(--bg-sidebar);
     --color-bg-card: var(--bg-card);
@@ -53,6 +65,20 @@
     --card-bg: var(--bg-card);
     --active-bg: var(--accent-primary);
     --active-color: white;
+}
+
+/* Global Placeholder styling to ensure visibility */
+::placeholder {
+    color: #adb5bd !important;
+    opacity: 1;
+}
+
+:-ms-input-placeholder {
+    color: #adb5bd !important;
+}
+
+::-ms-input-placeholder {
+    color: #adb5bd !important;
 }
 
 html,
