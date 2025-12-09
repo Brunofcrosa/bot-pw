@@ -1,9 +1,18 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { FaPlus, FaUsers, FaPlay, FaTrash, FaGamepad, FaExternalLinkAlt } from 'react-icons/fa';
 import GroupControlModal from '../modals/GroupControlModal';
 import './GroupsView.css';
 
-const GroupsView = ({ accounts = [], groups = [], runningAccounts = [], onSaveGroups, onOpenGroup }) => {
+const GroupsView = ({
+    accounts = [],
+    groups = [],
+    runningAccounts = [],
+    onSaveGroups,
+    onOpenGroup,
+    showConfirm,
+    hideConfirm
+}) => {
     const [isCreatingGroup, setIsCreatingGroup] = useState(false);
     const [newGroupName, setNewGroupName] = useState('');
     const [selectedAccounts, setSelectedAccounts] = useState([]);
@@ -11,14 +20,18 @@ const GroupsView = ({ accounts = [], groups = [], runningAccounts = [], onSaveGr
 
     const handleCreateGroup = () => {
         if (!newGroupName.trim() || selectedAccounts.length === 0) {
-            alert('Preencha o nome e selecione pelo menos uma conta');
+            showConfirm(
+                'Campos Inválidos',
+                'Preencha o nome do grupo e selecione pelo menos uma conta.',
+                hideConfirm,
+                'warning'
+            );
             return;
         }
 
         const newGroup = {
             id: Date.now().toString(),
             name: newGroupName,
-            accountIds: selectedAccounts,
             accountIds: selectedAccounts,
             color: 'var(--accent-secondary)'
         };
@@ -31,10 +44,16 @@ const GroupsView = ({ accounts = [], groups = [], runningAccounts = [], onSaveGr
     };
 
     const handleDeleteGroup = (groupId) => {
-        if (confirm('Deseja deletar este grupo?')) {
-            const updatedGroups = groups.filter(g => g.id !== groupId);
-            onSaveGroups(updatedGroups);
-        }
+        showConfirm(
+            'Deletar Grupo',
+            'Tem certeza que deseja deletar este grupo?',
+            () => {
+                const updatedGroups = groups.filter(g => g.id !== groupId);
+                onSaveGroups(updatedGroups);
+                hideConfirm();
+            },
+            'danger'
+        );
     };
 
     const toggleAccountSelection = (accountId) => {
@@ -183,6 +202,16 @@ const GroupsView = ({ accounts = [], groups = [], runningAccounts = [], onSaveGr
             />
         </div>
     );
+};
+
+GroupsView.propTypes = {
+    accounts: PropTypes.array,
+    groups: PropTypes.array,
+    runningAccounts: PropTypes.array,
+    onSaveGroups: PropTypes.func.isRequired,
+    onOpenGroup: PropTypes.func.isRequired,
+    showConfirm: PropTypes.func.isRequired,
+    hideConfirm: PropTypes.func.isRequired
 };
 
 export default GroupsView;

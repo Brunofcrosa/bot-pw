@@ -14,7 +14,7 @@ class KeyListenerService extends EventEmitter {
         if (this.process) return;
 
         if (process.platform !== 'win32') {
-            console.warn('[KeyListener] Skipping key listener service: Not running on Windows.');
+            console.warn('Skipping key listener service: Not running on Windows.');
             return;
         }
 
@@ -22,11 +22,11 @@ class KeyListenerService extends EventEmitter {
 
         const fs = require('fs');
         if (!fs.existsSync(exePath)) {
-            console.warn(`[KeyListener] Skipping key listener service: Executable not found at ${exePath}`);
+            console.warn(`Skipping key listener service: Executable not found at ${exePath}`);
             return;
         }
 
-        console.log(`[KeyListener] Iniciando serviço de escuta: ${exePath}`);
+        console.log(`Iniciando serviço de escuta: ${exePath}`);
 
         try {
             this.process = spawn(exePath);
@@ -36,16 +36,16 @@ class KeyListenerService extends EventEmitter {
             });
 
             this.process.stderr.on('data', (data) => {
-                console.error(`[KeyListener Error] ${data}`);
+                console.error(`Error: ${data}`);
             });
 
             this.process.on('close', (code) => {
-                console.log(`[KeyListener] Processo encerrado com código ${code}`);
+                console.log(`Processo encerrado com código ${code}`);
                 this.process = null;
             });
 
         } catch (error) {
-            console.error('[KeyListener] Falha ao iniciar executável:', error);
+            console.error('Falha ao iniciar executável:', error);
         }
     }
 

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { FaServer, FaFolder } from 'react-icons/fa';
 import './AccountModal.css';
 
-const AddServerModal = ({ show, onClose, onSaveServer, serverToEdit }) => {
+const AddServerModal = ({ show, onClose, onSaveServer, serverToEdit, showConfirm, hideConfirm }) => {
     const [serverName, setServerName] = useState('');
     const [exePath, setExePath] = useState('');
 
@@ -31,17 +32,31 @@ const AddServerModal = ({ show, onClose, onSaveServer, serverToEdit }) => {
         e.preventDefault();
 
         if (!serverName.trim()) {
-            alert('O nome do servidor não pode ser vazio.');
+            showConfirm(
+                'Campo Obrigatório',
+                'O nome do servidor não pode ser vazio.',
+                hideConfirm,
+                'warning'
+            );
             return;
         }
 
+        // Gera ID único usando crypto.randomUUID ou fallback
+        const generateId = () => {
+            if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+                return crypto.randomUUID();
+            }
+            return 'srv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        };
+
         const serverData = {
-            id: serverToEdit ? serverToEdit.id : serverName.trim().toLowerCase().replace(/[^a-z0-9]/gi, '_'),
+            id: serverToEdit ? serverToEdit.id : generateId(),
             name: serverName.trim(),
             exePath: exePath || ''
         };
 
         onSaveServer(serverData);
+
 
         setServerName('');
         setExePath('');
@@ -109,6 +124,15 @@ const AddServerModal = ({ show, onClose, onSaveServer, serverToEdit }) => {
             </div>
         </div>
     );
+};
+
+AddServerModal.propTypes = {
+    show: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
+    onSaveServer: PropTypes.func.isRequired,
+    serverToEdit: PropTypes.object,
+    showConfirm: PropTypes.func.isRequired,
+    hideConfirm: PropTypes.func.isRequired
 };
 
 export default AddServerModal;

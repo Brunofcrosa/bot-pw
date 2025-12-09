@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { memo } from 'react';
+import PropTypes from 'prop-types';
 import ServerCard from '../server/ServerCard';
 import { FaFolderOpen } from 'react-icons/fa';
 import './AccountsView.css';
@@ -45,4 +46,13 @@ const AccountsView = ({
     );
 };
 
-export default AccountsView;
+AccountsView.propTypes = {
+    accounts: PropTypes.array.isRequired,
+    runningAccounts: PropTypes.array.isRequired,
+    onOpenGame: PropTypes.func.isRequired,
+    onCloseGame: PropTypes.func.isRequired,
+    onEdit: PropTypes.func.isRequired,
+    onDelete: PropTypes.func.isRequired
+};
+
+export default memo(AccountsView);

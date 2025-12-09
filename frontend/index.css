@@ -67,6 +67,24 @@
     --active-color: white;
 }
 
+/* Tema Escuro */
+[data-theme="dark"] {
+    --bg-body: #1a1d24;
+    --bg-sidebar: #1e2028;
+    --bg-card: #2a2d3a;
+    --bg-hover: #3a3f52;
+    --bg-input: #2a2d3a;
+    --bg-modal: #2a2d3a;
+    --bg-modal-header: #1e2028;
+
+    --text-primary: #f8f9fa;
+    --text-secondary: #adb5bd;
+    --text-muted: #6c757d;
+
+    --border-color: #3a3f52;
+    --table-stripe: #2a2d3a;
+}
+
 /* Global Placeholder styling to ensure visibility */
 ::placeholder {
     color: #adb5bd !important;

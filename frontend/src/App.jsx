@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import ServerList from './components/server/ServerList';
 import AccountModal from './components/modals/AccountModal';
 import ActiveInstancesModal from './components/modals/ActiveInstancesModal';
 import AddServerModal from './components/modals/AddServerModal';
 import SettingsModal from './components/modals/SettingsModal';
+import ConfirmModal from './components/modals/ConfirmModal';
 import AccountsView from './components/views/AccountsView';
 import GroupsView from './components/views/GroupsView';
 import GroupControlModal from './components/modals/GroupControlModal';
@@ -12,8 +13,6 @@ import { FaCog, FaPlus, FaUsers, FaUser } from 'react-icons/fa';
 import './App.css';
 
 const App = () => {
-    console.log('[App] Componente App iniciando...');
-
     // Verifica se está em modo overlay
     const searchParams = new URLSearchParams(window.location.search);
     const isOverlay = searchParams.get('overlay') === 'true';
@@ -34,6 +33,23 @@ const App = () => {
     const [groups, setGroups] = useState([]);
     const [accountToEdit, setAccountToEdit] = useState(null);
 
+    // Estado para modal de confirmação
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: null,
+        type: 'warning'
+    });
+
+    const showConfirm = useCallback((title, message, onConfirm, type = 'warning') => {
+        setConfirmModal({ isOpen: true, title, message, onConfirm, type });
+    }, []);
+
+    const hideConfirm = useCallback(() => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+    }, []);
+
     const currentServer = useMemo(() => {
         return servers.find(s => s.id === currentServerId) || { id: '', name: 'Selecionar Servidor' };
     }, [servers, currentServerId]);
@@ -50,7 +66,6 @@ const App = () => {
             }
 
             // Carregar contas rodando
-            // ... (lógica existente)
         };
         init();
 
@@ -83,7 +98,7 @@ const App = () => {
         loadData();
     }, [currentServerId]);
 
-    const handleSaveServer = (srv) => {
+    const handleSaveServer = useCallback((srv) => {
         if (serverToEdit) {
             const updatedServers = servers.map(s => s.id === srv.id ? srv : s);
             setServers(updatedServers);
@@ -96,30 +111,37 @@ const App = () => {
         }
         setServerToEdit(null);
         setIsAddServerModalOpen(false);
-    };
+    }, [servers, serverToEdit]);
 
-    const handleSaveGroups = (updatedGroups) => {
+    const handleSaveGroups = useCallback((updatedGroups) => {
         setGroups(updatedGroups);
         window.electronAPI.invoke('save-groups', currentServerId, updatedGroups);
-    };
+    }, [currentServerId]);
 
-    const handleSaveAccount = (accData) => {
+    const handleSaveAccount = useCallback((accData) => {
         const newAccounts = accountToEdit
             ? accounts.map(a => a.id === accData.id ? accData : a)
             : [...accounts, accData];
 
         setAccounts(newAccounts);
         window.electronAPI.invoke('save-accounts', currentServerId, newAccounts);
-    };
+    }, [accounts, accountToEdit, currentServerId]);
 
     const handleDeleteAccount = (id) => {
-        if (!confirm("Deletar conta?")) return;
-        const newAccounts = accounts.filter(a => a.id !== id);
-        setAccounts(newAccounts);
-        window.electronAPI.invoke('save-accounts', currentServerId, newAccounts);
+        showConfirm(
+            'Deletar Conta',
+            'Tem certeza que deseja deletar esta conta? Esta ação não pode ser desfeita.',
+            () => {
+                const newAccounts = accounts.filter(a => a.id !== id);
+                setAccounts(newAccounts);
+                window.electronAPI.invoke('save-accounts', currentServerId, newAccounts);
+                hideConfirm();
+            },
+            'danger'
+        );
     };
 
-    const handleOpenGame = async (acc) => {
+    const handleOpenGame = useCallback(async (acc) => {
         setRunningAccounts(prev => [...prev, { accountId: acc.id, status: 'starting' }]);
         const exePath = acc.exePath || currentServer.exePath || '';
         await window.electronAPI.invoke('open-element', {
@@ -129,11 +151,11 @@ const App = () => {
             password: acc.password,
             characterName: acc.charName
         });
-    };
+    }, [currentServer.exePath]);
 
-    const handleCloseGame = async (pid) => {
+    const handleCloseGame = useCallback(async (pid) => {
         await window.electronAPI.invoke('close-element', pid);
-    };
+    }, []);
 
     const overlayGroup = useMemo(() => {
         if (!isOverlay || !groups.length) return null;
@@ -154,12 +176,12 @@ const App = () => {
         );
     }
 
-    const handleOpenGroup = async (groupAccounts) => {
+    const handleOpenGroup = useCallback(async (groupAccounts) => {
         for (const acc of groupAccounts) {
             await handleOpenGame(acc);
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
-    };
+    }, [handleOpenGame]);
 
     return (
         <div className="main-layout">
@@ -228,6 +250,8 @@ const App = () => {
                             runningAccounts={runningAccounts}
                             onSaveGroups={handleSaveGroups}
                             onOpenGroup={handleOpenGroup}
+                            showConfirm={showConfirm}
+                            hideConfirm={hideConfirm}
                         />
                     )}
                 </div>
@@ -250,6 +274,8 @@ const App = () => {
                 onClose={() => { setServerToEdit(null); setIsAddServerModalOpen(false); }}
                 onSaveServer={handleSaveServer}
                 serverToEdit={serverToEdit}
+                showConfirm={showConfirm}
+                hideConfirm={hideConfirm}
             />
 
             <ActiveInstancesModal
@@ -257,11 +283,24 @@ const App = () => {
                 onClose={() => setIsAccountsListModalOpen(false)}
                 runningAccounts={runningAccounts}
                 accounts={accounts}
+                showConfirm={showConfirm}
+                hideConfirm={hideConfirm}
             />
 
             <SettingsModal
                 isOpen={isSettingsModalOpen}
                 onClose={() => setIsSettingsModalOpen(false)}
+                showConfirm={showConfirm}
+                hideConfirm={hideConfirm}
+            />
+
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={hideConfirm}
+                type={confirmModal.type}
             />
         </div>
     );

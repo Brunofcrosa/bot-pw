@@ -1,0 +1,92 @@
+{
+  "version": "1.0",
+  "timestamp": "2025-12-09T20:37:19.859Z",
+  "data": {
+    "servers": [
+      {
+        "id": "default",
+        "name": "Servidor Padrão",
+        "exePath": ""
+      },
+      {
+        "id": "teste",
+        "name": "teste"
+      }
+    ],
+    "accounts": {
+      "default": [
+        {
+          "id": "acc-1763424342798",
+          "charName": "brusz",
+          "charClass": "arqueiro",
+          "login": "brusz",
+          "password": "***ENCRYPTED***",
+          "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe",
+          "charAvatarBg": "#cda623"
+        },
+        {
+          "id": "acc-1763424353180",
+          "charName": "brusz2",
+          "charClass": "brusz2",
+          "login": "brusz2",
+          "password": "***ENCRYPTED***",
+          "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe",
+          "charAvatarBg": "#afacf2"
+        },
+        {
+          "login": "teste",
+          "password": "***ENCRYPTED***",
+          "charName": "teste",
+          "charClass": "teste",
+          "exePath": ""
+        }
+      ],
+      "teste": [
+        {
+          "server": "123",
+          "login": "123",
+          "password": "***ENCRYPTED***"
+        },
+        {
+          "server": "123",
+          "login": "1231",
+          "password": "***ENCRYPTED***"
+        }
+      ]
+    },
+    "groups": {
+      "default": [
+        {
+          "id": "1764790577242",
+          "name": "tex",
+          "accountIds": [
+            "acc-1763424342798",
+            null,
+            "acc-1763424353180"
+          ],
+          "color": "hsl(43.53281124656526, 70%, 60%)"
+        },
+        {
+          "id": "1764797901946",
+          "name": "tata",
+          "accountIds": [
+            "acc-1763424342798",
+            null,
+            "acc-1763424353180"
+          ],
+          "color": "hsl(228.43424656543306, 70%, 60%)"
+        },
+        {
+          "id": "1764799947460",
+          "name": "242442",
+          "accountIds": [
+            "acc-1763424342798",
+            null,
+            "acc-1763424353180"
+          ],
+          "color": "var(--accent-primary)"
+        }
+      ]
+    }
+  }
+}

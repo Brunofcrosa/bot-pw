@@ -1,11 +1,10 @@
-const VK_TO_KEY = {
-    112: 'F1', 113: 'F2', 114: 'F3', 115: 'F4', 116: 'F5', 117: 'F6',
-    118: 'F7', 119: 'F8', 120: 'F9', 121: 'F10', 122: 'F11', 123: 'F12',
-    49: '1', 50: '2', 51: '3', 52: '4', 53: '5',
-    54: '6', 55: '7', 56: '8', 57: '9', 48: '0'
-};
+const { VK_MAP, VK_TO_KEY } = require('../constants');
 
-const KEY_TO_VK = Object.fromEntries(Object.entries(VK_TO_KEY).map(([k, v]) => [v, parseInt(k)]));
+// Mapeamento de Key Name -> VK Code (gerado a partir do VK_MAP)
+const KEY_TO_VK = Object.fromEntries(
+    Object.entries(VK_MAP).map(([key, vk]) => [key, vk])
+);
+
 
 class MacroService {
     constructor(windowService, keyListenerService) {
@@ -28,12 +27,12 @@ class MacroService {
         const triggerVk = KEY_TO_VK[triggerKeyName.toUpperCase()];
 
         if (!triggerVk) {
-            console.error(`[MacroService] Tecla desconhecida: ${triggerKeyName}`);
+            console.error(`Tecla desconhecida: ${triggerKeyName}`);
             return { success: false, error: 'Tecla inválida' };
         }
 
         this.activeMacros.set(pid, { triggerVk, sequence, interval });
-        console.log(`[MacroService] Macro registrado via KeyListener: ${triggerKeyName}(${triggerVk}) -> PID ${pid}`);
+        console.log(`Macro registrado via KeyListener: ${triggerKeyName}(${triggerVk}) -> PID ${pid}`);
 
         return { success: true };
     }
@@ -41,14 +40,29 @@ class MacroService {
     async checkAndExecute(pressedVk) {
         for (const [pid, config] of this.activeMacros.entries()) {
             if (config.triggerVk === pressedVk) {
-                console.log(`[MacroService] Gatilho detectado (${pressedVk}) para PID ${pid}`);
+                console.log(`Gatilho detectado (${pressedVk}) para PID ${pid}`);
                 this.windowService.sendKeySequence(pid, config.sequence, config.interval).catch(console.error);
             }
         }
     }
 
+    listMacros() {
+        const list = [];
+        for (const [pid, config] of this.activeMacros.entries()) {
+            list.push({
+                pid,
+                triggerVk: config.triggerVk,
+                sequence: config.sequence,
+                interval: config.interval
+            });
+        }
+        return list;
+    }
+
     unregisterAll() {
         this.activeMacros.clear();
+        console.log('Todas as macros foram removidas.');
+        return { success: true };
     }
 }
 

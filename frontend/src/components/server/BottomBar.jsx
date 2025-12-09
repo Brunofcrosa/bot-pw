@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { memo } from 'react';
+import PropTypes from 'prop-types';
 import './BottomBar.css';
 import { FaUsers } from 'react-icons/fa';
 
@@ -22,4 +23,9 @@ const BottomBar = ({ runningCount, onOpenAccountsList }) => {
     );
 };
 
-export default BottomBar;
+BottomBar.propTypes = {
+    runningCount: PropTypes.number.isRequired,
+    onOpenAccountsList: PropTypes.func.isRequired
+};
+
+export default memo(BottomBar);

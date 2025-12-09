@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { memo } from 'react';
+import PropTypes from 'prop-types';
 import './ServerCard.css';
 import { FaPlay, FaStop, FaEdit, FaTrash } from 'react-icons/fa';
 
@@ -76,4 +77,25 @@ const ServerCard = ({
     );
 };
 
-export default ServerCard;
+ServerCard.propTypes = {
+    charName: PropTypes.string,
+    charClass: PropTypes.string,
+    isRunning: PropTypes.bool,
+    pid: PropTypes.number,
+    status: PropTypes.string,
+    onOpen: PropTypes.func.isRequired,
+    onClose: PropTypes.func.isRequired,
+    accountData: PropTypes.object.isRequired,
+    onEdit: PropTypes.func.isRequired,
+    onDelete: PropTypes.func.isRequired
+};
+
+ServerCard.defaultProps = {
+    charName: '',
+    charClass: '',
+    isRunning: false,
+    pid: null,
+    status: ''
+};
+
+export default memo(ServerCard);

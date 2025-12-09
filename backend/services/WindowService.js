@@ -1,14 +1,6 @@
 const { exec } = require('child_process');
+const { VK_MAP, TARGET_PROCESS_NAME } = require('../constants');
 
-const TARGET_PROCESS_NAME = 'ElementClient_64.exe';
-
-const VK_MAP = {
-    'F1': 0x70, 'F2': 0x71, 'F3': 0x72, 'F4': 0x73,
-    'F5': 0x74, 'F6': 0x75, 'F7': 0x76, 'F8': 0x77,
-    'F9': 0x78, 'F10': 0x79, 'F11': 0x7A, 'F12': 0x7B,
-    '0': 0x30, '1': 0x31, '2': 0x32, '3': 0x33, '4': 0x34,
-    '5': 0x35, '6': 0x36, '7': 0x37, '8': 0x38, '9': 0x39
-};
 
 class WindowService {
     constructor(processManager) {
@@ -21,8 +13,8 @@ class WindowService {
     findPerfectWorldWindows() {
         if (process.platform !== 'win32') return Promise.resolve([]);
 
-        const baseName = TARGET_PROCESS_NAME.endsWith('.exe') 
-            ? TARGET_PROCESS_NAME.slice(0, -4) 
+        const baseName = TARGET_PROCESS_NAME.endsWith('.exe')
+            ? TARGET_PROCESS_NAME.slice(0, -4)
             : TARGET_PROCESS_NAME;
 
         const command = `powershell -Command "@(Get-Process -Name '${baseName}' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object Id, MainWindowHandle, MainWindowTitle) | ConvertTo-Json -Compress"`;
@@ -34,7 +26,7 @@ class WindowService {
                 try {
                     const stdoutTrimmed = stdout.trim();
                     if (!stdoutTrimmed) return resolve([]);
-                    
+
                     let json = JSON.parse(stdoutTrimmed);
                     if (!Array.isArray(json)) json = [json];
 
@@ -45,10 +37,10 @@ class WindowService {
                             title: p.MainWindowTitle || `${baseName} (PID ${p.Id})`,
                             hwnd: parseInt(p.MainWindowHandle)
                         }));
-                    
+
                     resolve(windows);
                 } catch (e) {
-                    console.error('[WindowService] Erro ao analisar JSON:', e);
+                    console.error('Erro ao analisar JSON:', e);
                     resolve([]);
                 }
             });
@@ -58,7 +50,7 @@ class WindowService {
     getCurrentForegroundWindow() {
         return new Promise(resolve => {
             const command = 'powershell -Command "[System.Runtime.InteropServices.Marshal]::GetLastWin32Error(); Add-Type -TypeDefinition \\"[DllImport(\\"user32.dll\\")] public static extern IntPtr GetForegroundWindow();\\" -Name \\"User32Funcs\\" -Namespace \\"Win32\\"; [Win32.User32Funcs]::GetForegroundWindow()"';
-            
+
             exec(command, (error, stdout) => {
                 if (error) return resolve(null);
                 resolve(parseInt(stdout.trim()));
@@ -80,7 +72,7 @@ class WindowService {
         `.replace(/\s+/g, ' ').trim();
 
         exec(`powershell -ExecutionPolicy Bypass -Command "${powershellScript}"`, (error) => {
-            if (error) console.error(`[WindowService] Falha ao focar janela ${hwnd}: ${error.message}`);
+            if (error) console.error(`Falha ao focar janela ${hwnd}: ${error.message}`);
         });
     }
 
@@ -92,7 +84,7 @@ class WindowService {
 
     focusWindowByPid(pid) {
         if (!pid) {
-            console.error('[WindowService] Tentativa de focar janela sem PID.');
+            console.error('Tentativa de focar janela sem PID.');
             return false;
         }
         this.processManager.sendFocusPid(pid);
@@ -101,7 +93,7 @@ class WindowService {
 
     async cycleWindows() {
         const windows = await this.findPerfectWorldWindows();
-        
+
         if (windows.length === 0) {
             this.window_handles_for_cycle = [];
             this.current_window_index = 0;
@@ -120,7 +112,7 @@ class WindowService {
 
     toggleLastWindows() {
         if (this.last_window_handles.length < 2) return;
-        
+
         const nextHwnd = this.last_window_handles[1];
         this.focusWindow(nextHwnd);
         this._updateLastWindow(nextHwnd);
@@ -131,12 +123,12 @@ class WindowService {
         const target = windows.find(w => w.pid === parseInt(pid));
 
         if (!target) {
-            console.error(`[WindowService] Janela com PID ${pid} não encontrada.`);
+            console.error(`Janela com PID ${pid} não encontrada.`);
             return false;
         }
 
         const vkCodes = keys.map(k => VK_MAP[k.toUpperCase()] || null).filter(v => v !== null);
-        
+
         if (vkCodes.length === 0) return false;
 
         const scriptActions = vkCodes.map(vk => `
@@ -158,10 +150,10 @@ class WindowService {
         return new Promise((resolve) => {
             exec(fullCommand, (err) => {
                 if (err) {
-                    console.error(`[WindowService] Erro ao enviar macro: ${err.message}`);
+                    console.error(`Erro ao enviar macro: ${err.message}`);
                     resolve(false);
                 } else {
-                    console.log(`[WindowService] Macro enviada para PID ${pid} (HWND: ${target.hwnd})`);
+                    console.log(`Macro enviada para PID ${pid} (HWND: ${target.hwnd})`);
                     resolve(true);
                 }
             });

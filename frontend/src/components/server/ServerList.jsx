@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { memo } from 'react';
+import PropTypes from 'prop-types';
 import { FaPlus, FaServer, FaEdit } from 'react-icons/fa';
 import './ServerList.css';
 
-const ServerItem = ({ server, isActive, onSelect, onEdit }) => (
+const ServerItem = memo(({ server, isActive, onSelect, onEdit }) => (
     <div className={`server-item-wrapper ${isActive ? 'active' : ''}`}>
         <button
             className="server-item"
@@ -24,7 +25,19 @@ const ServerItem = ({ server, isActive, onSelect, onEdit }) => (
             </button>
         )}
     </div>
-);
+));
+
+ServerItem.displayName = 'ServerItem';
+
+ServerItem.propTypes = {
+    server: PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        name: PropTypes.string.isRequired
+    }).isRequired,
+    isActive: PropTypes.bool.isRequired,
+    onSelect: PropTypes.func.isRequired,
+    onEdit: PropTypes.func.isRequired
+};
 
 const ServerList = ({ servers, currentServerId, onSelectServer, onOpenAddModal, onEditServer }) => (
     <div className="server-list-container">
@@ -50,4 +63,12 @@ const ServerList = ({ servers, currentServerId, onSelectServer, onOpenAddModal, 
     </div>
 );
 
-export default ServerList;
+ServerList.propTypes = {
+    servers: PropTypes.array.isRequired,
+    currentServerId: PropTypes.string,
+    onSelectServer: PropTypes.func.isRequired,
+    onOpenAddModal: PropTypes.func.isRequired,
+    onEditServer: PropTypes.func.isRequired
+};
+
+export default memo(ServerList);

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import './ActiveInstancesModal.css';
 import { FaKeyboard, FaRunning, FaRobot, FaTimes } from 'react-icons/fa';
 
-const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts }) => {
+const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts, showConfirm, hideConfirm }) => {
     const [selectedInstance, setSelectedInstance] = useState(null);
     const [macroConfig, setMacroConfig] = useState({ trigger: 'F12', sequence: '', interval: 200 });
 
@@ -33,10 +34,20 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts }) =>
         });
 
         if (result && result.success) {
-            alert(`Combo ativado para ${selectedInstance.charName || 'Personagem'}! Use a tecla ${macroConfig.trigger}.`);
+            showConfirm(
+                'Combo Ativado!',
+                `Combo ativado para ${selectedInstance.charName || 'Personagem'}! Use a tecla ${macroConfig.trigger}.`,
+                hideConfirm,
+                'info'
+            );
             setSelectedInstance(null);
         } else {
-            alert('Erro ao registrar macro: ' + (result?.error || 'Desconhecido'));
+            showConfirm(
+                'Erro',
+                'Erro ao registrar macro: ' + (result?.error || 'Desconhecido'),
+                hideConfirm,
+                'danger'
+            );
         }
     };
 
@@ -147,6 +158,15 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts }) =>
             </div>
         </div>
     );
+};
+
+ActiveInstancesModal.propTypes = {
+    isOpen: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
+    runningAccounts: PropTypes.array.isRequired,
+    accounts: PropTypes.array.isRequired,
+    showConfirm: PropTypes.func.isRequired,
+    hideConfirm: PropTypes.func.isRequired
 };
 
 export default ActiveInstancesModal;

@@ -1,12 +1,7 @@
 const { globalShortcut } = require('electron');
 const { exec } = require('child_process');
+const { VK_MAP, DEFAULT_CYCLE_HOTKEY } = require('../constants');
 
-const GLOBAL_HOTKEY_CYCLE = 'Control+Shift+T';
-
-const VK_MAP = {
-    'F1': 0x70, 'F2': 0x71, 'F3': 0x72, 'F4': 0x73, 'F5': 0x74, 'F6': 0x75,
-    'F7': 0x76, 'F8': 0x77, 'enter': 0x0D
-};
 
 class HotkeyService {
     constructor(windowService) {
@@ -37,21 +32,21 @@ class HotkeyService {
             const isRegistered = globalShortcut.register(hotkeyString, callback);
             if (isRegistered) {
                 newHandle = hotkeyString;
-                console.log(`[HotkeyService] Atalho ${hotkeyType} [${hotkeyString}] registrado.`);
+                console.log(`Atalho ${hotkeyType} [${hotkeyString}] registrado.`);
             } else {
-                console.error(`[HotkeyService] Falha ao registrar atalho ${hotkeyType} [${hotkeyString}].`);
+                console.error(`Falha ao registrar atalho ${hotkeyType} [${hotkeyString}].`);
             }
         }
-        
+
         if (hotkeyType === 'cycle') this.global_cycle_hotkey_handle = newHandle;
         else if (hotkeyType === 'toggle') this.global_toggle_hotkey_handle = newHandle;
         else if (hotkeyType === 'macro') this.global_macro_hotkey_handle = newHandle;
 
         return newHandle;
     }
-    
+
     setupInitialHotkeys() {
-        this.setCycleHotkey(GLOBAL_HOTKEY_CYCLE);
+        this.setCycleHotkey(DEFAULT_CYCLE_HOTKEY);
     }
 
     setCycleHotkey(hotkeyString) {
@@ -86,7 +81,7 @@ class HotkeyService {
 
         const keyCodes = keys.map(k => VK_MAP[k]).filter(v => v !== undefined);
         if (keyCodes.length === 0) return;
-        
+
         const messageScript = keyCodes.map(vkCode => {
             return `
                 [Win32.User32]::PostMessage([IntPtr]::new(${hwnd}), 0x0100, ${vkCode}, 0); 
@@ -99,7 +94,7 @@ class HotkeyService {
         const powershellCommand = `powershell -ExecutionPolicy Bypass -Command "Add-Type -TypeDefinition '[DllImport(\\"user32.dll\\")] public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);' -Name 'User32' -Namespace 'Win32'; ${messageScript}"`;
 
         exec(powershellCommand, (error) => {
-            if (error) console.error(`[HotkeyService] Falha ao enviar macro para ${hwnd}: ${error.message}`);
+            if (error) console.error(`Falha ao enviar macro para ${hwnd}: ${error.message}`);
         });
         return true;
     }
@@ -116,23 +111,23 @@ class HotkeyService {
             });
         } else {
             const currentHwnd = await this.windowService.getCurrentForegroundWindow();
-            
+
             for (const win of windows) {
                 if (this.focus_on_macro_enabled) {
                     this.windowService.focusWindow(win.hwnd);
                     await new Promise(r => setTimeout(r, 100));
                 }
             }
-            
+
             if (this.focus_on_macro_enabled && currentHwnd) {
-                 this.windowService.focusWindow(currentHwnd);
+                this.windowService.focusWindow(currentHwnd);
             }
         }
     }
 
     unregisterAll() {
         globalShortcut.unregisterAll();
-        console.log('[HotkeyService] Todos os atalhos globais foram removidos.');
+        console.log('Todos os atalhos globais foram removidos.');
     }
 }
 

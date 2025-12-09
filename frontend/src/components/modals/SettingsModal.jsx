@@ -1,15 +1,42 @@
-import React, { useState } from 'react';
-import './AccountModal.css'; // Reusa CSS do modal padrão
+import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+import './AccountModal.css';
 
-const SettingsModal = ({ isOpen, onClose }) => {
+const SettingsModal = ({ isOpen, onClose, showConfirm, hideConfirm }) => {
     const [cycleHotkey, setCycleHotkey] = useState('Control+Shift+T');
+
+    useEffect(() => {
+        if (isOpen) {
+            window.electronAPI.invoke('load-settings').then(settings => {
+                if (settings && settings.hotkeys && settings.hotkeys.cycle) {
+                    setCycleHotkey(settings.hotkeys.cycle);
+                }
+            }).catch(err => console.error('Erro ao carregar settings:', err));
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
     const handleSave = async () => {
-        await window.electronAPI.invoke('set-cycle-hotkey', cycleHotkey);
-        alert('Atalhos atualizados!');
-        onClose();
+        try {
+            await window.electronAPI.invoke('set-cycle-hotkey', cycleHotkey);
+            await window.electronAPI.invoke('save-settings', {
+                hotkeys: { cycle: cycleHotkey, toggle: '', macro: '' },
+                macro: { keys: [], focusOnMacro: true, backgroundMacro: false },
+                general: { autoBackup: true }
+            });
+            showConfirm(
+                'Sucesso',
+                'Atalhos atualizados com sucesso!',
+                () => {
+                    hideConfirm();
+                    onClose();
+                },
+                'info'
+            );
+        } catch (err) {
+            showConfirm('Erro', `Falha: ${err.message}`, hideConfirm, 'danger');
+        }
     };
 
     return (
@@ -30,19 +57,26 @@ const SettingsModal = ({ isOpen, onClose }) => {
                             onChange={(e) => setCycleHotkey(e.target.value)}
                             placeholder="Ex: Control+Shift+T"
                         />
-                        <small style={{ color: '#72767d', fontSize: '0.8rem' }}>
+                        <small style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                             Use formato Electron: 'Control+T', 'Alt+F1', etc.
                         </small>
                     </div>
                 </div>
 
                 <div className="modal-footer">
-                    <button className="btn-secondary" onClick={onClose}>Cancelar</button>
-                    <button className="btn-primary" onClick={handleSave}>Salvar</button>
+                    <button className="btn-cancel" onClick={onClose}>Cancelar</button>
+                    <button className="btn-confirm" onClick={handleSave}>Salvar</button>
                 </div>
             </div>
         </div>
     );
+};
+
+SettingsModal.propTypes = {
+    isOpen: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
+    showConfirm: PropTypes.func.isRequired,
+    hideConfirm: PropTypes.func.isRequired
 };
 
 export default SettingsModal;

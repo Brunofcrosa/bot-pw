@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { FaGamepad, FaTimes } from 'react-icons/fa';
 import './GroupControlModal.css';
 
@@ -13,21 +14,13 @@ const GroupControlModal = ({ isOpen, onClose, group, accounts, runningAccounts, 
 
     const handleFocus = async (accountId) => {
         const running = runningAccounts.find(r => r.accountId === accountId);
-        console.log('[GroupControlModal] handleFocus called', { accountId, running, isOverlayMode });
 
         if (running && running.pid) {
             try {
-                console.log('[GroupControlModal] Attempting to focus window with PID:', running.pid);
                 await window.electronAPI.invoke('focus-window', running.pid);
-                console.log('[GroupControlModal] Focus command sent successfully');
             } catch (error) {
-                console.error('[GroupControlModal] Error focusing window:', error);
-                if (!isOverlayMode) alert('Erro ao focar janela: ' + error.message);
+                // Erro silencioso em modo overlay para não atrapalhar UX
             }
-        } else {
-            console.warn('[GroupControlModal] Account not running or no PID');
-            // Em modo overlay, talvez não queiramos alertas intrusivos
-            if (!isOverlayMode) alert('Esta conta não parece estar rodando.');
         }
     };
 
@@ -77,6 +70,24 @@ const GroupControlModal = ({ isOpen, onClose, group, accounts, runningAccounts, 
             </div>
         </div>
     );
+};
+
+GroupControlModal.propTypes = {
+    isOpen: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
+    group: PropTypes.shape({
+        id: PropTypes.string,
+        name: PropTypes.string,
+        accountIds: PropTypes.array
+    }),
+    accounts: PropTypes.array.isRequired,
+    runningAccounts: PropTypes.array.isRequired,
+    isOverlayMode: PropTypes.bool
+};
+
+GroupControlModal.defaultProps = {
+    isOverlayMode: false,
+    group: null
 };
 
 export default GroupControlModal;

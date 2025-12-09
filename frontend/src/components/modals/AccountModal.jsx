@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import './AccountModal.css';
 
 const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
@@ -166,6 +167,24 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
             </div>
         </div>
     );
+};
+
+AccountModal.propTypes = {
+    isOpen: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
+    onSave: PropTypes.func.isRequired,
+    accountToEdit: PropTypes.shape({
+        id: PropTypes.string,
+        login: PropTypes.string,
+        password: PropTypes.string,
+        charName: PropTypes.string,
+        charClass: PropTypes.string,
+        exePath: PropTypes.string
+    })
+};
+
+AccountModal.defaultProps = {
+    accountToEdit: null
 };
 
 export default AccountModal;

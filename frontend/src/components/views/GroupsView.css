@@ -207,7 +207,7 @@
 .empty-groups p {
     font-size: 1.3rem;
     margin: 0.5rem 0;
-    color: #fff;
+    color: var(--text-primary);
     font-weight: 600;
 }
 
@@ -240,7 +240,7 @@
 }
 
 .group-content h3 {
-    color: #fff;
+    color: var(--text-primary);
     margin: 0 0 0.5rem 0;
     font-size: 1.2rem;
 }
@@ -303,8 +303,8 @@
 
 .btn-control-group {
     padding: 0.75rem;
-    background: #3a3f52;
-    color: var(--color-accent-active);
+    background: var(--bg-hover);
+    color: var(--accent-secondary);
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -312,8 +312,8 @@
 }
 
 .btn-control-group:hover {
-    background: var(--color-accent-active);
-    color: #1e2028;
+    background: var(--accent-secondary);
+    color: var(--bg-body);
 }
 
 .btn-icon-action {
