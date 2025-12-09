@@ -31,11 +31,11 @@ Thumbs.db
 *.njsproj
 *.sln
 
-*.exe
+# *.exe
 *.dmg
 *.AppImage
 *.deb
 *.rpm
 *.snap
 *.nsis
-*.nupkg
+*.nupkgexecutaveis/*.exe
