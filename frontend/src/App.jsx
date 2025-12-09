@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import ServerList from './componentes/server/ServerList';
-import AccountModal from './componentes/account/AccountModal';
-import ActiveInstancesModal from './componentes/account/ActiveInstancesModal';
-import AddServerModal from './componentes/server/AddServerModal';
-import SettingsModal from './componentes/settings/SettingsModal';
-import AccountsView from './componentes/accounts/AccountsView';
-import GroupsView from './componentes/groups/GroupsView';
-import GroupControlModal from './componentes/groups/GroupControlModal';
-import BottomBar from './componentes/server/BottomBar';
+import ServerList from './components/server/ServerList';
+import AccountModal from './components/modals/AccountModal';
+import ActiveInstancesModal from './components/modals/ActiveInstancesModal';
+import AddServerModal from './components/modals/AddServerModal';
+import SettingsModal from './components/modals/SettingsModal';
+import AccountsView from './components/views/AccountsView';
+import GroupsView from './components/views/GroupsView';
+import GroupControlModal from './components/modals/GroupControlModal';
+import BottomBar from './components/server/BottomBar';
 import { FaCog, FaPlus, FaUsers, FaUser } from 'react-icons/fa';
 import './App.css';
 

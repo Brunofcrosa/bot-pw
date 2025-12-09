@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './css/AccountModal.css';
+import './AccountModal.css';
 
 const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
     const [formData, setFormData] = useState({

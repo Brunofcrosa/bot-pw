@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaServer, FaFolder } from 'react-icons/fa';
-import '../account/css/AccountModal.css';
+import './AccountModal.css';
 
 const AddServerModal = ({ show, onClose, onSaveServer, serverToEdit }) => {
     const [serverName, setServerName] = useState('');

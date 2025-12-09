@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './css/ActiveInstancesModal.css';
+import './ActiveInstancesModal.css';
 import { FaKeyboard, FaRunning, FaRobot, FaTimes } from 'react-icons/fa';
 
 const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts }) => {

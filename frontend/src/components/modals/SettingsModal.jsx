@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../account/css/AccountModal.css'; // Reusa CSS do modal padrão
+import './AccountModal.css'; // Reusa CSS do modal padrão
 
 const SettingsModal = ({ isOpen, onClose }) => {
     const [cycleHotkey, setCycleHotkey] = useState('Control+Shift+T');

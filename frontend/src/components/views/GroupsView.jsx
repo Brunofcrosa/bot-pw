@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaPlus, FaUsers, FaPlay, FaTrash, FaGamepad, FaExternalLinkAlt } from 'react-icons/fa';
-import GroupControlModal from './GroupControlModal';
-import './css/GroupsView.css';
+import GroupControlModal from '../modals/GroupControlModal';
+import './GroupsView.css';
 
 const GroupsView = ({ accounts = [], groups = [], runningAccounts = [], onSaveGroups, onOpenGroup }) => {
     const [isCreatingGroup, setIsCreatingGroup] = useState(false);

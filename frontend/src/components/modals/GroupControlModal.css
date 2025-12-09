@@ -127,71 +127,73 @@
     max-width: 100%;
 }
 
-/* Modos Overlay */
+/* Modos Overlay - Ultra Compacto */
 .group-control-overlay.overlay-mode {
     background: transparent;
     backdrop-filter: none;
     padding: 0;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
 }
 
 .group-control-modal.overlay-mode {
-    width: 100%;
-    height: 100%;
+    width: auto;
+    height: auto;
     max-width: none;
-    border-radius: 0;
-    background: rgba(0, 0, 0, 0.2);
-    /* Fundo muito sutil apenas para hover */
-    border: 2px solid var(--accent-primary);
+    border-radius: 8px;
+    background: transparent;
+    border: none;
     box-shadow: none;
     animation: none;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
+    padding: 4px;
+    gap: 4px;
     -webkit-app-region: drag;
-    /* Permite arrastar a janela */
 }
 
 .group-control-modal.overlay-mode:hover {
-    background: rgba(42, 45, 58, 0.9);
-    /* Fica mais opaco ao passar o mouse */
+    background: transparent;
 }
 
+/* Esconder header no modo overlay */
 .group-control-modal.overlay-mode .control-header {
-    -webkit-app-region: drag;
-    /* Header também pode arrastar */
-}
-
-.group-control-modal.overlay-mode .btn-close {
-    -webkit-app-region: no-drag;
-    /* Botão de fechar deve ser clicável */
+    display: none;
 }
 
 .group-control-modal.overlay-mode .control-grid {
-    flex: 1;
-    overflow-y: auto;
-    /* Ajuste para ícones menores no overlay se necessário */
-    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-    gap: 0.5rem;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 4px;
+    overflow: hidden;
     -webkit-app-region: no-drag;
-    /* Grid não deve bloquear drag */
 }
 
 .group-control-modal.overlay-mode .control-btn {
-    height: 50px;
-    width: 50px;
-    padding: 0.25rem;
+    height: 36px;
+    width: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0;
+    border-radius: 6px;
+    border-width: 1px;
     -webkit-app-region: no-drag;
-    /* Botões devem ser clicáveis */
+}
+
+.group-control-modal.overlay-mode .control-btn:hover:not(:disabled) {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .group-control-modal.overlay-mode .class-icon {
-    width: 36px;
-    height: 36px;
-    font-size: 1rem;
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
     margin-bottom: 0;
 }
 
 .group-control-modal.overlay-mode .char-name {
     display: none;
-    /* Esconde o nome no modo overlay */
 }

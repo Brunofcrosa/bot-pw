@@ -1,5 +1,5 @@
 import React from 'react';
-import './css/ServerCard.css';
+import './ServerCard.css';
 import { FaPlay, FaStop, FaEdit, FaTrash } from 'react-icons/fa';
 
 const ServerCard = ({

@@ -1,7 +1,7 @@
 import React from 'react';
 import ServerCard from '../server/ServerCard';
 import { FaFolderOpen } from 'react-icons/fa';
-import './css/AccountsView.css';
+import './AccountsView.css';
 
 const AccountsView = ({
     accounts,

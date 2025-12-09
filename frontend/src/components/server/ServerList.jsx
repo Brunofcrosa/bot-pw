@@ -1,6 +1,6 @@
 import React from 'react';
 import { FaPlus, FaServer, FaEdit } from 'react-icons/fa';
-import './css/ServerList.css';
+import './ServerList.css';
 
 const ServerItem = ({ server, isActive, onSelect, onEdit }) => (
     <div className={`server-item-wrapper ${isActive ? 'active' : ''}`}>

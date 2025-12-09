@@ -1,6 +1,6 @@
 import React from 'react';
 import { FaGamepad, FaTimes } from 'react-icons/fa';
-import './css/GroupControlModal.css';
+import './GroupControlModal.css';
 
 const GroupControlModal = ({ isOpen, onClose, group, accounts, runningAccounts, isOverlayMode = false }) => {
     if (!isOpen || !group) return null;
