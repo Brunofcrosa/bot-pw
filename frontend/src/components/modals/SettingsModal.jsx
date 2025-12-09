@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import './AccountModal.css';
+import React, { useState, useEffect, memo } from 'react';
+import PropTypes from 'prop-types';
+import { FaKeyboard, FaRobot, FaSave, FaTimes, FaCog, FaDownload, FaUpload } from 'react-icons/fa';
+import './SettingsModal.css';
 
 const SettingsModal = ({ isOpen, onClose }) => {
     const [activeTab, setActiveTab] = useState('hotkeys');
@@ -21,6 +23,10 @@ const SettingsModal = ({ isOpen, onClose }) => {
 
     const loadSettings = async () => {
         try {
+            if (!window.electronAPI) {
+                console.warn('Electron API not available');
+                return;
+            }
             const settings = await window.electronAPI.invoke('load-settings');
             if (settings) {
                 setCycleHotkey(settings.hotkeys?.cycle || 'Control+Shift+T');
@@ -33,6 +39,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
             }
         } catch (err) {
             console.error('Erro ao carregar settings:', err);
+            setMessage('Erro ao carregar configurações.');
         }
     };
 
@@ -49,6 +56,8 @@ const SettingsModal = ({ isOpen, onClose }) => {
             };
 
             await window.electronAPI.invoke('save-settings', settings);
+
+            // Aplica as configurações imediatamente
             if (cycleHotkey) await window.electronAPI.invoke('set-cycle-hotkey', cycleHotkey);
             if (toggleHotkey) await window.electronAPI.invoke('set-toggle-hotkey', toggleHotkey);
             if (macroHotkey) await window.electronAPI.invoke('set-macro-hotkey', macroHotkey);
@@ -56,10 +65,10 @@ const SettingsModal = ({ isOpen, onClose }) => {
             await window.electronAPI.invoke('set-focus-on-macro', focusOnMacro);
             await window.electronAPI.invoke('set-background-macro', backgroundMacro);
 
-            setMessage('✅ Configurações salvas!');
-            setTimeout(() => onClose(), 1000);
+            setMessage('Configurações salvas!');
+            setTimeout(() => setMessage(''), 3000);
         } catch (err) {
-            setMessage(`❌ Erro: ${err.message}`);
+            setMessage(`Erro: ${err.message}`);
         }
     };
 
@@ -73,9 +82,9 @@ const SettingsModal = ({ isOpen, onClose }) => {
             a.download = `backup_${new Date().toISOString().split('T')[0]}.json`;
             a.click();
             URL.revokeObjectURL(url);
-            setMessage('✅ Backup exportado!');
+            setMessage('Backup exportado com sucesso!');
         } catch (err) {
-            setMessage(`❌ ${err.message}`);
+            setMessage(`Erro: ${err.message}`);
         }
     };
 
@@ -89,104 +98,177 @@ const SettingsModal = ({ isOpen, onClose }) => {
             try {
                 const text = await file.text();
                 const backup = JSON.parse(text);
-                if (confirm('Sobrescrever dados existentes?')) {
+                if (confirm('Tem certeza? Isso irá sobrescrever todos os dados atuais.')) {
                     await window.electronAPI.invoke('import-backup', backup, { overwrite: true });
-                    setMessage('✅ Importado! Reinicie o app.');
+                    setMessage('Dados importados! Reinicie a aplicação.');
                 }
             } catch (err) {
-                setMessage('❌ Arquivo inválido');
+                setMessage('Arquivo de backup inválido.');
             }
         };
         input.click();
     };
 
-    const tabStyle = (tab) => ({
-        padding: '8px 16px',
-        background: activeTab === tab ? 'var(--accent-primary, #5e72e4)' : 'transparent',
-        color: activeTab === tab ? 'white' : 'var(--text-secondary, #888)',
-        border: 'none',
-        borderRadius: '4px',
-        cursor: 'pointer',
-        fontWeight: 600,
-        marginRight: '8px'
-    });
-
     return (
         <div className="modal-overlay">
-            <div className="modal-container form-modal" style={{ width: '500px', maxWidth: '95%' }}>
-                <div className="modal-header">
-                    <h2>⚙️ Configurações</h2>
-                    <button className="close-btn" onClick={onClose}>&times;</button>
+            <div className="settings-modal-container">
+                <div className="settings-sidebar">
+                    <div className="sidebar-header">
+                        <h2><FaCog /> Ajustes</h2>
+                    </div>
+                    <nav className="sidebar-nav">
+                        <button
+                            className={`nav-item ${activeTab === 'hotkeys' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('hotkeys')}
+                        >
+                            <FaKeyboard className="nav-icon" /> Atalhos
+                        </button>
+                        <button
+                            className={`nav-item ${activeTab === 'macro' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('macro')}
+                        >
+                            <FaRobot className="nav-icon" /> Macros
+                        </button>
+                        <button
+                            className={`nav-item ${activeTab === 'backup' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('backup')}
+                        >
+                            <FaSave className="nav-icon" /> Backup
+                        </button>
+                    </nav>
                 </div>
 
-                <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-color, #333)' }}>
-                    <button style={tabStyle('hotkeys')} onClick={() => setActiveTab('hotkeys')}>Atalhos</button>
-                    <button style={tabStyle('macro')} onClick={() => setActiveTab('macro')}>Macros</button>
-                    <button style={tabStyle('backup')} onClick={() => setActiveTab('backup')}>Backup</button>
-                </div>
+                <div className="settings-content">
+                    <div className="content-header">
+                        <h3>
+                            {activeTab === 'hotkeys' && 'Atalhos Globais'}
+                            {activeTab === 'macro' && 'Configuração de Macros'}
+                            {activeTab === 'backup' && 'Gerenciamento de Dados'}
+                        </h3>
+                        <button className="close-button" onClick={onClose}><FaTimes /></button>
+                    </div>
 
-                <div className="modal-body">
-                    {message && <div style={{ padding: '8px', marginBottom: '12px', background: 'var(--bg-hover, #333)', borderRadius: '4px' }}>{message}</div>}
+                    <div className="content-body">
+                        {message && (
+                            <div style={{ padding: '10px', marginBottom: '15px', background: message.includes('Erro') ? '#442222' : '#224422', borderRadius: '4px', color: 'white' }}>
+                                {message}
+                            </div>
+                        )}
 
-                    {activeTab === 'hotkeys' && (
-                        <>
-                            <div className="form-group">
-                                <label>Ciclar Janelas</label>
-                                <input className="form-input" value={cycleHotkey} onChange={e => setCycleHotkey(e.target.value)} placeholder="Control+Shift+T" />
-                            </div>
-                            <div className="form-group">
-                                <label>Alternar Última Janela</label>
-                                <input className="form-input" value={toggleHotkey} onChange={e => setToggleHotkey(e.target.value)} placeholder="Control+Shift+Y" />
-                            </div>
-                            <div className="form-group">
-                                <label>Ativar Macro</label>
-                                <input className="form-input" value={macroHotkey} onChange={e => setMacroHotkey(e.target.value)} placeholder="Control+Shift+M" />
-                            </div>
-                            <small style={{ color: 'var(--text-muted, #666)' }}>Formato: Control+T, Alt+F1, etc.</small>
-                        </>
-                    )}
+                        {activeTab === 'hotkeys' && (
+                            <>
+                                <div className="settings-group">
+                                    <label className="control-label">Ciclar Janelas (Cycle)</label>
+                                    <input
+                                        type="text"
+                                        className="control-input"
+                                        value={cycleHotkey}
+                                        onChange={e => setCycleHotkey(e.target.value)}
+                                        placeholder="Ex: Control+Shift+T"
+                                    />
+                                    <span className="control-hint">Alterna para a próxima janela do PW em sequência.</span>
+                                </div>
+                                <div className="settings-group">
+                                    <label className="control-label">Alternar Última (Toggle)</label>
+                                    <input
+                                        type="text"
+                                        className="control-input"
+                                        value={toggleHotkey}
+                                        onChange={e => setToggleHotkey(e.target.value)}
+                                        placeholder="Ex: Control+Shift+Y"
+                                    />
+                                    <span className="control-hint">Alterna entre as duas últimas janelas focadas.</span>
+                                </div>
+                                <div className="settings-group">
+                                    <label className="control-label">Executar Macro</label>
+                                    <input
+                                        type="text"
+                                        className="control-input"
+                                        value={macroHotkey}
+                                        onChange={e => setMacroHotkey(e.target.value)}
+                                        placeholder="Ex: Control+Shift+M"
+                                    />
+                                    <span className="control-hint">Dispara a macro configurada.</span>
+                                </div>
+                            </>
+                        )}
 
-                    {activeTab === 'macro' && (
-                        <>
-                            <div className="form-group">
-                                <label>Teclas a Enviar (separadas por vírgula)</label>
-                                <input className="form-input" value={macroKeys} onChange={e => setMacroKeys(e.target.value)} placeholder="F1, F2, F3, 1, 2" />
-                            </div>
-                            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <input type="checkbox" checked={focusOnMacro} onChange={e => setFocusOnMacro(e.target.checked)} id="focusCheck" />
-                                <label htmlFor="focusCheck" style={{ margin: 0, cursor: 'pointer' }}>Focar janela ao enviar</label>
-                            </div>
-                            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <input type="checkbox" checked={backgroundMacro} onChange={e => setBackgroundMacro(e.target.checked)} id="bgCheck" />
-                                <label htmlFor="bgCheck" style={{ margin: 0, cursor: 'pointer' }}>Enviar em background</label>
-                            </div>
-                        </>
-                    )}
+                        {activeTab === 'macro' && (
+                            <>
+                                <div className="settings-group">
+                                    <label className="control-label">Sequência de Teclas</label>
+                                    <input
+                                        type="text"
+                                        className="control-input"
+                                        value={macroKeys}
+                                        onChange={e => setMacroKeys(e.target.value)}
+                                        placeholder="F1, F2, 1, 2"
+                                    />
+                                    <span className="control-hint">Teclas separadas por vírgula.</span>
+                                </div>
 
-                    {activeTab === 'backup' && (
-                        <>
-                            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <input type="checkbox" checked={autoBackup} onChange={e => setAutoBackup(e.target.checked)} id="autoCheck" />
-                                <label htmlFor="autoCheck" style={{ margin: 0, cursor: 'pointer' }}>Backup automático na inicialização</label>
-                            </div>
-                            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
-                                <button className="btn-confirm" onClick={handleExport}>📤 Exportar</button>
-                                <button className="btn-confirm" onClick={handleImport}>📥 Importar</button>
-                            </div>
-                            <small style={{ color: 'var(--text-muted, #666)', marginTop: '12px', display: 'block' }}>
-                                Backups salvos em: backend/data/backups/
-                            </small>
-                        </>
-                    )}
-                </div>
+                                <div className="toggle-control" onClick={() => setFocusOnMacro(!focusOnMacro)}>
+                                    <div className="toggle-info">
+                                        <div className="toggle-title">Focar Janela</div>
+                                        <div className="toggle-desc">Traz a janela para frente antes de enviar teclas</div>
+                                    </div>
+                                    <label className="checkbox-wrapper">
+                                        <input type="checkbox" checked={focusOnMacro} readOnly />
+                                        <span className="slider"></span>
+                                    </label>
+                                </div>
 
-                <div className="modal-footer">
-                    <button className="btn-cancel" onClick={onClose}>Cancelar</button>
-                    <button className="btn-confirm" onClick={handleSave}>Salvar</button>
+                                <div className="toggle-control" onClick={() => setBackgroundMacro(!backgroundMacro)}>
+                                    <div className="toggle-info">
+                                        <div className="toggle-title">Modo Background</div>
+                                        <div className="toggle-desc">Envia teclas sem focar (experimental)</div>
+                                    </div>
+                                    <label className="checkbox-wrapper">
+                                        <input type="checkbox" checked={backgroundMacro} readOnly />
+                                        <span className="slider"></span>
+                                    </label>
+                                </div>
+                            </>
+                        )}
+
+                        {activeTab === 'backup' && (
+                            <>
+                                <div className="toggle-control" onClick={() => setAutoBackup(!autoBackup)}>
+                                    <div className="toggle-info">
+                                        <div className="toggle-title">Backup Automático</div>
+                                        <div className="toggle-desc">Criar backup ao iniciar o aplicativo</div>
+                                    </div>
+                                    <label className="checkbox-wrapper">
+                                        <input type="checkbox" checked={autoBackup} readOnly />
+                                        <span className="slider"></span>
+                                    </label>
+                                </div>
+
+                                <div className="action-buttons">
+                                    <button className="btn btn-secondary" onClick={handleExport} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <FaDownload /> Exportar Dados
+                                    </button>
+                                    <button className="btn btn-secondary" onClick={handleImport} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <FaUpload /> Importar Dados
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    <div className="content-footer">
+                        <button className="btn btn-secondary" onClick={onClose}>Cancelar</button>
+                        <button className="btn btn-primary" onClick={handleSave}>Salvar Alterações</button>
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
 
-export default SettingsModal;
+SettingsModal.propTypes = {
+    isOpen: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired
+};
+
+export default memo(SettingsModal);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import PropTypes from 'prop-types';
 import './AccountModal.css';
 
@@ -187,4 +187,4 @@ AccountModal.defaultProps = {
     accountToEdit: null
 };
 
-export default AccountModal;
+export default memo(AccountModal);

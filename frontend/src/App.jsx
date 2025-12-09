@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useBotData } from './hooks/useBotData';
+import { useRunningInstances } from './hooks/useRunningInstances';
 import ServerList from './components/server/ServerList';
 import AccountModal from './components/modals/AccountModal';
 import ActiveInstancesModal from './components/modals/ActiveInstancesModal';
@@ -7,8 +9,9 @@ import SettingsModal from './components/modals/SettingsModal';
 import ConfirmModal from './components/modals/ConfirmModal';
 import AccountsView from './components/views/AccountsView';
 import GroupsView from './components/views/GroupsView';
-import GroupControlModal from './components/modals/GroupControlModal';
+
 import BottomBar from './components/server/BottomBar';
+import OverlayView from './components/views/OverlayView';
 import { FaCog, FaPlus, FaUsers, FaUser } from 'react-icons/fa';
 import './App.css';
 
@@ -18,19 +21,32 @@ const App = () => {
     const isOverlay = searchParams.get('overlay') === 'true';
     const overlayGroupId = searchParams.get('groupId');
 
+    // Hooks de Dados e Processos
+    const {
+        servers,
+        currentServerId,
+        setCurrentServerId,
+        accounts,
+        groups,
+        saveServers,
+        saveAccounts,
+        saveGroups
+    } = useBotData();
+
+    const {
+        runningAccounts,
+        registerStartingInstance,
+        removeInstance
+    } = useRunningInstances();
+
+    // Estado da UI
     const [activeTab, setActiveTab] = useState('accounts');
     const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
     const [isAddServerModalOpen, setIsAddServerModalOpen] = useState(false);
     const [isAccountsListModalOpen, setIsAccountsListModalOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
     const [serverToEdit, setServerToEdit] = useState(null);
-
-    const [servers, setServers] = useState([]);
-    const [currentServerId, setCurrentServerId] = useState(null);
-
-    const [runningAccounts, setRunningAccounts] = useState([]);
-    const [accounts, setAccounts] = useState([]);
-    const [groups, setGroups] = useState([]);
     const [accountToEdit, setAccountToEdit] = useState(null);
 
     // Estado para modal de confirmação
@@ -54,78 +70,37 @@ const App = () => {
         return servers.find(s => s.id === currentServerId) || { id: '', name: 'Selecionar Servidor' };
     }, [servers, currentServerId]);
 
-    useEffect(() => {
-        const init = async () => {
-            const loadedServers = await window.electronAPI.invoke('load-servers');
-            if (Array.isArray(loadedServers) && loadedServers.length > 0) {
-                setServers(loadedServers);
-                // Se estiver em overlay, precisamos carregar o servidor correto para o grupo
-                // Mas como groups são salvos por servidor, precisamos iterar ou assumir o padrão
-                // Simplificação: carrega o último servidor usado ou salvar o serverId na URL também
-                if (!currentServerId) setCurrentServerId(loadedServers[0].id);
+    const handleSaveServer = useCallback(async (srv) => {
+        try {
+            if (serverToEdit) {
+                const updatedServers = servers.map(s => s.id === srv.id ? srv : s);
+                saveServers(updatedServers);
+            } else {
+                const newServers = [...servers, srv];
+                saveServers(newServers);
+                // setCurrentServerId is purely local state, but depends on save
+                setCurrentServerId(srv.id);
             }
-
-            // Carregar contas rodando
-        };
-        init();
-
-        window.electronAPI.on('element-opened', (data) => {
-            if (data.success) {
-                setRunningAccounts(prev => [
-                    ...prev.filter(acc => acc.accountId !== data.accountId),
-                    { accountId: data.accountId, pid: data.pid, status: 'running' }
-                ]);
-            }
-        });
-
-        window.electronAPI.on('element-closed', (data) => {
-            if (data.success) {
-                setRunningAccounts(prev => prev.filter(acc => acc.pid !== data.pid));
-            }
-        });
-    }, []);
-
-    useEffect(() => {
-        const loadData = async () => {
-            if (currentServerId) {
-                const accs = await window.electronAPI.invoke('load-accounts', currentServerId);
-                setAccounts(Array.isArray(accs) ? accs : []);
-
-                const grps = await window.electronAPI.invoke('load-groups', currentServerId);
-                setGroups(Array.isArray(grps) ? grps : []);
-            }
-        };
-        loadData();
-    }, [currentServerId]);
-
-    const handleSaveServer = useCallback((srv) => {
-        if (serverToEdit) {
-            const updatedServers = servers.map(s => s.id === srv.id ? srv : s);
-            setServers(updatedServers);
-            window.electronAPI.invoke('save-servers', updatedServers);
-        } else {
-            const newServers = [...servers, srv];
-            setServers(newServers);
-            window.electronAPI.invoke('save-servers', newServers);
-            setCurrentServerId(srv.id);
+            setServerToEdit(null);
+            setIsAddServerModalOpen(false);
+        } catch (error) {
+            console.error('Erro ao salvar servidor:', error);
+            showConfirm('Erro', 'Falha ao salvar servidor: ' + error.message, hideConfirm, 'danger');
         }
-        setServerToEdit(null);
-        setIsAddServerModalOpen(false);
-    }, [servers, serverToEdit]);
+    }, [servers, serverToEdit, saveServers, setCurrentServerId, showConfirm, hideConfirm]);
 
-    const handleSaveGroups = useCallback((updatedGroups) => {
-        setGroups(updatedGroups);
-        window.electronAPI.invoke('save-groups', currentServerId, updatedGroups);
-    }, [currentServerId]);
+    const handleSaveAccount = useCallback(async (accData) => {
+        try {
+            const newAccounts = accountToEdit
+                ? accounts.map(a => a.id === accData.id ? accData : a)
+                : [...accounts, accData];
 
-    const handleSaveAccount = useCallback((accData) => {
-        const newAccounts = accountToEdit
-            ? accounts.map(a => a.id === accData.id ? accData : a)
-            : [...accounts, accData];
-
-        setAccounts(newAccounts);
-        window.electronAPI.invoke('save-accounts', currentServerId, newAccounts);
-    }, [accounts, accountToEdit, currentServerId]);
+            saveAccounts(newAccounts);
+        } catch (error) {
+            console.error('Erro ao salvar conta:', error);
+            showConfirm('Erro', 'Falha ao salvar conta: ' + error.message, hideConfirm, 'danger');
+        }
+    }, [accounts, accountToEdit, saveAccounts, showConfirm, hideConfirm]);
 
     const handleDeleteAccount = (id) => {
         showConfirm(
@@ -133,8 +108,7 @@ const App = () => {
             'Tem certeza que deseja deletar esta conta? Esta ação não pode ser desfeita.',
             () => {
                 const newAccounts = accounts.filter(a => a.id !== id);
-                setAccounts(newAccounts);
-                window.electronAPI.invoke('save-accounts', currentServerId, newAccounts);
+                saveAccounts(newAccounts);
                 hideConfirm();
             },
             'danger'
@@ -142,46 +116,67 @@ const App = () => {
     };
 
     const handleOpenGame = useCallback(async (acc) => {
-        setRunningAccounts(prev => [...prev, { accountId: acc.id, status: 'starting' }]);
-        const exePath = acc.exePath || currentServer.exePath || '';
-        await window.electronAPI.invoke('open-element', {
-            id: acc.id,
-            exePath: exePath,
-            login: acc.login,
-            password: acc.password,
-            characterName: acc.charName
-        });
-    }, [currentServer.exePath]);
+        try {
+            registerStartingInstance(acc.id);
+            const exePath = acc.exePath || currentServer.exePath || '';
+            const result = await window.electronAPI.invoke('open-element', {
+                id: acc.id,
+                exePath: exePath,
+                login: acc.login,
+                password: acc.password,
+                characterName: acc.charName
+            });
+
+            if (!result || !result.success) {
+                throw new Error(result?.error || 'Falha desconhecida ao iniciar jogo');
+            }
+        } catch (error) {
+            console.error('Erro ao abrir jogo:', error);
+            showConfirm(
+                'Erro ao Iniciar',
+                `Não foi possível iniciar o jogo para ${acc.charName || acc.login}: ${error.message}`,
+                hideConfirm,
+                'danger'
+            );
+            removeInstance(acc.id);
+        }
+    }, [currentServer.exePath, registerStartingInstance, removeInstance, showConfirm, hideConfirm]);
 
     const handleCloseGame = useCallback(async (pid) => {
         await window.electronAPI.invoke('close-element', pid);
     }, []);
 
-    const overlayGroup = useMemo(() => {
-        if (!isOverlay || !groups.length) return null;
-        return groups.find(g => g.id === overlayGroupId);
-    }, [isOverlay, groups, overlayGroupId]);
-
     if (isOverlay) {
-        if (!overlayGroup) return <div style={{ color: 'white', padding: '10px' }}>Carregando grupo...</div>;
         return (
-            <GroupControlModal
-                isOpen={true}
-                onClose={() => window.close()}
-                group={overlayGroup}
+            <OverlayView
+                groupId={overlayGroupId}
+                groups={groups}
                 accounts={accounts}
                 runningAccounts={runningAccounts}
-                isOverlayMode={true}
             />
         );
     }
 
     const handleOpenGroup = useCallback(async (groupAccounts) => {
         for (const acc of groupAccounts) {
-            await handleOpenGame(acc);
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Verifica se já está rodando para evitar duplo clique ou estado inválido
+            const isRunning = runningAccounts.some(r => r.accountId === acc.id);
+            if (!isRunning) {
+                await handleOpenGame(acc);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
         }
-    }, [handleOpenGame]);
+    }, [handleOpenGame, runningAccounts]);
+
+    if (!window.electronAPI) {
+        return (
+            <div style={{ color: 'white', padding: '20px', textAlign: 'center' }}>
+                <h1>Erro Crítico</h1>
+                <p>A API do Electron não foi carregada corretamente.</p>
+                <p>Verifique o preload.js ou o console de erros (Ctrl+Shift+I).</p>
+            </div>
+        );
+    }
 
     return (
         <div className="main-layout">
@@ -248,7 +243,7 @@ const App = () => {
                             accounts={accounts}
                             groups={groups}
                             runningAccounts={runningAccounts}
-                            onSaveGroups={handleSaveGroups}
+                            onSaveGroups={saveGroups}
                             onOpenGroup={handleOpenGroup}
                             showConfirm={showConfirm}
                             hideConfirm={hideConfirm}

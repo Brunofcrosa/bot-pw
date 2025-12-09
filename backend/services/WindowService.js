@@ -1,5 +1,8 @@
 const { exec } = require('child_process');
 const { VK_MAP, TARGET_PROCESS_NAME } = require('../constants');
+const { logger } = require('./Logger');
+
+const log = logger.child('WindowService');
 
 
 class WindowService {
@@ -40,7 +43,7 @@ class WindowService {
 
                     resolve(windows);
                 } catch (e) {
-                    console.error('Erro ao analisar JSON:', e);
+                    log.error('Erro ao analisar JSON:', e);
                     resolve([]);
                 }
             });
@@ -72,7 +75,7 @@ class WindowService {
         `.replace(/\s+/g, ' ').trim();
 
         exec(`powershell -ExecutionPolicy Bypass -Command "${powershellScript}"`, (error) => {
-            if (error) console.error(`Falha ao focar janela ${hwnd}: ${error.message}`);
+            if (error) log.error(`Falha ao focar janela ${hwnd}: ${error.message}`);
         });
     }
 
@@ -84,7 +87,7 @@ class WindowService {
 
     focusWindowByPid(pid) {
         if (!pid) {
-            console.error('Tentativa de focar janela sem PID.');
+            log.error('Tentativa de focar janela sem PID.');
             return false;
         }
         this.processManager.sendFocusPid(pid);
@@ -123,7 +126,7 @@ class WindowService {
         const target = windows.find(w => w.pid === parseInt(pid));
 
         if (!target) {
-            console.error(`Janela com PID ${pid} não encontrada.`);
+            log.error(`Janela com PID ${pid} não encontrada.`);
             return false;
         }
 
@@ -150,10 +153,10 @@ class WindowService {
         return new Promise((resolve) => {
             exec(fullCommand, (err) => {
                 if (err) {
-                    console.error(`Erro ao enviar macro: ${err.message}`);
+                    log.error(`Erro ao enviar macro: ${err.message}`);
                     resolve(false);
                 } else {
-                    console.log(`Macro enviada para PID ${pid} (HWND: ${target.hwnd})`);
+                    log.info(`Macro enviada para PID ${pid} (HWND: ${target.hwnd})`);
                     resolve(true);
                 }
             });

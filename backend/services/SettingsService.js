@@ -4,6 +4,9 @@
 
 const fs = require('fs');
 const path = require('path');
+const { logger } = require('./Logger');
+
+const log = logger.child('SettingsService');
 
 const SETTINGS_FILE_NAME = 'settings.json';
 
@@ -47,7 +50,7 @@ class SettingsService {
             }
             return { ...DEFAULT_SETTINGS };
         } catch (error) {
-            console.error('Falha ao carregar configurações:', error.message);
+            log.error('Falha ao carregar configurações:', error.message);
             return { ...DEFAULT_SETTINGS };
         }
     }
@@ -65,10 +68,10 @@ class SettingsService {
             this.settings = this.mergeWithDefaults(settings);
             const data = JSON.stringify(this.settings, null, 2);
             fs.writeFileSync(this.settingsFilePath, data, 'utf8');
-            console.log('Configurações salvas.');
+            log.info('Configurações salvas.');
             return { success: true };
         } catch (error) {
-            console.error('Falha ao salvar configurações:', error.message);
+            log.error('Falha ao salvar configurações:', error.message);
             return { success: false, error: error.message };
         }
     }

@@ -1,9 +1,12 @@
-const { VK_MAP, VK_TO_KEY } = require('../constants');
+const { VK_MAP } = require('../constants');
 
 // Mapeamento de Key Name -> VK Code (gerado a partir do VK_MAP)
 const KEY_TO_VK = Object.fromEntries(
     Object.entries(VK_MAP).map(([key, vk]) => [key, vk])
 );
+const { logger } = require('./Logger');
+
+const log = logger.child('MacroService');
 
 
 class MacroService {
@@ -27,12 +30,12 @@ class MacroService {
         const triggerVk = KEY_TO_VK[triggerKeyName.toUpperCase()];
 
         if (!triggerVk) {
-            console.error(`Tecla desconhecida: ${triggerKeyName}`);
+            log.error(`Tecla desconhecida: ${triggerKeyName}`);
             return { success: false, error: 'Tecla inválida' };
         }
 
         this.activeMacros.set(pid, { triggerVk, sequence, interval });
-        console.log(`Macro registrado via KeyListener: ${triggerKeyName}(${triggerVk}) -> PID ${pid}`);
+        log.info(`Macro registrado via KeyListener: ${triggerKeyName}(${triggerVk}) -> PID ${pid}`);
 
         return { success: true };
     }
@@ -40,8 +43,8 @@ class MacroService {
     async checkAndExecute(pressedVk) {
         for (const [pid, config] of this.activeMacros.entries()) {
             if (config.triggerVk === pressedVk) {
-                console.log(`Gatilho detectado (${pressedVk}) para PID ${pid}`);
-                this.windowService.sendKeySequence(pid, config.sequence, config.interval).catch(console.error);
+                log.info(`Gatilho detectado (${pressedVk}) para PID ${pid}`);
+                this.windowService.sendKeySequence(pid, config.sequence, config.interval).catch(err => log.error(err));
             }
         }
     }
@@ -61,7 +64,7 @@ class MacroService {
 
     unregisterAll() {
         this.activeMacros.clear();
-        console.log('Todas as macros foram removidas.');
+        log.info('Todas as macros foram removidas.');
         return { success: true };
     }
 }

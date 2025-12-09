@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import PropTypes from 'prop-types';
 import { FaGamepad, FaTimes } from 'react-icons/fa';
+import { getClassDisplay } from '../../utils/utils';
 import './GroupControlModal.css';
 
 const GroupControlModal = ({ isOpen, onClose, group, accounts, runningAccounts, isOverlayMode = false }) => {
@@ -24,11 +25,7 @@ const GroupControlModal = ({ isOpen, onClose, group, accounts, runningAccounts, 
         }
     };
 
-    // Função para obter iniciais ou ícone baseado na classe
-    const getClassDisplay = (charClass) => {
-        if (!charClass) return '?';
-        return charClass.substring(0, 2).toUpperCase();
-    };
+
 
     const containerClass = isOverlayMode ? 'group-control-modal overlay-mode' : 'group-control-modal';
     const overlayClass = isOverlayMode ? 'group-control-overlay overlay-mode' : 'group-control-overlay';
@@ -90,4 +87,4 @@ GroupControlModal.defaultProps = {
     group: null
 };
 
-export default GroupControlModal;
+export default memo(GroupControlModal);

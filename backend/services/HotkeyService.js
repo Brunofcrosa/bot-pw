@@ -1,6 +1,9 @@
 const { globalShortcut } = require('electron');
 const { exec } = require('child_process');
 const { VK_MAP, DEFAULT_CYCLE_HOTKEY } = require('../constants');
+const { logger } = require('./Logger');
+
+const log = logger.child('HotkeyService');
 
 
 class HotkeyService {
@@ -32,9 +35,9 @@ class HotkeyService {
             const isRegistered = globalShortcut.register(hotkeyString, callback);
             if (isRegistered) {
                 newHandle = hotkeyString;
-                console.log(`Atalho ${hotkeyType} [${hotkeyString}] registrado.`);
+                log.info(`Atalho ${hotkeyType} [${hotkeyString}] registrado.`);
             } else {
-                console.error(`Falha ao registrar atalho ${hotkeyType} [${hotkeyString}].`);
+                log.error(`Falha ao registrar atalho ${hotkeyType} [${hotkeyString}].`);
             }
         }
 
@@ -94,7 +97,7 @@ class HotkeyService {
         const powershellCommand = `powershell -ExecutionPolicy Bypass -Command "Add-Type -TypeDefinition '[DllImport(\\"user32.dll\\")] public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);' -Name 'User32' -Namespace 'Win32'; ${messageScript}"`;
 
         exec(powershellCommand, (error) => {
-            if (error) console.error(`Falha ao enviar macro para ${hwnd}: ${error.message}`);
+            if (error) log.error(`Falha ao enviar macro para ${hwnd}: ${error.message}`);
         });
         return true;
     }
@@ -127,7 +130,7 @@ class HotkeyService {
 
     unregisterAll() {
         globalShortcut.unregisterAll();
-        console.log('Todos os atalhos globais foram removidos.');
+        log.info('Todos os atalhos globais foram removidos.');
     }
 }
 

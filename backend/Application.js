@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 
 const { PersistenceService } = require('./services/PersistenceService');
@@ -10,6 +10,8 @@ const KeyListenerService = require('./services/KeyListenerService');
 const { BackupService } = require('./services/BackupService');
 const { SettingsService } = require('./services/SettingsService');
 const { logger } = require('./services/Logger');
+
+const log = logger.child('Application');
 
 const PRELOAD_SCRIPT = path.join(__dirname, 'preload.js');
 const HTML_FILE = path.join(__dirname, '..', 'frontend', 'index.html');
@@ -71,13 +73,13 @@ class Application {
         // Backup automático na inicialização
         if (this.settingsService.getSetting('general.autoBackup')) {
             this.backupService.createAutoBackup().then(filePath => {
-                console.log(`[Application] Backup automático criado: ${filePath}`);
+                log.info(`Backup automático criado: ${filePath}`);
             }).catch(err => {
-                console.error('[Application] Falha no backup automático:', err.message);
+                log.error(`Falha no backup automático: ${err.message}`);
             });
         }
 
-        console.log('[Application] Sistema pronto e inicializado.');
+        log.info('Sistema pronto e inicializado.');
     }
 
     applyStoredSettings() {
@@ -108,7 +110,7 @@ class Application {
     }
 
     onWillQuit() {
-        console.log('[Application] Encerrando...');
+        log.info('Encerrando...');
         this.keyListenerService.stop();
         this.hotkeyService.unregisterAll();
         this.processManager.killAll();

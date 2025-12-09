@@ -2,6 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const os = require('os');
+const { logger } = require('./Logger');
+
+const log = logger.child('PersistenceService');
 
 const ACCOUNTS_FILE_SUFFIX = '_accounts.json';
 const GROUPS_FILE_SUFFIX = '_groups.json';
@@ -10,7 +13,7 @@ const SERVERS_FILE_NAME = 'servers.json';
 // Constantes de criptografia
 const ENCRYPTION_ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
-const AUTH_TAG_LENGTH = 16;
+// const AUTH_TAG_LENGTH = 16;
 const SALT_LENGTH = 32;
 
 class PersistenceService {
@@ -44,7 +47,7 @@ class PersistenceService {
 
         // Deriva a chave usando PBKDF2
         this.encryptionKey = crypto.pbkdf2Sync(machineId, salt, 100000, 32, 'sha256');
-        console.log('Chave de criptografia inicializada.');
+        log.info('Chave de criptografia inicializada.');
     }
 
     // Criptografa uma senha
@@ -63,7 +66,7 @@ class PersistenceService {
             // Formato: iv:authTag:encryptedData
             return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
         } catch (error) {
-            console.error('Erro ao criptografar:', error.message);
+            log.error('Erro ao criptografar:', error.message);
             return password; // Fallback para senha original em caso de erro
         }
     }
@@ -93,7 +96,7 @@ class PersistenceService {
 
             return decrypted;
         } catch (error) {
-            console.error('Erro ao descriptografar:', error.message);
+            log.error('Erro ao descriptografar:', error.message);
             return encryptedPassword; // Retorna original em caso de erro
         }
     }
@@ -121,7 +124,7 @@ class PersistenceService {
             }
             return [{ id: 'default', name: 'Servidor Padrão' }];
         } catch (error) {
-            console.error('Falha ao carregar servidores:', error.message);
+            log.error('Falha ao carregar servidores:', error.message);
             return [{ id: 'default', name: 'Servidor Padrão' }];
         }
     }
@@ -133,7 +136,7 @@ class PersistenceService {
             fs.writeFileSync(filePath, data, 'utf8');
             return { success: true };
         } catch (error) {
-            console.error('Falha ao salvar servidores:', error.message);
+            log.error('Falha ao salvar servidores:', error.message);
             return { success: false, error: error.message };
         }
     }
@@ -154,7 +157,7 @@ class PersistenceService {
             }
             return [];
         } catch (error) {
-            console.error(`Falha ao carregar contas para ${serverName}:`, error.message);
+            log.error(`Falha ao carregar contas para ${serverName}:`, error.message);
             return [];
         }
     }
@@ -173,7 +176,7 @@ class PersistenceService {
             fs.writeFileSync(filePath, data, 'utf8');
             return { success: true };
         } catch (error) {
-            console.error(`Falha ao salvar contas para ${serverName}:`, error.message);
+            log.error(`Falha ao salvar contas para ${serverName}:`, error.message);
             return { success: false, error: error.message };
         }
     }
@@ -184,11 +187,11 @@ class PersistenceService {
         try {
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath);
-                console.log(`Arquivo de contas para ${serverId} excluído.`);
+                log.info(`Arquivo de contas para ${serverId} excluído.`);
             }
             return { success: true };
         } catch (error) {
-            console.error(`Falha ao excluir arquivo de contas para ${serverId}:`, error.message);
+            log.error(`Falha ao excluir arquivo de contas para ${serverId}:`, error.message);
             return { success: false, error: error.message };
         }
     }
@@ -203,7 +206,7 @@ class PersistenceService {
             }
             return [];
         } catch (error) {
-            console.error(`Falha ao carregar grupos para ${serverName}:`, error.message);
+            log.error(`Falha ao carregar grupos para ${serverName}:`, error.message);
             return [];
         }
     }
@@ -216,7 +219,7 @@ class PersistenceService {
             fs.writeFileSync(filePath, data, 'utf8');
             return { success: true };
         } catch (error) {
-            console.error(`Falha ao salvar grupos para ${serverName}:`, error.message);
+            log.error(`Falha ao salvar grupos para ${serverName}:`, error.message);
             return { success: false, error: error.message };
         }
     }

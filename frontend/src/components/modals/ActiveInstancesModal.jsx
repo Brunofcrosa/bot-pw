@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import PropTypes from 'prop-types';
 import './ActiveInstancesModal.css';
 import { FaKeyboard, FaRunning, FaRobot, FaTimes } from 'react-icons/fa';
@@ -169,4 +169,4 @@ ActiveInstancesModal.propTypes = {
     hideConfirm: PropTypes.func.isRequired
 };
 
-export default ActiveInstancesModal;
+export default memo(ActiveInstancesModal);

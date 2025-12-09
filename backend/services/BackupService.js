@@ -4,6 +4,9 @@
 
 const fs = require('fs');
 const path = require('path');
+const { logger } = require('./Logger');
+
+const log = logger.child('BackupService');
 
 class BackupService {
     constructor(dataPath) {
@@ -14,6 +17,7 @@ class BackupService {
      * Exporta todas as configurações para um arquivo JSON
      */
     async exportAll() {
+        log.info('Iniciando exportação de backup...');
         const backup = {
             version: '1.0',
             timestamp: new Date().toISOString(),
@@ -29,7 +33,7 @@ class BackupService {
                     const content = fs.readFileSync(filePath, 'utf8');
                     backup.data[file.replace('.json', '')] = JSON.parse(content);
                 } catch (e) {
-                    // Arquivo corrompido, ignorar
+                    log.error(`Erro ao ler arquivo ${file}:`, e);
                 }
             }
         }
@@ -53,7 +57,7 @@ class BackupService {
                     }
                 }
             } catch (e) {
-                // Erro ao processar servers
+                log.error('Erro ao processar backup de servers/contas:', e);
             }
         }
 
@@ -68,10 +72,11 @@ class BackupService {
             try {
                 backup.data.groups[serverId] = JSON.parse(fs.readFileSync(filePath, 'utf8'));
             } catch (e) {
-                // Arquivo corrompido
+                log.error(`Erro ao ler grupos do arquivo ${file}:`, e);
             }
         }
 
+        log.info('Exportação de backup concluída.');
         return backup;
     }
 
@@ -82,9 +87,11 @@ class BackupService {
      */
     async importBackup(backup, options = { overwrite: false }) {
         if (!backup || !backup.data) {
+            log.warn('Tentativa de importar backup inválido.');
             return { success: false, error: 'Backup inválido' };
         }
 
+        log.info('Iniciando importação de backup...');
         const results = { imported: [], errors: [] };
 
         // Importa servidores
@@ -96,6 +103,7 @@ class BackupService {
                     results.imported.push('servers');
                 }
             } catch (e) {
+                log.error('Erro ao importar servers:', e);
                 results.errors.push({ file: 'servers', error: e.message });
             }
         }
@@ -110,11 +118,13 @@ class BackupService {
                         results.imported.push(`groups_${serverId}`);
                     }
                 } catch (e) {
+                    log.error(`Erro ao importar grupos para ${serverId}:`, e);
                     results.errors.push({ file: `groups_${serverId}`, error: e.message });
                 }
             }
         }
 
+        log.info(`Importação concluída. Importados: ${results.imported.length}, Erros: ${results.errors.length}`);
         return {
             success: results.errors.length === 0,
             imported: results.imported,
@@ -137,6 +147,7 @@ class BackupService {
         const backupFile = path.join(backupDir, `backup_${timestamp}.json`);
 
         fs.writeFileSync(backupFile, JSON.stringify(backup, null, 2));
+        log.info(`Backup automático criado em: ${backupFile}`);
 
         // Mantém apenas os últimos 5 backups
         const backups = fs.readdirSync(backupDir)
@@ -146,6 +157,7 @@ class BackupService {
 
         for (let i = 5; i < backups.length; i++) {
             fs.unlinkSync(path.join(backupDir, backups[i]));
+            log.info(`Backup antigo removido: ${backups[i]}`);
         }
 
         return backupFile;

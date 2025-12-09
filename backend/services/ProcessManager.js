@@ -1,126 +1,117 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const { logger } = require('./Logger');
+
+const log = logger.child('ProcessManager');
 
 class ProcessManager {
     constructor(executablesPath) {
         this.executablesPath = executablesPath;
-        this.runningProcesses = new Map();
-        this.runningFocusByPidProcess = null;
+        this.runningProcesses = new Map(); // Map<accountId, ChildProcess>
         this.runningFocusBatchProcess = null;
         this.runningBackgroundFocusBatchProcess = null;
+        this.runningFocusByPidProcess = null;
     }
 
     _spawnHelper(exeName, onDataCallback) {
         const exePath = path.join(this.executablesPath, exeName);
         if (!fs.existsSync(exePath)) {
-            console.error(`[ProcessManager] ` + `Executável '${exeName}' não encontrado em ${exePath}`);
+            log.error(`Executável '${exeName}' não encontrado em ${exePath}`);
             return null;
         }
 
-        const process = spawn(exePath, [], {
-            stdio: ['pipe', 'pipe', 'ignore'],
-            windowsHide: true
-        });
+        const process = spawn(exePath);
 
         process.stdout.on('data', (data) => {
-            const lines = data.toString().split(/\r?\n/).filter(Boolean);
+            const lines = data.toString().split('\n');
             for (const line of lines) {
-                const trimmedLine = line.trim();
-                if (trimmedLine === '[OK]') {
-                    continue;
-                }
+                if (!line.trim()) continue;
                 try {
                     const msg = JSON.parse(line);
                     if (onDataCallback) onDataCallback(msg);
                 } catch (err) {
-                    console.warn(`[ProcessManager] ` + `${exeName} output (raw):`, line);
+                    // Ignora linhas que não são JSON válido
                 }
             }
         });
 
-        console.log(`[ProcessManager] ` + `Script C# "${exeName}" iniciado.`);
+        log.info(`Script C# "${exeName}" iniciado.`);
         return process;
     }
 
-    startFocusBatchScript() {
+    startFocusHelpers() {
         this.runningFocusBatchProcess = this._spawnHelper(
             'focus-window-batch.exe',
-            (msg) => console.log('[focus-batch]', msg)
+            (msg) => log.debug('[focus-batch]', msg)
         );
-    }
 
-    startBackgroundFocusBatchScript() {
         this.runningBackgroundFocusBatchProcess = this._spawnHelper(
             'background-focus-window-batch.exe',
-            (msg) => console.log('[background-focus-batch]', msg)
+            (msg) => log.debug('[background-focus-batch]', msg)
         );
-    }
 
-    startFocusByPidScript() {
-        this.runningFocusByPidProcess = this._spawnHelper('focus-window-by-pid.exe');
-    }
-
-    startFocusHelpers() {
-        this.startFocusBatchScript();
-        this.startBackgroundFocusBatchScript();
-        this.startFocusByPidScript();
+        this.runningFocusByPidProcess = spawn(path.join(this.executablesPath, 'focus-window-by-pid.exe'));
+        this.runningFocusByPidProcess.stdin.setDefaultEncoding('utf-8');
+        log.info('Script C# "focus-window-by-pid.exe" iniciado.');
     }
 
     sendFocusPid(pid) {
         if (!pid) {
-            console.warn(`[ProcessManager] ` + 'sendFocusPid chamado sem PID.');
+            log.warn('sendFocusPid chamado sem PID.');
             return;
         }
         if (this.runningFocusByPidProcess && this.runningFocusByPidProcess.stdin) {
-            console.log(`[ProcessManager] ` + `Solicitando foco (via C#) para PID: ${pid}`);
+            log.debug(`Solicitando foco (via C#) para PID: ${pid}`);
             this.runningFocusByPidProcess.stdin.write(`${pid}\n`);
         } else {
-            console.error(`[ProcessManager] ` + 'Erro: "focus-window-by-pid.exe" não está rodando.');
+            log.error('Erro: "focus-window-by-pid.exe" não está rodando.');
         }
     }
 
     launchGame(args, webContents) {
-        const exeHelperPath = path.join(this.executablesPath, 'open-element.exe');
-        const spawnArgs = [
-            `exe:${args.exePath}`,
-            `user:${args.login}`,
-            `pwd:${args.password}`,
-            `role:${args.characterName}`,
-            `extra:startbypatcher${args.argument ? ` ${args.argument}` : ''}`,
-            `onlyAdd:false`
-        ];
-
         try {
-            const exeDir = path.dirname(exeHelperPath);
-            const child = spawn(exeHelperPath, spawnArgs, {
-                stdio: ['pipe', 'pipe', 'ignore'],
-                windowsHide: true,
-                cwd: exeDir
-            });
+            const helperExe = 'launch-game.exe';
+            const helperPath = path.join(this.executablesPath, helperExe);
+
+            if (!fs.existsSync(helperPath)) {
+                return { success: false, error: 'Executável auxiliar launch-game.exe não encontrado.' };
+            }
+
+            // Argumentos para o helper: id, path_element, login, senha, char, args_extra
+            const spawnArgs = [
+                args.id,
+                args.exePath,
+                args.login,
+                args.password,
+                args.characterName || '',
+                args.argument || ''
+            ];
+
+            const child = spawn(helperPath, spawnArgs);
 
             this.runningProcesses.set(args.id, child);
 
             child.stdout.on('data', (data) => {
-                console.log(`[Launcher Helper]: ${data.toString()}`);
+                log.debug(`[Launcher Helper]: ${data.toString()}`);
                 try {
                     const { status, pid } = JSON.parse(data.toString());
                     if (status === "started" && pid && webContents) {
-                        console.log(`[ProcessManager] ` + `Jogo iniciado com PID: ${pid}. ID da Conta: ${args.id}`);
+                        log.info(`Jogo iniciado com PID: ${pid}. ID da Conta: ${args.id}`);
                         webContents.send('element-opened', { success: true, pid: pid, accountId: args.id });
                     }
                 } catch (e) {
-                    console.warn(`[ProcessManager] ` + 'Não foi possível parsear stdout do helper:', data.toString());
+                    // Ignora erros de parse
                 }
             });
 
-            child.on('error', (err) => {
-                console.error(`[ProcessManager] ` + `Falha ao iniciar processo helper (conta ${args.id}):`, err);
+            child.stderr.on('data', (data) => {
+                log.error(`Falha ao iniciar processo helper (conta ${args.id}):`, data.toString());
                 this.runningProcesses.delete(args.id);
             });
 
             child.on('close', (code) => {
-                console.log(`[ProcessManager] ` + `Processo helper (conta ${args.id}) fechado com código ${code}`);
+                log.info(`Processo helper (conta ${args.id}) fechado com código ${code}`);
                 this.runningProcesses.delete(args.id);
                 if (webContents) {
                     webContents.send('element-closed', { success: true, accountId: args.id });
@@ -130,7 +121,7 @@ class ProcessManager {
             return { success: true, pid: child.pid, accountId: args.id };
 
         } catch (error) {
-            console.error(`[ProcessManager] ` + 'Falha ao executar launchGame:', error);
+            log.error('Falha ao executar launchGame:', error);
             return { success: false, error: error.message };
         }
     }
@@ -138,27 +129,29 @@ class ProcessManager {
     killGameByPid(pid) {
         try {
             process.kill(pid);
-            console.log(`[ProcessManager] ` + `Processo ${pid} finalizado.`);
+            log.info(`Processo ${pid} finalizado.`);
 
             for (const [id, child] of this.runningProcesses.entries()) {
                 if (child.pid === pid) {
                     this.runningProcesses.delete(id);
-                    break;
                 }
             }
             return { success: true, closedPid: pid };
         } catch (error) {
-            console.error(`[ProcessManager] ` + `Falha ao finalizar processo ${pid}: ${error.message}`);
+            log.error(`Falha ao finalizar processo ${pid}: ${error.message}`);
             return { success: false, error: error.message };
         }
     }
 
-    killAll() {
-        this.runningProcesses.forEach((child) => child.kill());
+    cleanup() {
         if (this.runningFocusBatchProcess) this.runningFocusBatchProcess.kill();
         if (this.runningBackgroundFocusBatchProcess) this.runningBackgroundFocusBatchProcess.kill();
         if (this.runningFocusByPidProcess) this.runningFocusByPidProcess.kill();
-        console.log(`[ProcessManager] ` + 'Processos auxiliares e de jogo encerrados.');
+        log.info('Processos auxiliares e de jogo encerrados.');
+    }
+
+    killAll() {
+        this.cleanup();
     }
 }
 

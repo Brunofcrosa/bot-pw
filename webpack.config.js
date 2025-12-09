@@ -3,11 +3,11 @@ const path = require('path');
 module.exports = {
     mode: 'development',
     entry: './frontend/index.js',
-    target: 'electron-renderer',
+    target: 'web',
     output: {
-    path: path.resolve(__dirname, 'frontend'), 
-    filename: 'bundle.js',
-},
+        path: path.resolve(__dirname, 'frontend'),
+        filename: 'bundle.js',
+    },
     resolve: {
         extensions: ['.js', '.jsx'],
     },

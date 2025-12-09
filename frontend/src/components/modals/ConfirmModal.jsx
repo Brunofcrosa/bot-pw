@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import PropTypes from 'prop-types';
 import './ConfirmModal.css';
 
@@ -60,4 +60,4 @@ ConfirmModal.propTypes = {
     type: PropTypes.oneOf(['warning', 'danger', 'info'])
 };
 
-export default ConfirmModal;
+export default memo(ConfirmModal);

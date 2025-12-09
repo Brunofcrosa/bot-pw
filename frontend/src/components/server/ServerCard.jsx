@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import PropTypes from 'prop-types';
 import './ServerCard.css';
 import { FaPlay, FaStop, FaEdit, FaTrash } from 'react-icons/fa';
+import { getClassDisplay } from '../../utils/utils';
 
 const ServerCard = ({
     charName,
@@ -36,7 +37,7 @@ const ServerCard = ({
             <div className="card-content">
                 <div className="card-header">
                     <div className="char-avatar">
-                        {charName ? charName.charAt(0).toUpperCase() : '?'}
+                        {getClassDisplay(charClass)}
                     </div>
                     <div className="char-info">
                         <h4 className="char-name">{charName || 'Desconhecido'}</h4>

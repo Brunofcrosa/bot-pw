@@ -53,6 +53,7 @@ class Logger {
                 console.warn(formattedMessage);
                 break;
             default:
+                // eslint-disable-next-line no-console
                 console.log(formattedMessage);
         }
 
