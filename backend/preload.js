@@ -37,12 +37,18 @@ const ALLOWED_INVOKE_CHANNELS = [
     'load-settings',
     'save-settings',
     // Grupos
-    'open-group-accounts'
+    'open-group-accounts',
+    // Auto Forge & Utils
+    'start-auto-forge',
+    'stop-auto-forge',
+    'capture-coordinates'
 ];
 
 const ALLOWED_RECEIVE_CHANNELS = [
     'element-opened',
-    'element-closed'
+    'element-closed',
+    'auto-forge-event',
+    'auto-forge-stop'
 ];
 
 contextBridge.exposeInMainWorld('electronAPI', {

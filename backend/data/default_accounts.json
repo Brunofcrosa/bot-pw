@@ -1,25 +1,24 @@
 [
   {
-    "id": "acc-1763424342798",
+    "login": "brusz",
+    "password": "45d137904c57665afad2aeae259dfe1f:3c84ce9b0f8527f7d4605cda39f9e725:32000fd51dd2e383c4a2",
     "charName": "brusz",
     "charClass": "arqueiro",
-    "login": "brusz",
-    "password": "10maissa10",
-    "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe",
-    "charAvatarBg": "#cda623"
+    "exePath": "",
+    "id": "acc-1763424342798"
   },
   {
     "id": "acc-1763424353180",
     "charName": "brusz2",
     "charClass": "brusz2",
     "login": "brusz2",
-    "password": "10maissa10",
+    "password": "dff308503d62c9dfeeee15f696c5fba7:58ff6b46445d5734466edeb58c76042d:ae72f6013ef714e7e078",
     "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe",
     "charAvatarBg": "#afacf2"
   },
   {
     "login": "teste",
-    "password": "teste",
+    "password": "8fa9d69a3242d985b30bd64d1c5e55a9:4dfda624ff0e2eb89f0ff6732f86f4c7:fab8a19de4",
     "charName": "teste",
     "charClass": "teste",
     "exePath": ""

@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2025-12-09T22:11:54.901Z",
+  "timestamp": "2025-12-10T00:24:57.095Z",
   "data": {
     "servers": [
       {
@@ -16,13 +16,12 @@
     "accounts": {
       "default": [
         {
-          "id": "acc-1763424342798",
-          "charName": "brusz",
-          "charClass": "arqueiro",
           "login": "brusz",
           "password": "***ENCRYPTED***",
+          "charName": "brusz",
+          "charClass": "arqueiro",
           "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe",
-          "charAvatarBg": "#cda623"
+          "id": "acc-1763424342798"
         },
         {
           "id": "acc-1763424353180",

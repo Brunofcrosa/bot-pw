@@ -6,12 +6,14 @@ const { logger } = require('./Logger');
 const log = logger.child('ProcessManager');
 
 class ProcessManager {
-    constructor(executablesPath) {
+    constructor(executablesPath, titleChangerService) {
         this.executablesPath = executablesPath;
+        this.titleChangerService = titleChangerService;
         this.runningProcesses = new Map(); // Map<accountId, ChildProcess>
         this.runningFocusBatchProcess = null;
         this.runningBackgroundFocusBatchProcess = null;
         this.runningFocusByPidProcess = null;
+        this.crashMonitorInterval = null;
     }
 
     _spawnHelper(exeName, onDataCallback) {
@@ -54,6 +56,24 @@ class ProcessManager {
         this.runningFocusByPidProcess = spawn(path.join(this.executablesPath, 'focus-window-by-pid.exe'));
         this.runningFocusByPidProcess.stdin.setDefaultEncoding('utf-8');
         log.info('Script C# "focus-window-by-pid.exe" iniciado.');
+
+        this.startCrashMonitor();
+    }
+
+    startCrashMonitor() {
+        const { exec } = require('child_process');
+        if (this.crashMonitorInterval) clearInterval(this.crashMonitorInterval);
+
+        // Verifica a cada 10 segundos
+        this.crashMonitorInterval = setInterval(() => {
+            exec('tasklist /FI "IMAGENAME eq creportbugs.exe" /FO CSV /NH', (err, stdout) => {
+                if (err) return;
+                const output = stdout.toString();
+                if (output && output.includes('creportbugs.exe')) {
+                    log.warn('CRASH DETECTADO: creportbugs.exe está rodando!');
+                }
+            });
+        }, 10000);
     }
 
     sendFocusPid(pid) {
@@ -71,21 +91,21 @@ class ProcessManager {
 
     launchGame(args, webContents) {
         try {
-            const helperExe = 'launch-game.exe';
+            const helperExe = 'open-element.exe';
             const helperPath = path.join(this.executablesPath, helperExe);
 
             if (!fs.existsSync(helperPath)) {
-                return { success: false, error: 'Executável auxiliar launch-game.exe não encontrado.' };
+                return { success: false, error: 'Executável auxiliar open-element.exe não encontrado.' };
             }
 
-            // Argumentos para o helper: id, path_element, login, senha, char, args_extra
+            // Argumentos para o open-element.exe (formato key:value)
             const spawnArgs = [
-                args.id,
-                args.exePath,
-                args.login,
-                args.password,
-                args.characterName || '',
-                args.argument || ''
+                `exe:${args.exePath}`,
+                `user:${args.login}`,
+                `pwd:${args.password}`,
+                `role:${args.characterName || ''}`,
+                `extra:startbypatcher${args.argument ? ` ${args.argument}` : ''}`,
+                `onlyAdd:false`
             ];
 
             const child = spawn(helperPath, spawnArgs);
@@ -99,6 +119,13 @@ class ProcessManager {
                     if (status === "started" && pid && webContents) {
                         log.info(`Jogo iniciado com PID: ${pid}. ID da Conta: ${args.id}`);
                         webContents.send('element-opened', { success: true, pid: pid, accountId: args.id });
+
+                        // Tenta mudar o título da janela (aguarda 10s para a janela criar)
+                        if (this.titleChangerService && args.characterName) {
+                            setTimeout(() => {
+                                this.titleChangerService.changeTitle(pid, args.characterName);
+                            }, 10000);
+                        }
                     }
                 } catch (e) {
                     // Ignora erros de parse
@@ -138,15 +165,39 @@ class ProcessManager {
             }
             return { success: true, closedPid: pid };
         } catch (error) {
-            log.error(`Falha ao finalizar processo ${pid}: ${error.message}`);
+            if (error.code !== 'ESRCH') {
+                log.error(`Falha ao finalizar processo ${pid}: ${error.message}`);
+            }
             return { success: false, error: error.message };
         }
+    }
+
+    async launchGroup(accounts, delayMs = 2000, webContents) {
+        const results = [];
+        for (const acc of accounts) {
+            const result = this.launchGame({
+                id: acc.id,
+                exePath: acc.exePath,
+                login: acc.login,
+                password: acc.password,
+                characterName: acc.characterName,
+                argument: acc.argument
+            }, webContents);
+
+            results.push({ accountId: acc.id, ...result });
+
+            // Delay não bloqueante
+            await new Promise(r => setTimeout(r, delayMs));
+        }
+        log.info(`Grupo processado: ${results.length} contas iniciadas.`);
+        return { success: true, results };
     }
 
     cleanup() {
         if (this.runningFocusBatchProcess) this.runningFocusBatchProcess.kill();
         if (this.runningBackgroundFocusBatchProcess) this.runningBackgroundFocusBatchProcess.kill();
         if (this.runningFocusByPidProcess) this.runningFocusByPidProcess.kill();
+        if (this.crashMonitorInterval) clearInterval(this.crashMonitorInterval);
         log.info('Processos auxiliares e de jogo encerrados.');
     }
 

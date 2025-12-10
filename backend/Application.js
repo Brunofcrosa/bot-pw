@@ -9,6 +9,9 @@ const MacroService = require('./services/MacroService');
 const KeyListenerService = require('./services/KeyListenerService');
 const { BackupService } = require('./services/BackupService');
 const { SettingsService } = require('./services/SettingsService');
+const { AutoForgeService } = require('./services/AutoForgeService');
+const { ClickListenerService } = require('./services/ClickListenerService');
+const { TitleChangerService } = require('./services/TitleChangerService');
 const { logger } = require('./services/Logger');
 
 const log = logger.child('Application');
@@ -23,7 +26,9 @@ class Application {
 
         this.persistenceService = new PersistenceService(path.join(__dirname, 'data'));
 
-        this.processManager = new ProcessManager(EXECUTABLES_PATH);
+        this.titleChangerService = new TitleChangerService(EXECUTABLES_PATH);
+
+        this.processManager = new ProcessManager(EXECUTABLES_PATH, this.titleChangerService);
 
         this.windowService = new WindowService(this.processManager);
 
@@ -36,6 +41,10 @@ class Application {
         this.backupService = new BackupService(path.join(__dirname, 'data'));
 
         this.settingsService = new SettingsService(path.join(__dirname, 'data'));
+
+        this.autoForgeService = new AutoForgeService(EXECUTABLES_PATH);
+
+        this.clickListenerService = new ClickListenerService(EXECUTABLES_PATH, this.windowService);
     }
 
     init() {
@@ -219,6 +228,13 @@ class Application {
         ipcMain.handle('load-settings', () => this.settingsService.loadSettings());
         ipcMain.handle('save-settings', (e, settings) => this.settingsService.saveSettings(settings));
 
+        // Auto Forge handlers
+        ipcMain.handle('start-auto-forge', (e, config) => this.autoForgeService.start(config, this.getWebContents()));
+        ipcMain.handle('stop-auto-forge', () => this.autoForgeService.stop());
+
+        // Click Listener handlers
+        ipcMain.handle('capture-coordinates', (e, pid) => this.clickListenerService.getCoordinates(pid));
+
         // Abertura automática de grupo
         ipcMain.handle('open-group-accounts', async (e, { serverName, groupId, delayMs = 2000 }) => {
             const groups = this.persistenceService.loadGroups(serverName);
@@ -232,22 +248,7 @@ class Application {
                 return { success: false, error: 'Nenhuma conta encontrada no grupo' };
             }
 
-            const results = [];
-            for (const acc of groupAccounts) {
-                const result = this.processManager.launchGame({
-                    id: acc.id,
-                    exePath: acc.exePath,
-                    login: acc.login,
-                    password: acc.password,
-                    characterName: acc.characterName,
-                    argument: acc.argument
-                }, this.getWebContents());
-                results.push({ accountId: acc.id, ...result });
-                // Delay entre aberturas para não sobrecarregar
-                await new Promise(r => setTimeout(r, delayMs));
-            }
-            console.log(`[Application] Grupo ${groupId} aberto: ${results.length} contas iniciadas.`);
-            return { success: true, results };
+            return this.processManager.launchGroup(groupAccounts, delayMs, this.getWebContents());
         });
     }
 

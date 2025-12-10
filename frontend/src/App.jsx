@@ -9,10 +9,10 @@ import SettingsModal from './components/modals/SettingsModal';
 import ConfirmModal from './components/modals/ConfirmModal';
 import AccountsView from './components/views/AccountsView';
 import GroupsView from './components/views/GroupsView';
-
+import AutoForgeView from './components/views/AutoForgeView';
 import BottomBar from './components/server/BottomBar';
 import OverlayView from './components/views/OverlayView';
-import { FaCog, FaPlus, FaUsers, FaUser } from 'react-icons/fa';
+import { FaUser, FaUsers, FaPlus, FaCog, FaHammer } from 'react-icons/fa';
 import './App.css';
 
 const App = () => {
@@ -78,7 +78,6 @@ const App = () => {
             } else {
                 const newServers = [...servers, srv];
                 saveServers(newServers);
-                // setCurrentServerId is purely local state, but depends on save
                 setCurrentServerId(srv.id);
             }
             setServerToEdit(null);
@@ -146,6 +145,16 @@ const App = () => {
         await window.electronAPI.invoke('close-element', pid);
     }, []);
 
+    const handleOpenGroup = useCallback(async (groupAccounts) => {
+        for (const acc of groupAccounts) {
+            const isRunning = runningAccounts.some(r => r.accountId === acc.id);
+            if (!isRunning) {
+                await handleOpenGame(acc);
+                await new Promise(resolve => setTimeout(resolve, 1500));
+            }
+        }
+    }, [handleOpenGame, runningAccounts]);
+
     if (isOverlay) {
         return (
             <OverlayView
@@ -156,17 +165,6 @@ const App = () => {
             />
         );
     }
-
-    const handleOpenGroup = useCallback(async (groupAccounts) => {
-        for (const acc of groupAccounts) {
-            // Verifica se já está rodando para evitar duplo clique ou estado inválido
-            const isRunning = runningAccounts.some(r => r.accountId === acc.id);
-            if (!isRunning) {
-                await handleOpenGame(acc);
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-        }
-    }, [handleOpenGame, runningAccounts]);
 
     if (!window.electronAPI) {
         return (
@@ -204,6 +202,12 @@ const App = () => {
                             >
                                 <FaUsers /> Grupos
                             </button>
+                            <button
+                                className={`tab-button ${activeTab === 'autoforge' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('autoforge')}
+                            >
+                                <FaHammer /> Auto Forja
+                            </button>
                         </div>
 
                         <div className="header-actions">
@@ -229,7 +233,7 @@ const App = () => {
                 </div>
 
                 <div className="tab-content">
-                    {activeTab === 'accounts' ? (
+                    {activeTab === 'accounts' && (
                         <AccountsView
                             accounts={accounts}
                             runningAccounts={runningAccounts}
@@ -238,17 +242,19 @@ const App = () => {
                             onEdit={(a) => { setAccountToEdit(a); setIsAccountModalOpen(true); }}
                             onDelete={handleDeleteAccount}
                         />
-                    ) : (
+                    )}
+                    {activeTab === 'groups' && (
                         <GroupsView
                             accounts={accounts}
                             groups={groups}
                             runningAccounts={runningAccounts}
                             onSaveGroups={saveGroups}
-                            onOpenGroup={handleOpenGroup}
+                            onOpenGroup={handleOpenGroup} // Nota: GroupCard pode precisar de ajuste se quisermos usar o loop do backend
                             showConfirm={showConfirm}
                             hideConfirm={hideConfirm}
                         />
                     )}
+                    {activeTab === 'autoforge' && <AutoForgeView />}
                 </div>
             </div>
 
@@ -299,6 +305,7 @@ const App = () => {
             />
         </div>
     );
+
 };
 
 export default App;

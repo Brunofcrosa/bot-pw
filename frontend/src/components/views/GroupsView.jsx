@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { FaPlus, FaUsers, FaPlay, FaTrash, FaGamepad, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaPlus, FaUsers } from 'react-icons/fa';
 import GroupControlModal from '../modals/GroupControlModal';
+import GroupCard from '../groups/GroupCard';
 import './GroupsView.css';
 
 const GroupsView = ({
@@ -132,62 +133,15 @@ const GroupsView = ({
                         );
 
                         return (
-                            <div key={group.id} className="group-card">
-                                <div
-                                    className="group-header-bar"
-                                    style={{ backgroundColor: group.color }}
-                                />
-
-                                <div className="group-content">
-                                    <h3>{group.name}</h3>
-                                    <p className="group-count">
-                                        {groupAccounts.length} conta(s)
-                                    </p>
-
-                                    <div className="group-accounts-preview">
-                                        {groupAccounts.slice(0, 3).map(acc => (
-                                            <div key={acc.id} className="preview-account">
-                                                {acc.charName || acc.login}
-                                            </div>
-                                        ))}
-                                        {groupAccounts.length > 3 && (
-                                            <div className="preview-more">
-                                                +{groupAccounts.length - 3}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="group-actions">
-                                        <button
-                                            className="btn-play-group"
-                                            onClick={() => onOpenGroup(groupAccounts)}
-                                        >
-                                            <FaPlay /> Iniciar
-                                        </button>
-                                        <button
-                                            className="btn-control-group"
-                                            onClick={() => setControlGroup(group)}
-                                            title="Painel de Controle"
-                                        >
-                                            <FaGamepad />
-                                        </button>
-                                        <button
-                                            className="btn-control-group"
-                                            onClick={() => window.electronAPI.invoke('open-group-overlay', group.id)}
-                                            title="Abrir Painel Flutuante"
-                                            style={{ marginLeft: '0.5rem' }}
-                                        >
-                                            <FaExternalLinkAlt />
-                                        </button>
-                                        <button
-                                            className="btn-icon-action"
-                                            onClick={() => handleDeleteGroup(group.id)}
-                                        >
-                                            <FaTrash />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                            <GroupCard
+                                key={group.id}
+                                group={group}
+                                groupAccounts={groupAccounts}
+                                onOpenGroup={onOpenGroup}
+                                onControlGroup={setControlGroup}
+                                onOpenOverlay={(groupId) => window.electronAPI.invoke('open-group-overlay', groupId)}
+                                onDeleteGroup={handleDeleteGroup}
+                            />
                         );
                     })
                 )}
