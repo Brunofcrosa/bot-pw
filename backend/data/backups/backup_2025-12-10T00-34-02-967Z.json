@@ -1,12 +1,12 @@
 {
   "version": "1.0",
-  "timestamp": "2025-12-10T00:24:57.095Z",
+  "timestamp": "2025-12-10T00:34:02.964Z",
   "data": {
     "servers": [
       {
         "id": "default",
         "name": "Servidor Padrão",
-        "exePath": ""
+        "exePath": "C:\\Jogos\\Level Up\\Perfect World\\element\\x64\\elementclient_64.exe"
       },
       {
         "id": "teste",
@@ -20,7 +20,7 @@
           "password": "***ENCRYPTED***",
           "charName": "brusz",
           "charClass": "arqueiro",
-          "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe",
+          "exePath": "",
           "id": "acc-1763424342798"
         },
         {

@@ -1,12 +1,12 @@
 {
   "version": "1.0",
-  "timestamp": "2025-12-10T00:26:36.808Z",
+  "timestamp": "2025-12-10T00:32:19.406Z",
   "data": {
     "servers": [
       {
         "id": "default",
         "name": "Servidor Padrão",
-        "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe"
+        "exePath": "C:\\Jogos\\Level Up\\Perfect World\\element\\x64\\elementclient_64.exe"
       },
       {
         "id": "teste",

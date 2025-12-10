@@ -142,8 +142,19 @@ const App = () => {
     }, [currentServer.exePath, registerStartingInstance, removeInstance, showConfirm, hideConfirm]);
 
     const handleCloseGame = useCallback(async (pid) => {
-        await window.electronAPI.invoke('close-element', pid);
-    }, []);
+        try {
+            const result = await window.electronAPI.invoke('close-element', pid);
+            if (result && result.success) {
+                // Atualiza UI imediatamente para melhor responsividade
+                const account = runningAccounts.find(r => r.pid === pid);
+                if (account) {
+                    removeInstance(account.accountId);
+                }
+            }
+        } catch (error) {
+            console.error("Erro ao fechar jogo:", error);
+        }
+    }, [runningAccounts, removeInstance]);
 
     const handleOpenGroup = useCallback(async (groupAccounts) => {
         for (const acc of groupAccounts) {

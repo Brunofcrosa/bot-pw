@@ -15,7 +15,8 @@ export const useRunningInstances = () => {
 
         const handleElementClosed = (data) => {
             if (data.success) {
-                setRunningAccounts(prev => prev.filter(acc => acc.pid !== data.pid));
+                // Backend envia accountId no evento element-closed
+                setRunningAccounts(prev => prev.filter(acc => acc.accountId !== data.accountId));
             }
         };
 

@@ -9,7 +9,9 @@ class ProcessManager {
     constructor(executablesPath, titleChangerService) {
         this.executablesPath = executablesPath;
         this.titleChangerService = titleChangerService;
-        this.runningProcesses = new Map(); // Map<accountId, ChildProcess>
+        this.runningProcesses = new Map(); // Map<accountId, HelperChildProcess>
+        this.activeGamePids = new Map(); // Map<accountId, GamePID>
+        this.monitoringIntervals = new Map(); // Map<accountId, IntervalID>
         this.runningFocusBatchProcess = null;
         this.runningBackgroundFocusBatchProcess = null;
         this.runningFocusByPidProcess = null;
@@ -118,6 +120,10 @@ class ProcessManager {
                     const { status, pid } = JSON.parse(data.toString());
                     if (status === "started" && pid && webContents) {
                         log.info(`Jogo iniciado com PID: ${pid}. ID da Conta: ${args.id}`);
+
+                        this.activeGamePids.set(args.id, pid);
+                        this.startGameMonitor(args.id, pid, webContents);
+
                         webContents.send('element-opened', { success: true, pid: pid, accountId: args.id });
 
                         // Tenta mudar o título da janela (aguarda 10s para a janela criar)
@@ -140,9 +146,8 @@ class ProcessManager {
             child.on('close', (code) => {
                 log.info(`Processo helper (conta ${args.id}) fechado com código ${code}`);
                 this.runningProcesses.delete(args.id);
-                if (webContents) {
-                    webContents.send('element-closed', { success: true, accountId: args.id });
-                }
+                // NÃO envia element-closed aqui se for código 0, pois o jogo continua rodando.
+                // O monitoramento via PID cuidará de avisar quando o jogo fechar.
             });
 
             return { success: true, pid: child.pid, accountId: args.id };
@@ -153,22 +158,59 @@ class ProcessManager {
         }
     }
 
+    startGameMonitor(accountId, pid, webContents) {
+        if (this.monitoringIntervals.has(accountId)) {
+            clearInterval(this.monitoringIntervals.get(accountId));
+        }
+
+        const interval = setInterval(() => {
+            try {
+                // process.kill(pid, 0) lança erro se o processo não existe
+                process.kill(pid, 0);
+            } catch (e) {
+                // Processo não existe mais
+                log.info(`Jogo detectado como fechado (PID: ${pid}). Conta: ${accountId}`);
+                clearInterval(interval);
+                this.monitoringIntervals.delete(accountId);
+                this.activeGamePids.delete(accountId);
+
+                if (webContents) {
+                    webContents.send('element-closed', { success: true, accountId: accountId });
+                }
+            }
+        }, 2000); // Verifica a cada 2 segundos
+
+        this.monitoringIntervals.set(accountId, interval);
+    }
+
     killGameByPid(pid) {
         try {
             process.kill(pid);
             log.info(`Processo ${pid} finalizado.`);
 
-            for (const [id, child] of this.runningProcesses.entries()) {
-                if (child.pid === pid) {
-                    this.runningProcesses.delete(id);
+            // Limpa o monitoramento para essa conta
+            for (const [accountId, gamePid] of this.activeGamePids.entries()) {
+                if (gamePid === pid) {
+                    this.stopGameMonitor(accountId);
+                    this.activeGamePids.delete(accountId);
+                    break;
                 }
             }
+
             return { success: true, closedPid: pid };
         } catch (error) {
             if (error.code !== 'ESRCH') {
                 log.error(`Falha ao finalizar processo ${pid}: ${error.message}`);
             }
-            return { success: false, error: error.message };
+            // Se falhou pq não existe (ESRCH), ainda consideramos "fechado"
+            return { success: true, closedPid: pid };
+        }
+    }
+
+    stopGameMonitor(accountId) {
+        if (this.monitoringIntervals.has(accountId)) {
+            clearInterval(this.monitoringIntervals.get(accountId));
+            this.monitoringIntervals.delete(accountId);
         }
     }
 
@@ -198,6 +240,13 @@ class ProcessManager {
         if (this.runningBackgroundFocusBatchProcess) this.runningBackgroundFocusBatchProcess.kill();
         if (this.runningFocusByPidProcess) this.runningFocusByPidProcess.kill();
         if (this.crashMonitorInterval) clearInterval(this.crashMonitorInterval);
+
+        // Limpa todos os monitores
+        for (const interval of this.monitoringIntervals.values()) {
+            clearInterval(interval);
+        }
+        this.monitoringIntervals.clear();
+
         log.info('Processos auxiliares e de jogo encerrados.');
     }
 
