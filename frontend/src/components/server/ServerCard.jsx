@@ -37,7 +37,15 @@ const ServerCard = ({
             <div className="card-content">
                 <div className="card-header">
                     <div className="char-avatar">
-                        {getClassDisplay(charClass)}
+                        {accountData.icon ? (
+                            accountData.icon.endsWith('.ico') ? (
+                                <img src={accountData.icon} alt="Class icon" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            ) : (
+                                <span style={{ fontSize: '1.5rem' }}>{accountData.icon}</span>
+                            )
+                        ) : (
+                            getClassDisplay(charClass)
+                        )}
                     </div>
                     <div className="char-info">
                         <h4 className="char-name">{charName || 'Desconhecido'}</h4>

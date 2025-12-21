@@ -48,7 +48,7 @@ class ClickListenerService {
                 }
             });
 
-            proc.on('close', (code) => {
+            proc.on('close', (_code) => {
                 if (!captured) {
                     resolve({ success: false, error: 'Processo encerrado sem captura' });
                 }

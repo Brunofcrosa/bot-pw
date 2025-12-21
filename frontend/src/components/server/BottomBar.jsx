@@ -1,9 +1,23 @@
-import React, { memo } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './BottomBar.css';
 import { FaUsers } from 'react-icons/fa';
 
 const BottomBar = ({ runningCount, onOpenAccountsList }) => {
+    const [appVersion, setAppVersion] = useState('');
+
+    useEffect(() => {
+        const fetchVersion = async () => {
+            try {
+                const version = await window.electronAPI.invoke('get-app-version');
+                setAppVersion(version || '1.0.0');
+            } catch (err) {
+                // Failed to load version - will show unknown
+            }
+        };
+        fetchVersion();
+    }, []);
+
     return (
         <div className="bottom-bar">
             <div>
@@ -19,6 +33,12 @@ const BottomBar = ({ runningCount, onOpenAccountsList }) => {
                 <FaUsers className="me-1" />
                 Listar Contas
             </button>
+
+            {appVersion && (
+                <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    v{appVersion}
+                </span>
+            )}
         </div>
     );
 };

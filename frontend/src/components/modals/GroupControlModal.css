@@ -129,11 +129,13 @@
 
 /* Modos Overlay - Ultra Compacto */
 .group-control-overlay.overlay-mode {
-    background: transparent;
-    backdrop-filter: none;
+    background: transparent !important;
+    backdrop-filter: none !important;
     padding: 0;
     align-items: center;
     justify-content: center;
+    pointer-events: none;
+    /* Permite clicar através da área vazia se o Electron suportar, mas o drag precisa da janela */
 }
 
 .group-control-modal.overlay-mode {
@@ -141,20 +143,25 @@
     height: auto;
     max-width: none;
     border-radius: 8px;
-    background: transparent;
-    border: none;
-    box-shadow: none;
+    /* Glass effect for the bar */
+    background: rgba(30, 30, 36, 0.85) !important;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
     animation: none;
     display: flex;
     flex-direction: row;
     align-items: center;
-    padding: 4px;
-    gap: 4px;
+    padding: 6px 12px;
+    gap: 8px;
     -webkit-app-region: drag;
+    pointer-events: auto;
 }
 
+/* Remove weird hover effect, maybe add a subtle glow instead */
 .group-control-modal.overlay-mode:hover {
-    background: transparent;
+    background: rgba(30, 30, 36, 0.95) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 /* Esconder header no modo overlay */
@@ -168,18 +175,24 @@
     flex-wrap: nowrap;
     gap: 4px;
     overflow: hidden;
-    -webkit-app-region: no-drag;
+    /* Allow dragging on the grid background/gaps */
+    /* -webkit-app-region: no-drag; REMOVED to allow dragging between buttons */
 }
 
 .group-control-modal.overlay-mode .control-btn {
-    height: 36px;
-    width: 36px;
-    min-width: 36px;
-    min-height: 36px;
+    height: 40px;
+    width: 40px;
+    min-width: 40px;
+    min-height: 40px;
     padding: 0;
-    border-radius: 6px;
-    border-width: 1px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.2);
     -webkit-app-region: no-drag;
+    background: var(--bg-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
 }
 
 .group-control-modal.overlay-mode .control-btn:hover:not(:disabled) {
@@ -188,12 +201,31 @@
 }
 
 .group-control-modal.overlay-mode .class-icon {
-    width: 28px;
-    height: 28px;
-    font-size: 0.75rem;
+    width: 100%;
+    height: 100%;
+    font-size: 0.9rem;
     margin-bottom: 0;
+    border-radius: 0;
+    background: transparent;
 }
 
 .group-control-modal.overlay-mode .char-name {
     display: none;
+}
+
+.drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    cursor: grab;
+    padding: 0 8px;
+    border-right: 1px solid var(--border-color);
+    margin-right: 4px;
+    -webkit-app-region: drag;
+    font-size: 1.2rem;
+}
+
+.drag-handle:hover {
+    color: var(--text-primary);
 }

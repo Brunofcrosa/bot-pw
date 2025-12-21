@@ -214,6 +214,18 @@ class ProcessManager {
         }
     }
 
+    getRunningInstances() {
+        // Retorna array com as instâncias ativas
+        const instances = [];
+        for (const [accountId, pid] of this.activeGamePids.entries()) {
+            instances.push({ accountId, pid, status: 'running' });
+        }
+        return instances;
+    }
+
+
+
+
     async launchGroup(accounts, delayMs = 2000, webContents) {
         const results = [];
         for (const acc of accounts) {

@@ -73,7 +73,7 @@ class KeyListenerService extends EventEmitter {
                     const event = JSON.parse(jsonStr);
                     this.emit('key-event', event);
                 } catch (e) {
-                    // Ignore JSON parse error
+                    log.debug('Invalid JSON in key event stream:', e.message);
                 }
             }
             boundary = this.buffer.indexOf('\n');

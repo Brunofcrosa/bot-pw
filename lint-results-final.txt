@@ -1,0 +1,50 @@
+﻿
+> meu-app-electron@1.0.0 lint
+> eslint backend frontend/src --ext .js,.jsx
+
+
+C:\Users\bruno\OneDrive\├ürea de Trabalho\bot\bot-pw\backend\preload.js
+  59:9   warning  Unexpected console statement  no-console
+  67:13  warning  Unexpected console statement  no-console
+  76:13  warning  Unexpected console statement  no-console
+
+C:\Users\bruno\OneDrive\├ürea de Trabalho\bot\bot-pw\backend\services\ClickListenerService.js
+  51:31  warning  'code' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\bruno\OneDrive\├ürea de Trabalho\bot\bot-pw\backend\services\Logger.js
+  50:17  warning  Unexpected console statement  no-console
+  53:17  warning  Unexpected console statement  no-console
+
+C:\Users\bruno\OneDrive\├ürea de Trabalho\bot\bot-pw\frontend\src\App.jsx
+   93:13  warning  Unexpected console statement  no-console
+  106:13  warning  Unexpected console statement  no-console
+  140:13  warning  Unexpected console statement  no-console
+  162:13  warning  Unexpected console statement  no-console
+  184:13  warning  Unexpected console statement  no-console
+
+C:\Users\bruno\OneDrive\├ürea de Trabalho\bot\bot-pw\frontend\src\components\ErrorBoundary.jsx
+   9:37  warning  'error' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  15:9   warning  Unexpected console statement                                             no-console
+
+C:\Users\bruno\OneDrive\├ürea de Trabalho\bot\bot-pw\frontend\src\components\modals\ActiveInstancesModal.jsx
+  16:13  warning  Unexpected console statement  no-console
+  81:21  warning  Unexpected console statement  no-console
+
+C:\Users\bruno\OneDrive\├ürea de Trabalho\bot\bot-pw\frontend\src\components\modals\SettingsModal.jsx
+  27:17  warning  Unexpected console statement  no-console
+  41:13  warning  Unexpected console statement  no-console
+
+C:\Users\bruno\OneDrive\├ürea de Trabalho\bot\bot-pw\frontend\src\components\server\BottomBar.jsx
+  15:17  warning  Unexpected console statement  no-console
+
+C:\Users\bruno\OneDrive\├ürea de Trabalho\bot\bot-pw\frontend\src\components\views\AutoForgeView.jsx
+  58:21  warning  Unexpected console statement                                             no-console
+  62:55  warning  'event' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  68:13  warning  Unexpected console statement                                             no-console
+
+C:\Users\bruno\OneDrive\├ürea de Trabalho\bot\bot-pw\frontend\src\hooks\useBotData.js
+  20:17  warning  Unexpected console statement  no-console
+  39:21  warning  Unexpected console statement  no-console
+
+Ô£û 23 problems (0 errors, 23 warnings)
+

@@ -1,0 +1,28 @@
+[
+  {
+    "login": "brusz",
+    "password": "b3edb4e15de77649ec90c1cd29dfddbb:30bd94858063b4cb9190aa3778b2be6e:c4fe25d5a0322e83b8790ee7dca3c8706fb87c37e5c9501ef254844476f1aff73e8d716ccd0765f5ccee2ff82d2e699c6501bd4f378ba78b060f878e578e024ebcde690f22be65dd5a6abfeb2459de5fdad60a5a3641",
+    "charName": "brusz",
+    "charClass": "arqueiro",
+    "exePath": "",
+    "icon": "file:///C:/Users/bruno/OneDrive/%C3%81rea%20de%20Trabalho/bot/bot-pw/frontend/assets/Arqueiro.ico",
+    "id": "acc-1763424342798"
+  },
+  {
+    "login": "brusz2",
+    "password": "ad53a57be5b61e3d48e955fc8b19976c:7110f9d4878b723af3b90480508eaa80:d32d5dd4112f95914707d4b92673b91a488e068c1c8ea799cedf89a9eb77f0c40e10be31db9df6c2ca6f137dcbf658fbcc2b465bcee1c276393edd3ed417e720f032a0cbab23fe56c0f6afc0bc697a40fa6979170cc8",
+    "charName": "brusz2",
+    "charClass": "brusz2",
+    "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe",
+    "icon": "file:///C:/Users/bruno/OneDrive/%C3%81rea%20de%20Trabalho/bot/bot-pw/frontend/assets/Atiradora.ico",
+    "id": "acc-1763424353180"
+  },
+  {
+    "login": "teste",
+    "password": "2bb97981945e36b9ec4d0f4b73c2b9c2:436129e8528712fc2b04a1eff0d9f085:b13ac37156",
+    "charName": "teste",
+    "charClass": "teste",
+    "exePath": "",
+    "icon": "file:///C:/Users/bruno/OneDrive/%C3%81rea%20de%20Trabalho/bot/bot-pw/frontend/assets/Mago.ico"
+  }
+]

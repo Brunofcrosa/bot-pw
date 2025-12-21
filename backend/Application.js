@@ -153,16 +153,19 @@ class Application {
     }
 
     registerIpcHandlers() {
+        // Persistence handlers - agora async para aguardar locks
         ipcMain.handle('load-servers', () => this.persistenceService.loadServers());
-        ipcMain.handle('save-servers', (e, s) => this.persistenceService.saveServers(s));
-        ipcMain.handle('load-accounts', (e, s) => this.persistenceService.loadAccounts(s));
-        ipcMain.handle('save-accounts', (e, s, acc) => this.persistenceService.saveAccounts(s, acc));
+        ipcMain.handle('save-servers', async (_event, servers) => await this.persistenceService.saveServers(servers));
+        ipcMain.handle('load-accounts', (_event, s) => this.persistenceService.loadAccounts(s));
+        ipcMain.handle('save-accounts', async (_event, s, acc) => await this.persistenceService.saveAccounts(s, acc));
         ipcMain.handle('delete-accounts-file', (e, s) => this.persistenceService.deleteAccountsFile(s));
 
         ipcMain.handle('open-element', (e, args) => this.processManager.launchGame(args, this.getWebContents()));
         ipcMain.handle('close-element', (e, pid) => this.processManager.killGameByPid(pid));
+        ipcMain.handle('get-running-instances', () => this.processManager.getRunningInstances());
         ipcMain.handle('find-pw-windows', () => this.windowService.findPerfectWorldWindows());
         ipcMain.handle('focus-window', (e, pid) => this.windowService.focusWindowByPid(pid));
+
 
         ipcMain.handle('register-macro', async (event, { pid, triggerKey, sequence }) => {
             return this.macroService.registerMacro(pid, triggerKey, sequence);
@@ -183,7 +186,10 @@ class Application {
             return (canceled || filePaths.length === 0) ? null : filePaths[0];
         });
 
-        ipcMain.handle('open-group-overlay', (e, groupId) => this.createOverlayWindow(groupId));
+        ipcMain.handle('open-group-overlay', (_event, groupId, serverId) => {
+            this.createOverlayWindow(groupId, serverId);
+            return { success: true };
+        });
 
         // BackupService handlers
         ipcMain.handle('export-backup', () => this.backupService.exportAll());
@@ -252,7 +258,7 @@ class Application {
         });
     }
 
-    createOverlayWindow(groupId) {
+    createOverlayWindow(groupId, serverId = '') {
         if (this.overlayWindow) {
             this.overlayWindow.close();
             this.overlayWindow = null;
@@ -273,7 +279,7 @@ class Application {
         });
 
         // Carrega a mesma página mas com parâmetro para indicar modo overlay
-        this.overlayWindow.loadURL(`file://${HTML_FILE}?overlay=true&groupId=${groupId}`);
+        this.overlayWindow.loadURL(`file://${HTML_FILE}?overlay=true&groupId=${encodeURIComponent(groupId)}&serverId=${encodeURIComponent(serverId)}`);
 
         this.overlayWindow.on('closed', () => {
             this.overlayWindow = null;

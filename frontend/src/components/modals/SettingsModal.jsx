@@ -24,7 +24,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
     const loadSettings = async () => {
         try {
             if (!window.electronAPI) {
-                console.warn('Electron API not available');
                 return;
             }
             const settings = await window.electronAPI.invoke('load-settings');
@@ -38,7 +37,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
                 setAutoBackup(settings.general?.autoBackup ?? true);
             }
         } catch (err) {
-            console.error('Erro ao carregar settings:', err);
+            // Failed to load settings - will show empty
             setMessage('Erro ao carregar configurações.');
         }
     };

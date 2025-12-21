@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import PropTypes from 'prop-types';
-import { FaGamepad, FaTimes } from 'react-icons/fa';
+import { FaTimes, FaGripVertical } from 'react-icons/fa';
 import { getClassDisplay } from '../../utils/utils';
 import './GroupControlModal.css';
 
@@ -9,9 +9,11 @@ const GroupControlModal = ({ isOpen, onClose, group, accounts, runningAccounts, 
 
     const groupAccounts = accounts.filter(acc => group.accountIds.includes(acc.id));
 
-    // No modo overlay, mostra todas as contas do grupo
-    // (as que não estão rodando ficam desabilitadas)
-    const displayedAccounts = groupAccounts;
+    // No modo overlay, mostra apenas as contas que estão rodando
+    // No modo normal, mostra todas as contas do grupo
+    const displayedAccounts = isOverlayMode
+        ? groupAccounts.filter(acc => runningAccounts.some(r => r.accountId === acc.id && r.pid))
+        : groupAccounts;
 
     const handleFocus = async (accountId) => {
         const running = runningAccounts.find(r => r.accountId === accountId);
@@ -25,8 +27,6 @@ const GroupControlModal = ({ isOpen, onClose, group, accounts, runningAccounts, 
         }
     };
 
-
-
     const containerClass = isOverlayMode ? 'group-control-modal overlay-mode' : 'group-control-modal';
     const overlayClass = isOverlayMode ? 'group-control-overlay overlay-mode' : 'group-control-overlay';
 
@@ -35,10 +35,17 @@ const GroupControlModal = ({ isOpen, onClose, group, accounts, runningAccounts, 
             <div className={containerClass}>
                 <div className="control-header">
                     <h3>{group.name}</h3>
-                    <button onClick={onClose} className="btn-close"><FaTimes /></button>
+                    <button onClick={onClose} className="btn-close" aria-label="Fechar modal">
+                        <FaTimes />
+                    </button>
                 </div>
 
                 <div className="control-grid">
+                    {isOverlayMode && (
+                        <div className="drag-handle" title="Arrastar">
+                            <FaGripVertical />
+                        </div>
+                    )}
                     {displayedAccounts.length === 0 && isOverlayMode && (
                         <div style={{ color: '#aaa', textAlign: 'center', width: '100%' }}>
                             Nenhuma conta rodando neste grupo.
@@ -53,11 +60,26 @@ const GroupControlModal = ({ isOpen, onClose, group, accounts, runningAccounts, 
                                 key={acc.id}
                                 className={`control-btn ${isRunning ? 'running' : 'stopped'}`}
                                 onClick={() => handleFocus(acc.id)}
-                                title={`${acc.charName} (${acc.charClass}) - ${isRunning ? 'Online' : 'Offline'}`}
-                                disabled={!isRunning}
-                            >
+                                title={`${acc.charName} (${acc.charClass}) - ${isRunning ? 'Online' : 'Offline'}`}>
+
                                 <div className="class-icon">
-                                    {getClassDisplay(acc.charClass)}
+                                    {acc.icon ? (
+                                        acc.icon.endsWith('.ico') ? (
+                                            <img
+                                                src={acc.icon}
+                                                alt="Class icon"
+                                                style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    objectFit: 'contain'
+                                                }}
+                                            />
+                                        ) : (
+                                            <span style={{ fontSize: isOverlayMode ? '1.2rem' : '1.5rem' }}>{acc.icon}</span>
+                                        )
+                                    ) : (
+                                        getClassDisplay(acc.charClass)
+                                    )}
                                 </div>
                                 <span className="char-name">{acc.charName || acc.login}</span>
                             </button>

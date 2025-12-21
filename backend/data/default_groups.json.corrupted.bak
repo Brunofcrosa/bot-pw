@@ -1,0 +1,25 @@
+[
+  {
+    "id": "1766328487645",
+    "name": "teste",
+    "accountIds": [
+      "acc-1763424342798",
+      null,
+      "acc-1763424353180",
+      null,
+      null
+    ],
+    "color": "var(--accent-secondary)"
+  },
+  {
+    "id": "1766329350959",
+    "name": "teste",
+    "accountIds": [
+      null,
+      "acc-1763424342798",
+      "acc-1763424353180",
+      null
+    ],
+    "color": "var(--accent-secondary)"
+  }
+]

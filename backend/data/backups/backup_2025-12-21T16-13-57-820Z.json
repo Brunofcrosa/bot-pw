@@ -1,0 +1,64 @@
+{
+  "version": "1.0",
+  "timestamp": "2025-12-21T16:13:57.818Z",
+  "data": {
+    "servers": [
+      {
+        "id": "default",
+        "name": "Servidor Padrão",
+        "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe"
+      },
+      {
+        "id": "teste",
+        "name": "teste"
+      }
+    ],
+    "accounts": {
+      "default": [
+        {
+          "login": "CONTA",
+          "password": "***ENCRYPTED***",
+          "charName": "123",
+          "charClass": "123",
+          "exePath": "",
+          "icon": "file:///C:/Users/bruno/OneDrive/%C3%81rea%20de%20Trabalho/bot/bot-pw/frontend/assets/Arcano.ico",
+          "id": "acc-1766331521545"
+        },
+        {
+          "login": "1244",
+          "password": "***ENCRYPTED***",
+          "charName": "124",
+          "charClass": "14",
+          "exePath": "",
+          "icon": "file:///C:/Users/bruno/OneDrive/%C3%81rea%20de%20Trabalho/bot/bot-pw/frontend/assets/Arqueiro.ico",
+          "id": "acc-1766331758330"
+        }
+      ],
+      "teste": [
+        {
+          "server": "123",
+          "login": "123",
+          "password": "***ENCRYPTED***"
+        },
+        {
+          "server": "123",
+          "login": "1231",
+          "password": "***ENCRYPTED***"
+        }
+      ]
+    },
+    "groups": {
+      "default": [
+        {
+          "id": "1766331563197",
+          "name": "TEWSTE",
+          "accountIds": [
+            "acc-1766331521545",
+            "acc-1766331758330"
+          ],
+          "color": "var(--accent-secondary)"
+        }
+      ]
+    }
+  }
+}

@@ -14,16 +14,15 @@ export const useBotData = () => {
                 const loadedServers = await window.electronAPI.invoke('load-servers');
                 if (Array.isArray(loadedServers) && loadedServers.length > 0) {
                     setServers(loadedServers);
-                    if (!currentServerId) setCurrentServerId(loadedServers[0].id);
+                    setCurrentServerId(prev => prev || loadedServers[0].id);
                 }
             } catch (err) {
-                console.error('Erro ao carregar servidores:', err);
+                // Failed to load servers - will show empty
             } finally {
                 setIsLoading(false);
             }
         };
         fetchServers();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Carregar contas e grupos quando o servidor muda
@@ -37,7 +36,7 @@ export const useBotData = () => {
                     const grps = await window.electronAPI.invoke('load-groups', currentServerId);
                     setGroups(Array.isArray(grps) ? grps : []);
                 } catch (err) {
-                    console.error('Erro ao carregar dados do servidor:', err);
+                    // Failed to load server data - will show empty
                 }
             }
         };

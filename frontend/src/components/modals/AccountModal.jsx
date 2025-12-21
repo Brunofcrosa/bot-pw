@@ -1,5 +1,6 @@
 import React, { useState, useEffect, memo } from 'react';
 import PropTypes from 'prop-types';
+import { CLASS_ICONS } from '../../utils/iconUtils';
 import './AccountModal.css';
 
 const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
@@ -8,7 +9,8 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
         password: '',
         charName: '',
         charClass: '',
-        exePath: ''
+        exePath: '',
+        icon: ''
     });
     const [showPassword, setShowPassword] = useState(false);
 
@@ -20,10 +22,11 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
                     password: accountToEdit.password || '',
                     charName: accountToEdit.charName || '',
                     charClass: accountToEdit.charClass || '',
-                    exePath: accountToEdit.exePath || ''
+                    exePath: accountToEdit.exePath || '',
+                    icon: accountToEdit.icon || ''
                 });
             } else {
-                setFormData({ login: '', password: '', charName: '', charClass: '', exePath: '' });
+                setFormData({ login: '', password: '', charName: '', charClass: '', exePath: '', icon: '' });
             }
             setShowPassword(false);
         }
@@ -45,7 +48,9 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSave({ ...formData, id: accountToEdit?.id });
+        // Gera ID para novas contas, mantém o existente para edição
+        const accountId = accountToEdit?.id || `acc-${Date.now()}`;
+        onSave({ ...formData, id: accountId });
         onClose();
     };
 
@@ -127,6 +132,23 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
                         </div>
 
                         <div className="form-group">
+                            <label>Ícone da Classe</label>
+                            <div className="icon-picker">
+                                {CLASS_ICONS.map(icon => (
+                                    <button
+                                        key={icon.name}
+                                        type="button"
+                                        className={`icon-option ${formData.icon === icon.path ? 'selected' : ''}`}
+                                        onClick={() => setFormData(prev => ({ ...prev, icon: prev.icon === icon.path ? '' : icon.path }))}
+                                        title={icon.name}
+                                    >
+                                        <img src={icon.path} alt={icon.name} className="class-icon-img" />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="form-group">
                             <label htmlFor="exePath">Executável Específico</label>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                 <input
@@ -179,7 +201,8 @@ AccountModal.propTypes = {
         password: PropTypes.string,
         charName: PropTypes.string,
         charClass: PropTypes.string,
-        exePath: PropTypes.string
+        exePath: PropTypes.string,
+        icon: PropTypes.string
     })
 };
 

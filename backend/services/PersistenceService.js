@@ -20,6 +20,7 @@ class PersistenceService {
     constructor(dataFolderPath) {
         this.dataFolderPath = dataFolderPath;
         this.encryptionKey = null;
+        this.writeLocks = new Map(); // Previne escritas concorrentes
         this.initDataFolder();
         this.initEncryptionKey();
     }
@@ -162,22 +163,53 @@ class PersistenceService {
         }
     }
 
-    saveAccounts(serverName, accounts) {
+    async saveAccounts(serverName, accounts) {
         if (!serverName) return { success: false, error: 'Server name missing' };
         const filePath = this.getAccountsFilePath(serverName);
+
+        log.info(`[saveAccounts] Recebido ${accounts.length} contas para salvar em ${serverName}`);
+        log.debug(`[saveAccounts] IDs recebidos: ${accounts.map(a => a?.id).join(', ')}`);
+
+        // Aguarda se já houver uma escrita em andamento
+        const lockKey = `accounts_${serverName}`;
+        while (this.writeLocks.get(lockKey)) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+
         try {
+            this.writeLocks.set(lockKey, true);
+
+            // Valida e filtra contas inválidas
+            const validAccounts = accounts.filter(acc =>
+                acc && acc.id && acc.login && typeof acc === 'object'
+            );
+
+            log.info(`[saveAccounts] ${validAccounts.length} contas válidas após filtro`);
+            if (validAccounts.length < accounts.length) {
+                const removed = accounts.filter(acc => !validAccounts.includes(acc));
+                log.warn(`[saveAccounts] ${removed.length} contas removidas pelo filtro:`, removed.map(a => ({ id: a?.id, login: a?.login })));
+            }
+
             // Criptografa as senhas antes de salvar
-            const encryptedAccounts = accounts.map(acc => ({
+            const encryptedAccounts = validAccounts.map(acc => ({
                 ...acc,
                 password: this.encryptPassword(acc.password)
             }));
 
             const data = JSON.stringify(encryptedAccounts, null, 2);
-            fs.writeFileSync(filePath, data, 'utf8');
+
+            // Atomic write: escreve em temp file primeiro
+            const tempPath = `${filePath}.tmp`;
+            fs.writeFileSync(tempPath, data, 'utf8');
+            fs.renameSync(tempPath, filePath);
+
+            log.info(`[saveAccounts] Salvo com sucesso: ${validAccounts.length} contas`);
             return { success: true };
         } catch (error) {
             log.error(`Falha ao salvar contas para ${serverName}:`, error.message);
             return { success: false, error: error.message };
+        } finally {
+            this.writeLocks.delete(lockKey);
         }
     }
 
@@ -211,16 +243,38 @@ class PersistenceService {
         }
     }
 
-    saveGroups(serverName, groups) {
+    async saveGroups(serverName, groups) {
         if (!serverName) return { success: false, error: 'Server name missing' };
         const filePath = this.getGroupsFilePath(serverName);
+
+        // Aguarda se já houver uma escrita em andamento
+        const lockKey = `groups_${serverName}`;
+        while (this.writeLocks.get(lockKey)) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+
         try {
-            const data = JSON.stringify(groups, null, 2);
-            fs.writeFileSync(filePath, data, 'utf8');
+            this.writeLocks.set(lockKey, true);
+
+            // Limpa null/undefined values dos arrays de accountIds
+            const cleanedGroups = groups.map(g => ({
+                ...g,
+                accountIds: g.accountIds ? g.accountIds.filter(id => id != null) : []
+            }));
+
+            const data = JSON.stringify(cleanedGroups, null, 2);
+
+            // Atomic write: escreve em temp file primeiro
+            const tempPath = `${filePath}.tmp`;
+            fs.writeFileSync(tempPath, data, 'utf8');
+            fs.renameSync(tempPath, filePath);
+
             return { success: true };
         } catch (error) {
             log.error(`Falha ao salvar grupos para ${serverName}:`, error.message);
             return { success: false, error: error.message };
+        } finally {
+            this.writeLocks.delete(lockKey);
         }
     }
 }

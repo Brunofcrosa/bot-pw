@@ -55,17 +55,17 @@ const AutoForgeView = () => {
                         });
                     }
                 } catch (e) {
-                    console.error('Error handling event stats', e);
+                    // Failed to parse event stats
                 }
             });
 
-            window.electronAPI.on('auto-forge-stop', (event) => {
+            window.electronAPI.on('auto-forge-stop', (_event) => {
                 setIsRunning(false);
                 setStats(prev => ({ ...prev, lastAction: 'Parado.' }));
                 setLogs(prev => [`[STOPPED]`, ...prev].slice(0, 50));
             });
         } catch (err) {
-            console.error('Error in AutoForgeView useEffect', err);
+            // Failed to set up event listeners
         }
     }, []);
 

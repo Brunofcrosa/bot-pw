@@ -1,11 +1,27 @@
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import './ActiveInstancesModal.css';
-import { FaKeyboard, FaRunning, FaRobot, FaTimes } from 'react-icons/fa';
+import { FaKeyboard, FaRunning, FaRobot, FaTimes, FaTrash, FaList } from 'react-icons/fa';
 
 const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts, showConfirm, hideConfirm }) => {
     const [selectedInstance, setSelectedInstance] = useState(null);
     const [macroConfig, setMacroConfig] = useState({ trigger: 'F12', sequence: '', interval: 200 });
+    const [macroList, setMacroList] = useState([]);
+
+    const loadMacros = useCallback(async () => {
+        try {
+            const macros = await window.electronAPI.invoke('list-macros');
+            setMacroList(Array.isArray(macros) ? macros : []);
+        } catch (err) {
+            // Failed to load macros - will show empty list
+        }
+    }, []);
+
+    React.useEffect(() => {
+        if (isOpen) {
+            loadMacros();
+        }
+    }, [isOpen, loadMacros]);
 
     if (!isOpen) return null;
 
@@ -41,6 +57,7 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts, show
                 'info'
             );
             setSelectedInstance(null);
+            loadMacros(); // Recarrega a lista
         } else {
             showConfirm(
                 'Erro',
@@ -51,11 +68,39 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts, show
         }
     };
 
+    const handleClearAllMacros = async () => {
+        showConfirm(
+            'Limpar Todas Macros',
+            'Tem certeza que deseja remover todas as macros ativas?',
+            async () => {
+                try {
+                    await window.electronAPI.invoke('unregister-all-macros');
+                    await loadMacros();
+                    hideConfirm();
+                } catch (err) {
+                    // Failed to clear macros
+                    hideConfirm();
+                }
+            },
+            'warning'
+        );
+    };
+
     return (
         <div className="modal-overlay">
             <div className="modal-container instance-modal">
                 <div className="modal-header">
                     <h2><FaRobot className="me-2" /> Instâncias Ativas</h2>
+                    {macroList.length > 0 && (
+                        <button
+                            className="btn-clear-macros"
+                            onClick={handleClearAllMacros}
+                            title="Limpar Todas Macros"
+                            style={{ marginRight: '10px', padding: '6px 12px', fontSize: '0.85rem', background: 'var(--accent-danger)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                            <FaTrash /> Limpar Macros ({macroList.length})
+                        </button>
+                    )}
                     <button className="close-btn" onClick={onClose}>&times;</button>
                 </div>
 
@@ -98,6 +143,31 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts, show
                             <div className="empty-state">
                                 <FaRunning size={40} />
                                 <p>Nenhum jogo aberto no momento.</p>
+                            </div>
+                        )}
+
+                        {macroList.length > 0 && (
+                            <div style={{ marginTop: '20px', padding: '15px', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                                <h4 style={{ margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+                                    <FaList /> Macros Ativas ({macroList.length})
+                                </h4>
+                                <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                                    {macroList.map((macro, idx) => (
+                                        <div
+                                            key={idx}
+                                            style={{
+                                                padding: '8px',
+                                                marginBottom: '6px',
+                                                background: 'rgba(255,255,255,0.03)',
+                                                borderRadius: '4px',
+                                                borderLeft: '3px solid var(--accent-primary)',
+                                                fontSize: '0.85rem'
+                                            }}
+                                        >
+                                            <strong>PID {macro.pid}</strong> - Tecla: <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '3px' }}>{macro.triggerKey}</code>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>

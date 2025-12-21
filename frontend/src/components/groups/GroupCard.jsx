@@ -1,15 +1,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FaPlay, FaGamepad, FaExternalLinkAlt, FaTrash } from 'react-icons/fa';
+import { FaPlay, FaGamepad, FaTrash, FaEdit } from 'react-icons/fa';
 
 const GroupCard = ({
     group,
     groupAccounts,
     onOpenGroup,
-    onControlGroup,
+    onEditGroup,
     onOpenOverlay,
     onDeleteGroup
 }) => {
+
     return (
         <div className="group-card">
             <div
@@ -39,28 +40,30 @@ const GroupCard = ({
                 <div className="group-actions">
                     <button
                         className="btn-play-group"
-                        onClick={() => onOpenGroup(groupAccounts)}
+                        onClick={() => onOpenGroup(group)}
                     >
                         <FaPlay /> Iniciar
                     </button>
                     <button
                         className="btn-control-group"
-                        onClick={() => onControlGroup(group)}
-                        title="Painel de Controle"
+                        onClick={() => onOpenOverlay(group.id)}
+                        title="Modo Gaming (Overlay)"
                     >
                         <FaGamepad />
                     </button>
+
                     <button
-                        className="btn-control-group"
-                        onClick={() => onOpenOverlay(group.id)}
-                        title="Abrir Painel Flutuante"
+                        className="btn-icon-action"
+                        onClick={() => onEditGroup(group)}
+                        title="Editar Grupo"
                         style={{ marginLeft: '0.5rem' }}
                     >
-                        <FaExternalLinkAlt />
+                        <FaEdit />
                     </button>
                     <button
                         className="btn-icon-action"
                         onClick={() => onDeleteGroup(group.id)}
+                        title="Deletar Grupo"
                     >
                         <FaTrash />
                     </button>
@@ -74,9 +77,10 @@ GroupCard.propTypes = {
     group: PropTypes.object.isRequired,
     groupAccounts: PropTypes.array.isRequired,
     onOpenGroup: PropTypes.func.isRequired,
-    onControlGroup: PropTypes.func.isRequired,
+    onEditGroup: PropTypes.func.isRequired,
     onOpenOverlay: PropTypes.func.isRequired,
     onDeleteGroup: PropTypes.func.isRequired
 };
+
 
 export default GroupCard;

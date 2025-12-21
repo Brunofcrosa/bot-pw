@@ -9,6 +9,7 @@ const ALLOWED_INVOKE_CHANNELS = [
     'delete-accounts-file',
     'open-element',
     'close-element',
+    'get-running-instances',
     'find-pw-windows',
     'focus-window',
     'register-macro',
@@ -18,6 +19,7 @@ const ALLOWED_INVOKE_CHANNELS = [
     'get-app-version',
     'select-exe-file',
     'open-group-overlay',
+
     // BackupService
     'export-backup',
     'import-backup',
@@ -56,15 +58,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
         if (ALLOWED_INVOKE_CHANNELS.includes(channel)) {
             return ipcRenderer.invoke(channel, ...args);
         }
-        console.error(`[Preload] Canal IPC não permitido: ${channel}`);
         return Promise.reject(new Error(`Canal IPC não permitido: ${channel}`));
     },
 
     send: (channel, ...args) => {
         if (ALLOWED_INVOKE_CHANNELS.includes(channel)) {
             ipcRenderer.send(channel, ...args);
-        } else {
-            console.error(`[Preload] Canal IPC send não permitido: ${channel}`);
         }
     },
 
@@ -72,8 +71,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
         if (ALLOWED_RECEIVE_CHANNELS.includes(channel)) {
             ipcRenderer.removeAllListeners(channel);
             ipcRenderer.on(channel, (event, ...args) => func(...args));
-        } else {
-            console.error(`[Preload] Canal IPC on não permitido: ${channel}`);
         }
     }
 });

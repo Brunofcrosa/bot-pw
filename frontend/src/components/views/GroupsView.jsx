@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { FaPlus, FaUsers } from 'react-icons/fa';
-import GroupControlModal from '../modals/GroupControlModal';
 import GroupCard from '../groups/GroupCard';
 import './GroupsView.css';
 
@@ -9,6 +8,7 @@ const GroupsView = ({
     accounts = [],
     groups = [],
     runningAccounts = [],
+    currentServerId,
     onSaveGroups,
     onOpenGroup,
     showConfirm,
@@ -17,7 +17,22 @@ const GroupsView = ({
     const [isCreatingGroup, setIsCreatingGroup] = useState(false);
     const [newGroupName, setNewGroupName] = useState('');
     const [selectedAccounts, setSelectedAccounts] = useState([]);
-    const [controlGroup, setControlGroup] = useState(null);
+    const [editingGroup, setEditingGroup] = useState(null);
+
+    const handleOpenGroupEditor = (group = null) => {
+        if (group) {
+            // Modo edição
+            setEditingGroup(group);
+            setNewGroupName(group.name);
+            setSelectedAccounts(group.accountIds);
+        } else {
+            // Modo criação
+            setEditingGroup(null);
+            setNewGroupName('');
+            setSelectedAccounts([]);
+        }
+        setIsCreatingGroup(true);
+    };
 
     const handleCreateGroup = () => {
         if (!newGroupName.trim() || selectedAccounts.length === 0) {
@@ -30,17 +45,29 @@ const GroupsView = ({
             return;
         }
 
-        const newGroup = {
-            id: Date.now().toString(),
-            name: newGroupName,
-            accountIds: selectedAccounts,
-            color: 'var(--accent-secondary)'
-        };
+        if (editingGroup) {
+            // Modo edição - atualiza grupo existente
+            const updatedGroups = groups.map(g =>
+                g.id === editingGroup.id
+                    ? { ...g, name: newGroupName, accountIds: selectedAccounts }
+                    : g
+            );
+            onSaveGroups(updatedGroups);
+        } else {
+            // Modo criação - cria novo grupo
+            const newGroup = {
+                id: Date.now().toString(),
+                name: newGroupName,
+                accountIds: selectedAccounts,
+                color: 'var(--accent-secondary)'
+            };
+            const updatedGroups = [...groups, newGroup];
+            onSaveGroups(updatedGroups);
+        }
 
-        const updatedGroups = [...groups, newGroup];
-        onSaveGroups(updatedGroups);
         setNewGroupName('');
         setSelectedAccounts([]);
+        setEditingGroup(null);
         setIsCreatingGroup(false);
     };
 
@@ -71,7 +98,7 @@ const GroupsView = ({
                 <h2><FaUsers /> Grupos de Contas</h2>
                 <button
                     className="btn-create-group"
-                    onClick={() => setIsCreatingGroup(true)}
+                    onClick={() => handleOpenGroupEditor()}
                 >
                     <FaPlus /> Novo Grupo
                 </button>
@@ -83,8 +110,8 @@ const GroupsView = ({
                 }}>
                     <div className="group-creator">
                         <div className="creator-header">
-                            <h3>Criar Novo Grupo</h3>
-                            <button onClick={() => setIsCreatingGroup(false)}>✕</button>
+                            <h3>{editingGroup ? 'Editar Grupo' : 'Criar Novo Grupo'}</h3>
+                            <button onClick={() => { setIsCreatingGroup(false); setEditingGroup(null); }}>✕</button>
                         </div>
 
                         <input
@@ -112,8 +139,11 @@ const GroupsView = ({
                             </div>
                         </div>
 
-                        <button className="btn-save-group" onClick={handleCreateGroup}>
-                            Criar Grupo
+                        <button
+                            className="btn-save-group"
+                            onClick={handleCreateGroup}
+                        >
+                            {editingGroup ? 'Salvar Alterações' : 'Criar Grupo'}
                         </button>
                     </div>
                 </div>
@@ -138,22 +168,14 @@ const GroupsView = ({
                                 group={group}
                                 groupAccounts={groupAccounts}
                                 onOpenGroup={onOpenGroup}
-                                onControlGroup={setControlGroup}
-                                onOpenOverlay={(groupId) => window.electronAPI.invoke('open-group-overlay', groupId)}
+                                onEditGroup={handleOpenGroupEditor}
+                                onOpenOverlay={(groupId) => window.electronAPI.invoke('open-group-overlay', groupId, currentServerId)}
                                 onDeleteGroup={handleDeleteGroup}
                             />
                         );
                     })
                 )}
             </div>
-
-            <GroupControlModal
-                isOpen={!!controlGroup}
-                onClose={() => setControlGroup(null)}
-                group={controlGroup}
-                accounts={accounts}
-                runningAccounts={runningAccounts}
-            />
         </div>
     );
 };
@@ -162,6 +184,7 @@ GroupsView.propTypes = {
     accounts: PropTypes.array,
     groups: PropTypes.array,
     runningAccounts: PropTypes.array,
+    currentServerId: PropTypes.string,
     onSaveGroups: PropTypes.func.isRequired,
     onOpenGroup: PropTypes.func.isRequired,
     showConfirm: PropTypes.func.isRequired,

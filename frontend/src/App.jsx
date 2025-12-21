@@ -21,6 +21,13 @@ const App = () => {
     const isOverlay = searchParams.get('overlay') === 'true';
     const overlayGroupId = searchParams.get('groupId');
 
+    React.useEffect(() => {
+        if (isOverlay) {
+            document.body.style.backgroundColor = 'transparent';
+            document.getElementById('root').style.backgroundColor = 'transparent';
+        }
+    }, [isOverlay]);
+
     // Hooks de Dados e Processos
     const {
         servers,
@@ -83,7 +90,6 @@ const App = () => {
             setServerToEdit(null);
             setIsAddServerModalOpen(false);
         } catch (error) {
-            console.error('Erro ao salvar servidor:', error);
             showConfirm('Erro', 'Falha ao salvar servidor: ' + error.message, hideConfirm, 'danger');
         }
     }, [servers, serverToEdit, saveServers, setCurrentServerId, showConfirm, hideConfirm]);
@@ -96,7 +102,6 @@ const App = () => {
 
             saveAccounts(newAccounts);
         } catch (error) {
-            console.error('Erro ao salvar conta:', error);
             showConfirm('Erro', 'Falha ao salvar conta: ' + error.message, hideConfirm, 'danger');
         }
     }, [accounts, accountToEdit, saveAccounts, showConfirm, hideConfirm]);
@@ -130,7 +135,6 @@ const App = () => {
                 throw new Error(result?.error || 'Falha desconhecida ao iniciar jogo');
             }
         } catch (error) {
-            console.error('Erro ao abrir jogo:', error);
             showConfirm(
                 'Erro ao Iniciar',
                 `Não foi possível iniciar o jogo para ${acc.charName || acc.login}: ${error.message}`,
@@ -152,19 +156,40 @@ const App = () => {
                 }
             }
         } catch (error) {
-            console.error("Erro ao fechar jogo:", error);
+            // Silently fail - user will notice window didn't close
         }
     }, [runningAccounts, removeInstance]);
 
-    const handleOpenGroup = useCallback(async (groupAccounts) => {
-        for (const acc of groupAccounts) {
-            const isRunning = runningAccounts.some(r => r.accountId === acc.id);
-            if (!isRunning) {
-                await handleOpenGame(acc);
+    const handleOpenGroup = useCallback(async (group) => {
+        try {
+            if (!group || !group.id) {
+                showConfirm('Erro', 'Grupo inválido', hideConfirm, 'danger');
+                return;
+            }
+
+            // Busca as contas do grupo
+            const groupAccounts = accounts.filter(acc => group.accountIds.includes(acc.id));
+
+            if (groupAccounts.length === 0) {
+                showConfirm('Erro', 'Nenhuma conta encontrada neste grupo', hideConfirm, 'warning');
+                return;
+            }
+
+            // Inicia cada conta do grupo
+            for (const account of groupAccounts) {
+                await handleOpenGame(account);
+                // Pequeno delay entre inicializações
                 await new Promise(resolve => setTimeout(resolve, 1500));
             }
+        } catch (error) {
+            showConfirm(
+                'Erro',
+                'Falha ao abrir grupo: ' + error.message,
+                hideConfirm,
+                'danger'
+            );
         }
-    }, [handleOpenGame, runningAccounts]);
+    }, [accounts, handleOpenGame, showConfirm, hideConfirm]);
 
     if (isOverlay) {
         return (
@@ -259,8 +284,9 @@ const App = () => {
                             accounts={accounts}
                             groups={groups}
                             runningAccounts={runningAccounts}
+                            currentServerId={currentServerId}
                             onSaveGroups={saveGroups}
-                            onOpenGroup={handleOpenGroup} // Nota: GroupCard pode precisar de ajuste se quisermos usar o loop do backend
+                            onOpenGroup={(group) => handleOpenGroup(group)}
                             showConfirm={showConfirm}
                             hideConfirm={hideConfirm}
                         />
