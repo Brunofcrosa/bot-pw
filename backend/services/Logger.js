@@ -91,7 +91,7 @@ class Logger {
 const logger = new Logger({
     level: process.env.LOG_LEVEL || 'INFO',
     serviceName: 'Main',
-    logToFile: process.env.NODE_ENV === 'production'
+    logToFile: true // Always log to file for debugging
 });
 
 module.exports = { Logger, logger };

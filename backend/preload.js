@@ -30,6 +30,11 @@ const ALLOWED_INVOKE_CHANNELS = [
     'set-macro-keys',
     'set-focus-on-macro',
     'set-background-macro',
+    'send-combo-to-all',
+    'send-background-keys',
+    'start-auto-combo',
+    'stop-auto-combo',
+    'stop-all-auto-combos',
     // WindowService
     'focus-hwnd',
     // MacroService

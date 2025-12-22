@@ -1,230 +1,400 @@
-import React, { useState, memo, useCallback } from 'react';
+import React, { useState, memo, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './ActiveInstancesModal.css';
-import { FaKeyboard, FaRunning, FaRobot, FaTimes, FaTrash, FaList } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaArrowLeft, FaCog, FaKeyboard, FaLayerGroup, FaInfoCircle, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
 
 const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts, showConfirm, hideConfirm }) => {
-    const [selectedInstance, setSelectedInstance] = useState(null);
-    const [macroConfig, setMacroConfig] = useState({ trigger: 'F12', sequence: '', interval: 200 });
-    const [macroList, setMacroList] = useState([]);
+    // VIEW STATE: 'DASHBOARD' | 'EDITOR'
+    const [viewMode, setViewMode] = useState('DASHBOARD');
 
-    const loadMacros = useCallback(async () => {
-        try {
-            const macros = await window.electronAPI.invoke('list-macros');
-            setMacroList(Array.isArray(macros) ? macros : []);
-        } catch (err) {
-            // Failed to load macros - will show empty list
-        }
-    }, []);
+    // DATA STATE
+    const [presets, setPresets] = useState([]); // Array<{ id, name, triggerKey, commands: [] }>
+    const [activePresetId, setActivePresetId] = useState(null); // ID of the preset being edited
+    const [backgroundMacroEnabled, setBackgroundMacroEnabled] = useState(false);
+    const [activeMacroTriggers, setActiveMacroTriggers] = useState([]); // List of TriggerKeys currently registered
 
-    React.useEffect(() => {
+    // Initial Load
+    useEffect(() => {
         if (isOpen) {
-            loadMacros();
+            window.electronAPI.invoke('load-settings').then(settings => {
+                const loadedPresets = settings?.macro?.presets || [];
+                setPresets(loadedPresets);
+                setBackgroundMacroEnabled(settings?.macro?.backgroundMacro ?? false);
+
+                // Initialize editor with first preset if exists
+                if (loadedPresets.length > 0) {
+                    setActivePresetId(loadedPresets[0].id);
+                }
+            }).catch(() => { });
         }
-    }, [isOpen, loadMacros]);
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
-    const activeInstances = runningAccounts.map(run => {
-        const accDetails = accounts.find(a => a.id === run.accountId);
-        return {
-            ...run,
-            ...accDetails,
-        };
-    });
-
-    const handleOpenConfig = (instance) => {
-        setSelectedInstance(instance);
-        setMacroConfig({ trigger: 'F12', sequence: '', interval: 200 });
-    };
-
-    const handleSaveMacro = async () => {
-        if (!selectedInstance || !selectedInstance.pid) return;
-
-        const sequenceArray = macroConfig.sequence.split(',').map(s => s.trim());
-
-        const result = await window.electronAPI.invoke('register-macro', {
-            pid: selectedInstance.pid,
-            triggerKey: macroConfig.trigger,
-            sequence: sequenceArray
-        });
-
-        if (result && result.success) {
-            showConfirm(
-                'Combo Ativado!',
-                `Combo ativado para ${selectedInstance.charName || 'Personagem'}! Use a tecla ${macroConfig.trigger}.`,
-                hideConfirm,
-                'info'
-            );
-            setSelectedInstance(null);
-            loadMacros(); // Recarrega a lista
-        } else {
-            showConfirm(
-                'Erro',
-                'Erro ao registrar macro: ' + (result?.error || 'Desconhecido'),
-                hideConfirm,
-                'danger'
-            );
+    // --- PERSISTENCE ---
+    const saveSettings = async (updatedPresets, bgEnabled) => {
+        try {
+            const currentSettings = await window.electronAPI.invoke('load-settings');
+            const newSettings = {
+                ...currentSettings,
+                macro: {
+                    ...currentSettings.macro,
+                    presets: updatedPresets,
+                    backgroundMacro: bgEnabled
+                }
+            };
+            await window.electronAPI.invoke('save-settings', newSettings);
+        } catch (error) {
+            console.error("Failed to save settings", error);
         }
     };
 
-    const handleClearAllMacros = async () => {
-        showConfirm(
-            'Limpar Todas Macros',
-            'Tem certeza que deseja remover todas as macros ativas?',
-            async () => {
-                try {
-                    await window.electronAPI.invoke('unregister-all-macros');
-                    await loadMacros();
-                    hideConfirm();
-                } catch (err) {
-                    // Failed to clear macros
-                    hideConfirm();
-                }
-            },
-            'warning'
-        );
+    // --- DASHBOARD ACTIONS ---
+
+    const togglePreset = async (preset) => {
+        // Check if active
+        const isActive = activeMacroTriggers.includes(preset.triggerKey);
+
+        if (isActive) {
+            // Stop
+            await window.electronAPI.invoke('unregister-macro', preset.triggerKey);
+            setActiveMacroTriggers(prev => prev.filter(k => k !== preset.triggerKey));
+        } else {
+            // Start
+            if (!preset.triggerKey || preset.commands.length === 0) {
+                showConfirm('Erro', 'Este macro está incompleto (sem tecla ou comandos).', hideConfirm, 'warning');
+                return;
+            }
+
+            // Map commands to use current PIDs
+            const validCommands = preset.commands.map(cmd => {
+                const run = runningAccounts.find(r => r.accountId === cmd.accountId);
+                if (!run) return null;
+                return {
+                    pid: run.pid,
+                    accountId: cmd.accountId, // kept for reference if needed
+                    actionKey: cmd.key.toUpperCase(),
+                    delay: cmd.delay
+                };
+            }).filter(c => c !== null);
+
+            if (validCommands.length === 0) {
+                showConfirm('Erro', 'As contas cadastradas neste macro não estão abertas.', hideConfirm, 'danger');
+                return;
+            }
+
+            await window.electronAPI.invoke('register-macro', {
+                triggerKey: preset.triggerKey,
+                commands: validCommands,
+                loop: preset.loop || false
+            });
+            setActiveMacroTriggers(prev => [...prev, preset.triggerKey]);
+        }
     };
+
+    const goToEditor = () => {
+        if (presets.length === 0) {
+            addNewPreset();
+        } else if (!activePresetId && presets.length > 0) {
+            setActivePresetId(presets[0].id);
+        }
+        setViewMode('EDITOR');
+    };
+
+    // --- EDITOR ACTIONS ---
+    const addNewPreset = () => {
+        const newPreset = {
+            id: Date.now(),
+            name: `Novo Macro ${presets.length + 1}`,
+            triggerKey: '',
+            loop: false,
+            commands: []
+        };
+        const updated = [...presets, newPreset];
+        setPresets(updated);
+        setActivePresetId(newPreset.id);
+        saveSettings(updated, backgroundMacroEnabled);
+    };
+
+    const deletePreset = (id) => {
+        const updated = presets.filter(p => p.id !== id);
+        setPresets(updated);
+        saveSettings(updated, backgroundMacroEnabled);
+
+        if (activePresetId === id) {
+            setActivePresetId(updated.length > 0 ? updated[0].id : null);
+        }
+    };
+
+    const updatePreset = (id, field, value) => {
+        const updated = presets.map(p => p.id === id ? { ...p, [field]: value } : p);
+        setPresets(updated);
+    };
+
+    // Command Management
+    const getActivePreset = () => presets.find(p => p.id === activePresetId);
+
+    const addCommand = () => {
+        if (!activePresetId) return;
+        const current = getActivePreset();
+        const newCmd = {
+            id: Date.now(),
+            accountId: runningAccounts.length > 0 ? runningAccounts[0].accountId : '',
+            key: '',
+            delay: 200
+        };
+        updatePreset(activePresetId, 'commands', [...current.commands, newCmd]);
+    };
+
+    const updateCommand = (cmdId, field, value) => {
+        if (!activePresetId) return;
+        const current = getActivePreset();
+        const newCmds = current.commands.map(c => c.id === cmdId ? { ...c, [field]: value } : c);
+        updatePreset(activePresetId, 'commands', newCmds);
+    };
+
+    const removeCommand = (cmdId) => {
+        if (!activePresetId) return;
+        const current = getActivePreset();
+        updatePreset(activePresetId, 'commands', current.commands.filter(c => c.id !== cmdId));
+    };
+
+    const handleBackToDashboard = () => {
+        saveSettings(presets, backgroundMacroEnabled);
+        setViewMode('DASHBOARD');
+    };
+
+
+    // Helper for merged accounts display
+    const mergedAccounts = runningAccounts.map(run => {
+        const details = accounts.find(a => a.id === run.accountId);
+        return { ...run, ...details };
+    });
 
     return (
         <div className="modal-overlay">
             <div className="modal-container instance-modal">
                 <div className="modal-header">
-                    <h2><FaRobot className="me-2" /> Instâncias Ativas</h2>
-                    {macroList.length > 0 && (
-                        <button
-                            className="btn-clear-macros"
-                            onClick={handleClearAllMacros}
-                            title="Limpar Todas Macros"
-                            style={{ marginRight: '10px', padding: '6px 12px', fontSize: '0.85rem', background: 'var(--accent-danger)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                        >
-                            <FaTrash /> Limpar Macros ({macroList.length})
-                        </button>
-                    )}
+                    <h2><FaLayerGroup /> {viewMode === 'DASHBOARD' ? 'Central de Macros' : 'Editor de Macros'}</h2>
                     <button className="close-btn" onClick={onClose}>&times;</button>
                 </div>
 
-                <div className="modal-body-split">
-                    <div className="instance-list">
-                        {activeInstances.length > 0 ? (
-                            <table className="dark-table">
-                                <thead>
-                                    <tr>
-                                        <th>PID</th>
-                                        <th>Personagem</th>
-                                        <th>Servidor</th>
-                                        <th>Ação</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {activeInstances.map((inst) => (
-                                        <tr key={inst.pid} className={selectedInstance?.pid === inst.pid ? 'selected-row' : ''}>
-                                            <td className="pid-cell">{inst.pid}</td>
-                                            <td>
-                                                <div className="char-info-cell">
-                                                    <span className="status-dot online"></span>
-                                                    {inst.charName || inst.login || 'Desconhecido'}
-                                                </div>
-                                            </td>
-                                            <td>{inst.server || '-'}</td>
-                                            <td>
-                                                <button
-                                                    className="btn-config-macro"
-                                                    onClick={() => handleOpenConfig(inst)}
-                                                >
-                                                    <FaKeyboard /> Configurar
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        ) : (
-                            <div className="empty-state">
-                                <FaRunning size={40} />
-                                <p>Nenhum jogo aberto no momento.</p>
-                            </div>
-                        )}
-
-                        {macroList.length > 0 && (
-                            <div style={{ marginTop: '20px', padding: '15px', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                                <h4 style={{ margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
-                                    <FaList /> Macros Ativas ({macroList.length})
-                                </h4>
-                                <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
-                                    {macroList.map((macro, idx) => (
-                                        <div
-                                            key={idx}
-                                            style={{
-                                                padding: '8px',
-                                                marginBottom: '6px',
-                                                background: 'rgba(255,255,255,0.03)',
-                                                borderRadius: '4px',
-                                                borderLeft: '3px solid var(--accent-primary)',
-                                                fontSize: '0.85rem'
-                                            }}
-                                        >
-                                            <strong>PID {macro.pid}</strong> - Tecla: <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '3px' }}>{macro.triggerKey}</code>
+                {viewMode === 'DASHBOARD' && (
+                    <div className="dashboard-view">
+                        <div>
+                            <div className="dashboard-section-title">Contas em Execução {mergedAccounts.length > 0 && `(${mergedAccounts.length})`}</div>
+                            <div className="running-accounts-grid">
+                                {mergedAccounts.length === 0 && <span className="empty-state-text">Nenhuma conta detectada.</span>}
+                                {mergedAccounts.map(acc => (
+                                    <div key={acc.pid} className="account-card">
+                                        <div className="account-card-icon">
+                                            {acc.icon && acc.icon.endsWith('.ico')
+                                                ? <img src={acc.icon} alt="" />
+                                                : <span>{acc.icon || '🎮'}</span>
+                                            }
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {selectedInstance && (
-                        <div className="macro-config-panel">
-                            <div className="panel-header">
-                                <h3>Configurar Combo</h3>
-                                <button className="btn-close-panel" onClick={() => setSelectedInstance(null)}><FaTimes /></button>
-                            </div>
-
-                            <p className="target-info">
-                                Alvo: <strong>{selectedInstance.charName || selectedInstance.login}</strong>
-                                <br />
-                                <span className="pid-badge">PID: {selectedInstance.pid}</span>
-                            </p>
-
-                            <div className="form-group">
-                                <label>Tecla de Ativação (Gatilho)</label>
-                                <input
-                                    type="text"
-                                    className="dark-input"
-                                    value={macroConfig.trigger}
-                                    onChange={(e) => setMacroConfig({ ...macroConfig, trigger: e.target.value.toUpperCase() })}
-                                    placeholder="Ex: F12"
-                                />
-                                <small>Tecla global que inicia o combo.</small>
-                            </div>
-
-                            <div className="form-group">
-                                <label>Sequência (Skills/Teclas)</label>
-                                <input
-                                    type="text"
-                                    className="dark-input"
-                                    value={macroConfig.sequence}
-                                    onChange={(e) => setMacroConfig({ ...macroConfig, sequence: e.target.value })}
-                                    placeholder="Ex: 1, 2, F1, 3"
-                                />
-                                <small>Separe as teclas por vírgula.</small>
-                            </div>
-
-                            <div className="form-group">
-                                <label>Intervalo entre teclas (ms)</label>
-                                <input
-                                    type="number"
-                                    className="dark-input"
-                                    value={macroConfig.interval}
-                                    onChange={(e) => setMacroConfig({ ...macroConfig, interval: parseInt(e.target.value) })}
-                                />
-                            </div>
-
-                            <div className="panel-actions">
-                                <button className="btn-save" onClick={handleSaveMacro}>Ativar Combo</button>
+                                        <div className="account-card-info">
+                                            <span className="account-card-name">{acc.charName || acc.login}</span>
+                                            <span className="account-card-pid">PID: {acc.pid}</span>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                    )}
-                </div>
+
+                        <div className="macro-controls-section">
+                            <div className="macro-controls-header">
+                                <div className="dashboard-section-title no-margin">Listagem de Macros</div>
+                            </div>
+
+                            <div className="help-banner">
+                                <FaInfoCircle style={{ fontSize: '1.2rem' }} />
+                                <div>
+                                    Para utilizar, <strong>ative a chave</strong> do macro desejado abaixo.
+                                    Quando estiver ativo, basta pressionar a <strong>Tecla de Ativação</strong> no teclado para executar.
+                                </div>
+                            </div>
+
+                            <div className="macro-list">
+                                {presets.length === 0 && (
+                                    <div className="macro-list-empty">
+                                        Nenhum macro criado.<br />
+                                        Clique em <strong>Configurar Macros</strong> para criar o primeiro.
+                                    </div>
+                                )}
+                                {presets.map(preset => {
+                                    const isActive = activeMacroTriggers.includes(preset.triggerKey);
+                                    return (
+                                        <div key={preset.id} className={`macro-item ${isActive ? 'active' : ''}`}>
+                                            <div className="macro-info-group">
+                                                <span className="macro-name">{preset.name}</span>
+                                                <div className="macro-status-row">
+                                                    <span className="key-badge">{preset.triggerKey || '?'}</span>
+                                                    {isActive ? (
+                                                        <span className="status-text active"><FaCheckCircle /> Aguardando Tecla... {preset.loop && '(Loop)'}</span>
+                                                    ) : (
+                                                        <span className="status-text inactive"><FaExclamationCircle /> Inativo</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <label className="macro-toggle">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isActive}
+                                                    onChange={() => togglePreset(preset)}
+                                                    disabled={!preset.triggerKey}
+                                                />
+                                                <span className="slider"></span>
+                                            </label>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="dashboard-actions">
+                                <button className="btn-large-primary" onClick={goToEditor}>
+                                    <FaCog /> Configurar Macros
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {viewMode === 'EDITOR' && (
+                    <div className="editor-view">
+                        <div className="tabs-bar">
+                            {presets.map(p => (
+                                <button
+                                    key={p.id}
+                                    className={`tab ${activePresetId === p.id ? 'active' : ''}`}
+                                    onClick={() => setActivePresetId(p.id)}
+                                >
+                                    {p.name}
+                                </button>
+                            ))}
+                            <button className="tab-add" onClick={addNewPreset}><FaPlus /></button>
+                        </div>
+
+                        <div className="editor-body">
+                            {activePresetId ? (
+                                <>
+                                    {/* Left: Commands */}
+                                    <div className="commands-panel">
+                                        <div className="panel-header">
+                                            <span className="panel-title">Sequência de Comandos</span>
+                                            <button className="tab-add tab-add-btn-small" onClick={addCommand}>
+                                                <FaPlus style={{ marginRight: 6 }} /> Add
+                                            </button>
+                                        </div>
+                                        <div className="commands-list">
+                                            {getActivePreset()?.commands.map((cmd, idx) => (
+                                                <div key={cmd.id} className="command-row">
+                                                    <div className="cmd-index">{idx + 1}</div>
+                                                    <select
+                                                        className="cmd-select"
+                                                        value={cmd.accountId}
+                                                        onChange={e => updateCommand(cmd.id, 'accountId', e.target.value)}
+                                                    >
+                                                        <option value="">Selecione Conta...</option>
+                                                        {mergedAccounts.map(acc => (
+                                                            <option key={acc.accountId} value={acc.accountId}>
+                                                                {acc.charName || acc.login} (PID: {acc.pid})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <input
+                                                        className="cmd-key"
+                                                        placeholder="KEY"
+                                                        maxLength={3}
+                                                        value={cmd.key}
+                                                        onChange={e => updateCommand(cmd.id, 'key', e.target.value)}
+                                                    />
+                                                    <div className="cmd-delay-wrapper">
+                                                        <input
+                                                            type="number"
+                                                            className="cmd-delay"
+                                                            placeholder="0"
+                                                            value={cmd.delay}
+                                                            onChange={e => updateCommand(cmd.id, 'delay', e.target.value)}
+                                                        />
+                                                        <span className="cmd-delay-unit">ms</span>
+                                                    </div>
+                                                    <div className="cmd-actions">
+                                                        <button onClick={() => removeCommand(cmd.id)}><FaTrash /></button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {getActivePreset()?.commands.length === 0 && (
+                                                <div className="commands-list-empty">
+                                                    Adicione comandos para este macro.
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Right: Settings */}
+                                    <div className="settings-panel">
+                                        <div className="settings-header">DETALHES DO MACRO {getActivePreset()?.name}</div>
+
+                                        <div className="settings-group">
+                                            <label>Nome do Preset</label>
+                                            <input
+                                                className="settings-input"
+                                                value={getActivePreset()?.name}
+                                                onChange={e => updatePreset(activePresetId, 'name', e.target.value)}
+                                                placeholder="Ex: Combo Guerreiro"
+                                            />
+                                        </div>
+                                        <div className="settings-group">
+                                            <label><FaKeyboard style={{ marginRight: 6 }} /> Tecla de Ativação (Gatilho)</label>
+                                            <input
+                                                className="settings-input trigger-input"
+                                                value={getActivePreset()?.triggerKey}
+                                                onChange={e => updatePreset(activePresetId, 'triggerKey', e.target.value.toUpperCase())}
+                                                maxLength={3}
+                                                placeholder="F1"
+                                            />
+                                            <small className="trigger-help-text">
+                                                Essa é a tecla que você aperta para <strong>rodar</strong> o macro.
+                                            </small>
+                                        </div>
+
+                                        <div className="settings-group">
+                                            <label>Opções de Execução</label>
+                                            <div className="checkbox-group">
+                                                <label className="checkbox-label">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={getActivePreset()?.loop || false}
+                                                        onChange={e => updatePreset(activePresetId, 'loop', e.target.checked)}
+                                                    />
+                                                    <span>Repetir em Loop (Execução Contínua)</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            className="delete-btn"
+                                            onClick={() => deletePreset(activePresetId)}
+                                        >
+                                            <FaTrash /> Excluir Preset
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="editor-empty-state">
+                                    Selecione ou crie um novo macro.
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="editor-footer">
+                            <button className="back-btn" onClick={handleBackToDashboard}>
+                                <FaArrowLeft /> Salvar & Voltar
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { FaPlus, FaUsers } from 'react-icons/fa';
+import ActiveInstancesModal from '../modals/ActiveInstancesModal';
 import GroupCard from '../groups/GroupCard';
 import './GroupsView.css';
 
@@ -18,6 +19,7 @@ const GroupsView = ({
     const [newGroupName, setNewGroupName] = useState('');
     const [selectedAccounts, setSelectedAccounts] = useState([]);
     const [editingGroup, setEditingGroup] = useState(null);
+    const [instancesGroup, setInstancesGroup] = useState(null);
 
     const handleOpenGroupEditor = (group = null) => {
         if (group) {
@@ -91,6 +93,19 @@ const GroupsView = ({
                 : [...prev, accountId]
         );
     };
+
+    const handleShowInstances = (groupId) => {
+        setInstancesGroup(groupId);
+    };
+
+    // Filtra running accounts para mostrar apenas do grupo selecionado
+    const currentInstancesGroup = groups.find(g => g.id === instancesGroup);
+    const filteredRunningAccounts = currentInstancesGroup
+        ? runningAccounts.filter(r => {
+            const account = accounts.find(a => a.id === r.accountId);
+            return account && currentInstancesGroup.accountIds.includes(account.id);
+        })
+        : [];
 
     return (
         <div className="groups-view">
@@ -170,12 +185,22 @@ const GroupsView = ({
                                 onOpenGroup={onOpenGroup}
                                 onEditGroup={handleOpenGroupEditor}
                                 onOpenOverlay={(groupId) => window.electronAPI.invoke('open-group-overlay', groupId, currentServerId)}
+                                onShowInstances={handleShowInstances}
                                 onDeleteGroup={handleDeleteGroup}
                             />
                         );
                     })
                 )}
             </div>
+
+            <ActiveInstancesModal
+                isOpen={!!instancesGroup}
+                onClose={() => setInstancesGroup(null)}
+                runningAccounts={filteredRunningAccounts}
+                accounts={accounts}
+                showConfirm={showConfirm}
+                hideConfirm={hideConfirm}
+            />
         </div>
     );
 };

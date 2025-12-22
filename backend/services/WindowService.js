@@ -1,4 +1,6 @@
-const { exec } = require('child_process');
+const { exec, spawn } = require('child_process');
+const path = require('path');
+const { app } = require('electron');
 const { VK_MAP, TARGET_PROCESS_NAME } = require('../constants');
 const { logger } = require('./Logger');
 
@@ -11,6 +13,31 @@ class WindowService {
         this.window_handles_for_cycle = [];
         this.last_window_handles = [];
         this.current_window_index = 0;
+
+        this.senderProcess = null;
+        this.backgroundSenderProcess = null;
+        this.startSender();
+        this.startBackgroundSender();
+    }
+
+    startSender() {
+        const psScript = path.join(__dirname, '..', 'scripts', 'ps-sender.ps1');
+        log.info(`Iniciando sender de teclas persistente: ${psScript}`);
+
+        this.senderProcess = spawn('powershell', ['-ExecutionPolicy', 'Bypass', '-File', psScript]);
+
+        this.senderProcess.stdout.on('data', (data) => {
+            log.debug(`[Sender]: ${data}`);
+        });
+
+        this.senderProcess.stderr.on('data', (data) => {
+            log.error(`[Sender Error]: ${data}`);
+        });
+
+        this.senderProcess.on('close', (code) => {
+            log.warn(`Sender process closed with code ${code}. Restarting...`);
+            setTimeout(() => this.startSender(), 2000);
+        });
     }
 
     findPerfectWorldWindows() {
@@ -122,10 +149,10 @@ class WindowService {
     }
 
     async sendKeySequence(pid, keys, interval = 200) {
-        const windows = await this.findPerfectWorldWindows();
-        const target = windows.find(w => w.pid === parseInt(pid));
+        // Get HWND directly from PID using a fast PowerShell query
+        const hwnd = await this.getHwndFromPid(pid);
 
-        if (!target) {
+        if (!hwnd) {
             log.error(`Janela com PID ${pid} não encontrada.`);
             return false;
         }
@@ -134,30 +161,128 @@ class WindowService {
 
         if (vkCodes.length === 0) return false;
 
-        const scriptActions = vkCodes.map(vk => `
-            [Win32.User32]::PostMessage($hWnd, 0x0100, ${vk}, 0); 
-            Start-Sleep -Milliseconds ${Math.max(50, interval)}; 
-            [Win32.User32]::PostMessage($hWnd, 0x0101, ${vk}, 0); 
-            Start-Sleep -Milliseconds ${Math.max(50, interval)};
-        `).join('');
+        if (this.senderProcess && !this.senderProcess.killed) {
+            // Send to persistent process: HWND|VKs|INTERVAL
+            const cmd = `${hwnd}|${vkCodes.join(',')}|${interval}\n`;
+            this.senderProcess.stdin.write(cmd);
+            log.info(`Enviado (Persistent) para PID ${pid} (HWND: ${hwnd}): ${cmd.trim()}`);
+            return true;
+        } else {
+            log.error('Sender process not running. Fallback is disabled.');
+            return false;
+        }
+    }
 
-        const psCommand = `
-            $code = '[DllImport("user32.dll")] public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);';
-            $type = Add-Type -MemberDefinition $code -Name "User32" -Namespace Win32 -PassThru;
-            $hWnd = [IntPtr]::new(${target.hwnd});
-            ${scriptActions}
-        `;
+    // --- Background Combo Implementation ---
 
-        const fullCommand = `powershell -ExecutionPolicy Bypass -Command "${psCommand.replace(/"/g, '\\"')}"`;
+    startBackgroundSender() {
+        const exeName = 'background-focus-window-batch.exe';
+        let exePath;
 
+        if (!app.isPackaged) {
+            exePath = path.join(__dirname, '..', '..', 'executaveis', exeName);
+        } else {
+            exePath = path.join(process.resourcesPath, 'executaveis', exeName);
+        }
+
+        // Fallback if not found in root executaveis (development structure variation)
+        if (!app.isPackaged && !require('fs').existsSync(exePath)) {
+            exePath = path.join(__dirname, '..', '..', 'help', 'shared', 'exe', exeName);
+        }
+
+        log.info(`Iniciando Background Sender: ${exePath}`);
+
+        this.backgroundSenderProcess = spawn(exePath, [], {
+            stdio: ['pipe', 'pipe', 'ignore'],
+            windowsHide: true
+        });
+
+        this.backgroundSenderProcess.stdout.on('data', (data) => {
+            const lines = data.toString().split(/\r?\n/).filter(Boolean);
+            for (const line of lines) {
+                try {
+                    const msg = JSON.parse(line);
+                    if (msg.status === 'error') {
+                        log.error(`[BackgroundSender Error]: ${msg.message}`);
+                    } else if (msg.status === 'done' || msg.status === 'cancelled') {
+                        log.info(`[BackgroundSender]: Job ${msg.jobId} ${msg.status}`);
+                    }
+                } catch (e) {
+                    log.debug(`[BackgroundSender Raw]: ${line}`);
+                }
+            }
+        });
+
+        this.backgroundSenderProcess.on('close', (code) => {
+            log.warn(`Background Sender process closed with code ${code}. Restarting...`);
+            setTimeout(() => this.startBackgroundSender(), 3000);
+        });
+
+        this.backgroundSenderProcess.on('error', (err) => {
+            log.error(`Falha ao iniciar Background Sender: ${err.message}`);
+        });
+    }
+
+    sendBatchSequence(jobId, commands, loop = false) {
+        if (!this.backgroundSenderProcess || this.backgroundSenderProcess.killed) {
+            log.error('Background Sender process not running');
+            return false;
+        }
+
+        const payload = JSON.stringify({
+            type: "execute",
+            jobId,
+            commands,
+            loop
+        }) + "\n";
+
+        this.backgroundSenderProcess.stdin.write(payload);
+        log.info(`Enviado para background sender (Job: ${jobId}, Loop: ${loop})`);
+        return true;
+    }
+
+    cancelBatchSequence(jobId) {
+        if (!this.backgroundSenderProcess || this.backgroundSenderProcess.killed) return;
+
+        const payload = JSON.stringify({
+            type: "cancel",
+            jobId
+        }) + "\n";
+
+        this.backgroundSenderProcess.stdin.write(payload);
+        log.info(`Cancelamento enviado para Job: ${jobId}`);
+    }
+
+    stopAllBackground() {
+        if (!this.backgroundSenderProcess || this.backgroundSenderProcess.killed) return;
+        const payload = JSON.stringify({
+            type: "exit"
+        }) + "\n";
+        this.backgroundSenderProcess.stdin.write(payload);
+
+        // Restart connection
+        setTimeout(() => {
+            if (this.backgroundSenderProcess.killed) this.startBackgroundSender();
+        }, 1000);
+    }
+
+    // ---------------------------------------
+
+    getHwndFromPid(pid) {
         return new Promise((resolve) => {
-            exec(fullCommand, (err) => {
-                if (err) {
-                    log.error(`Erro ao enviar macro: ${err.message}`);
-                    resolve(false);
+            const command = `powershell -Command "try { $p = Get-Process -Id ${pid} -ErrorAction Stop; if ($p.MainWindowHandle -ne 0) { $p.MainWindowHandle } else { 0 } } catch { 0 }"`;
+
+            exec(command, (error, stdout) => {
+                if (error) {
+                    log.debug(`Erro ao obter HWND para PID ${pid}: ${error.message}`);
+                    return resolve(null);
+                }
+
+                const hwnd = parseInt(stdout.trim());
+                if (hwnd && hwnd !== 0) {
+                    resolve(hwnd);
                 } else {
-                    log.info(`Macro enviada para PID ${pid} (HWND: ${target.hwnd})`);
-                    resolve(true);
+                    resolve(null);
                 }
             });
         });

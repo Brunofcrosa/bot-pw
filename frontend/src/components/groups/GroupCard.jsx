@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FaPlay, FaGamepad, FaTrash, FaEdit } from 'react-icons/fa';
+import { FaPlay, FaGamepad, FaList, FaTrash, FaEdit } from 'react-icons/fa';
 
 const GroupCard = ({
     group,
@@ -8,6 +8,7 @@ const GroupCard = ({
     onOpenGroup,
     onEditGroup,
     onOpenOverlay,
+    onShowInstances,
     onDeleteGroup
 }) => {
 
@@ -51,6 +52,14 @@ const GroupCard = ({
                     >
                         <FaGamepad />
                     </button>
+                    <button
+                        className="btn-control-group"
+                        onClick={() => onShowInstances(group.id)}
+                        title="Listar Contas Abertas"
+                        style={{ marginLeft: '0.5rem' }}
+                    >
+                        <FaList />
+                    </button>
 
                     <button
                         className="btn-icon-action"
@@ -79,8 +88,10 @@ GroupCard.propTypes = {
     onOpenGroup: PropTypes.func.isRequired,
     onEditGroup: PropTypes.func.isRequired,
     onOpenOverlay: PropTypes.func.isRequired,
+    onShowInstances: PropTypes.func.isRequired,
     onDeleteGroup: PropTypes.func.isRequired
 };
+
 
 
 export default GroupCard;

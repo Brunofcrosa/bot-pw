@@ -1,11 +1,22 @@
-[
-  {
-    "id": "1766331563197",
-    "name": "TEWSTE",
-    "accountIds": [
-      "acc-1766331521545",
-      "acc-1766331758330"
-    ],
-    "color": "var(--accent-secondary)"
-  }
-]
+{
+	"0": {
+		"id": "1766331563197",
+		"name": "TEWSTE",
+		"accountIds": [
+			"acc-1766331521545",
+			"acc-1766331758330"
+		],
+		"color": "var(--accent-secondary)"
+	},
+	"groups": [
+		{
+			"id": "1766358245453",
+			"name": "CLASSIC PW",
+			"accountIds": [
+				"acc-1766358212163",
+				"acc-1766358229017"
+			],
+			"color": "var(--accent-secondary)"
+		}
+	]
+}

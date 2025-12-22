@@ -1,11 +1,10 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 
-const { PersistenceService } = require('./services/PersistenceService');
+// const { PersistenceService } = require('./services/PersistenceService'); // REPLACED BY STORES
 const { ProcessManager } = require('./services/ProcessManager');
 const { WindowService } = require('./services/WindowService');
 const { HotkeyService } = require('./services/HotkeyService');
-const MacroService = require('./services/MacroService');
 const KeyListenerService = require('./services/KeyListenerService');
 const { BackupService } = require('./services/BackupService');
 const { SettingsService } = require('./services/SettingsService');
@@ -13,6 +12,21 @@ const { AutoForgeService } = require('./services/AutoForgeService');
 const { ClickListenerService } = require('./services/ClickListenerService');
 const { TitleChangerService } = require('./services/TitleChangerService');
 const { logger } = require('./services/Logger');
+
+// New Stores
+const ServerStore = require('./stores/ServerStore');
+const AccountStore = require('./stores/AccountStore');
+const GroupStore = require('./stores/GroupStore');
+const MacroStore = require('./stores/MacroStore');
+
+// Features
+const MacroFeature = require('./features/macro/MacroFeature');
+const AutoForgeFeature = require('./features/auto-forge/AutoForgeFeature');
+const BackupFeature = require('./features/backup/BackupFeature');
+const HotkeyFeature = require('./features/hotkey/HotkeyFeature');
+
+const MacroService = require('./services/MacroService');
+
 
 const log = logger.child('Application');
 
@@ -24,7 +38,10 @@ class Application {
     constructor() {
         this.mainWindow = null;
 
-        this.persistenceService = new PersistenceService(path.join(__dirname, 'data'));
+        // Stores (Replacement for PersistenceService)
+        this.serverStore = new ServerStore();
+        this.accountStore = new AccountStore();
+        this.groupStore = new GroupStore();
 
         this.titleChangerService = new TitleChangerService(EXECUTABLES_PATH);
 
@@ -36,15 +53,25 @@ class Application {
 
         this.hotkeyService = new HotkeyService(this.windowService);
 
-        this.macroService = new MacroService(this.windowService, this.keyListenerService);
 
         this.backupService = new BackupService(path.join(__dirname, 'data'));
+        this.backupFeature = new BackupFeature(this.backupService);
 
         this.settingsService = new SettingsService(path.join(__dirname, 'data'));
 
+        this.hotkeyFeature = new HotkeyFeature(this.hotkeyService, this.settingsService);
+
+        this.macroService = new MacroService(this.windowService, this.keyListenerService, () => this.processManager.getRunningInstances());
+        this.macroStore = new MacroStore(this.settingsService);
+        this.macroFeature = new MacroFeature(this.macroService, this.macroStore);
+
+
         this.autoForgeService = new AutoForgeService(EXECUTABLES_PATH);
+        this.autoForgeFeature = new AutoForgeFeature(this.autoForgeService);
 
         this.clickListenerService = new ClickListenerService(EXECUTABLES_PATH, this.windowService);
+
+        this.activeComboIntervals = new Map(); // Track active auto-repeat combos
     }
 
     init() {
@@ -154,11 +181,11 @@ class Application {
 
     registerIpcHandlers() {
         // Persistence handlers - agora async para aguardar locks
-        ipcMain.handle('load-servers', () => this.persistenceService.loadServers());
-        ipcMain.handle('save-servers', async (_event, servers) => await this.persistenceService.saveServers(servers));
-        ipcMain.handle('load-accounts', (_event, s) => this.persistenceService.loadAccounts(s));
-        ipcMain.handle('save-accounts', async (_event, s, acc) => await this.persistenceService.saveAccounts(s, acc));
-        ipcMain.handle('delete-accounts-file', (e, s) => this.persistenceService.deleteAccountsFile(s));
+        ipcMain.handle('load-servers', () => this.serverStore.getServers());
+        ipcMain.handle('save-servers', async (_event, servers) => this.serverStore.saveServers(servers));
+        ipcMain.handle('load-accounts', (_event, s) => this.accountStore.getAccounts(s));
+        ipcMain.handle('save-accounts', async (_event, s, acc) => this.accountStore.saveAccounts(s, acc));
+        ipcMain.handle('delete-accounts-file', (e, s) => this.accountStore.deleteStore(s));
 
         ipcMain.handle('open-element', (e, args) => this.processManager.launchGame(args, this.getWebContents()));
         ipcMain.handle('close-element', (e, pid) => this.processManager.killGameByPid(pid));
@@ -167,14 +194,13 @@ class Application {
         ipcMain.handle('focus-window', (e, pid) => this.windowService.focusWindowByPid(pid));
 
 
-        ipcMain.handle('register-macro', async (event, { pid, triggerKey, sequence }) => {
-            return this.macroService.registerMacro(pid, triggerKey, sequence);
-        });
+        // Macro handlers moved to MacroFeature
 
-        ipcMain.handle('set-cycle-hotkey', (e, h) => this.hotkeyService.setCycleHotkey(h));
 
-        ipcMain.handle('load-groups', (e, s) => this.persistenceService.loadGroups(s));
-        ipcMain.handle('save-groups', (e, s, groups) => this.persistenceService.saveGroups(s, groups));
+        // ipcMain.handle('set-cycle-hotkey', (e, h) => this.hotkeyService.setCycleHotkey(h)); // Moved to HotkeyFeature
+
+        ipcMain.handle('load-groups', (e, s) => this.groupStore.getGroups(s));
+        ipcMain.handle('save-groups', (e, s, groups) => this.groupStore.saveGroups(s, groups));
 
         ipcMain.handle('get-app-version', () => app.getVersion());
         ipcMain.handle('select-exe-file', async () => {
@@ -191,36 +217,71 @@ class Application {
             return { success: true };
         });
 
-        // BackupService handlers
-        ipcMain.handle('export-backup', () => this.backupService.exportAll());
-        ipcMain.handle('import-backup', (e, backup, options) => this.backupService.importBackup(backup, options));
-        ipcMain.handle('create-auto-backup', () => this.backupService.createAutoBackup());
+        // BackupService handlers moved to BackupFeature
 
-        // HotkeyService handlers
-        ipcMain.handle('set-toggle-hotkey', (e, h) => {
-            const result = this.hotkeyService.setToggleHotkey(h);
-            if (result) this.settingsService.setSetting('hotkeys.toggle', h);
-            return result;
+        // HotkeyService handlers moved to HotkeyFeature
+
+        ipcMain.handle('start-auto-combo', async (e, { accountId, pid, keys, delayMs }) => {
+            try {
+                if (!accountId || !pid || !keys || keys.length === 0 || !delayMs) {
+                    return { success: false, error: 'accountId, pid, keys e delayMs são obrigatórios' };
+                }
+
+                // Cancela combo existente se houver
+                if (this.activeComboIntervals.has(accountId)) {
+                    this.windowService.cancelBatchSequence(accountId);
+                    this.activeComboIntervals.delete(accountId);
+                }
+
+                // Envia comando via ProcessManager (que delega para WindowService)
+                const result = await this.processManager.startBackgroundCombo(accountId, pid, keys, delayMs, this.windowService);
+
+                if (result.success) {
+                    this.activeComboIntervals.set(accountId, true); // Marca como ativo
+                    log.info(`Auto-combo em segundo plano iniciado para conta ${accountId} (PID: ${pid})`);
+                    return { success: true, accountId };
+                } else {
+                    return result;
+                }
+            } catch (error) {
+                log.error('Erro ao iniciar auto-combo:', error);
+                return { success: false, error: error.message };
+            }
         });
-        ipcMain.handle('set-macro-hotkey', (e, h) => {
-            const result = this.hotkeyService.setMacroHotkey(h);
-            if (result) this.settingsService.setSetting('hotkeys.macro', h);
-            return result;
+
+        ipcMain.handle('stop-auto-combo', async (e, { accountId }) => {
+            try {
+                if (!accountId) {
+                    return { success: false, error: 'accountId é obrigatório' };
+                }
+
+                if (this.activeComboIntervals.has(accountId)) {
+                    this.windowService.cancelBatchSequence(accountId);
+                    this.activeComboIntervals.delete(accountId);
+                    log.info(`Auto-combo parado para conta ${accountId}`);
+                    return { success: true, accountId };
+                }
+
+                return { success: false, error: 'Nenhum auto-combo ativo para esta conta' };
+            } catch (error) {
+                log.error('Erro ao parar auto-combo:', error);
+                return { success: false, error: error.message };
+            }
         });
-        ipcMain.handle('set-macro-keys', (e, keys) => {
-            const result = this.hotkeyService.setMacroKeys(keys);
-            if (result) this.settingsService.setSetting('macro.keys', keys);
-            return result;
-        });
-        ipcMain.handle('set-focus-on-macro', (e, state) => {
-            const result = this.hotkeyService.setFocusOnMacro(state);
-            if (result) this.settingsService.setSetting('macro.focusOnMacro', state);
-            return result;
-        });
-        ipcMain.handle('set-background-macro', (e, state) => {
-            const result = this.hotkeyService.setBackgroundMacro(state);
-            if (result) this.settingsService.setSetting('macro.backgroundMacro', state);
-            return result;
+
+        ipcMain.handle('stop-all-auto-combos', async () => {
+            try {
+                for (const accountId of this.activeComboIntervals.keys()) {
+                    this.windowService.cancelBatchSequence(accountId);
+                }
+                const count = this.activeComboIntervals.size;
+                this.activeComboIntervals.clear();
+                log.info(`Todos os ${count} auto-combos foram parados`);
+                return { success: true, count };
+            } catch (error) {
+                log.error('Erro ao parar todos auto-combos:', error);
+                return { success: false, error: error.message };
+            }
         });
 
         // WindowService handlers

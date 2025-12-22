@@ -18,6 +18,7 @@ const DEFAULT_SETTINGS = {
     },
     macro: {
         keys: [],
+        presets: [],
         focusOnMacro: true,
         backgroundMacro: false,
         interval: 200

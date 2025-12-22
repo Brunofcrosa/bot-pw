@@ -1,0 +1,44 @@
+{
+  "hotkeys": {
+    "cycle": "Control+Shift+T",
+    "toggle": null,
+    "macro": null
+  },
+  "macro": {
+    "keys": [],
+    "presets": [
+      {
+        "id": 1766353260990,
+        "name": "TESTE",
+        "triggerKey": "F12",
+        "commands": [
+          {
+            "id": 1766353791715,
+            "accountId": "acc-1766358212163",
+            "key": "f1",
+            "delay": 200
+          },
+          {
+            "id": 1766353795697,
+            "accountId": "acc-1766358229017",
+            "key": "f2",
+            "delay": 200
+          }
+        ]
+      },
+      {
+        "id": 1766353787576,
+        "name": "Novo Macro 2",
+        "triggerKey": "",
+        "commands": []
+      }
+    ],
+    "focusOnMacro": true,
+    "backgroundMacro": false,
+    "interval": 200
+  },
+  "general": {
+    "autoBackup": true,
+    "autoBackupOnClose": true
+  }
+}

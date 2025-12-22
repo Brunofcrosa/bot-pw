@@ -1,20 +1,40 @@
-[
-  {
-    "login": "CONTA",
-    "password": "f2a37d016d94a03ef2a3e000e41db153:0fbeff6498d57eda36115e38d300fc7a:bfc8c4",
-    "charName": "123",
-    "charClass": "123",
-    "exePath": "",
-    "icon": "file:///C:/Users/bruno/OneDrive/%C3%81rea%20de%20Trabalho/bot/bot-pw/frontend/assets/Arcano.ico",
-    "id": "acc-1766331521545"
-  },
-  {
-    "login": "1244",
-    "password": "7ff8f82d782feeae8e2f46f9e1cf9bf8:c4b9250234bd3c8778cdf50e2b8bfb31:be8e1caf",
-    "charName": "124",
-    "charClass": "14",
-    "exePath": "",
-    "icon": "file:///C:/Users/bruno/OneDrive/%C3%81rea%20de%20Trabalho/bot/bot-pw/frontend/assets/Arqueiro.ico",
-    "id": "acc-1766331758330"
-  }
-]
+{
+	"0": {
+		"login": "CONTA",
+		"password": "f2a37d016d94a03ef2a3e000e41db153:0fbeff6498d57eda36115e38d300fc7a:bfc8c4",
+		"charName": "123",
+		"charClass": "123",
+		"exePath": "",
+		"icon": "file:///C:/Users/bruno/OneDrive/%C3%81rea%20de%20Trabalho/bot/bot-pw/frontend/assets/Arcano.ico",
+		"id": "acc-1766331521545"
+	},
+	"1": {
+		"login": "1244",
+		"password": "7ff8f82d782feeae8e2f46f9e1cf9bf8:c4b9250234bd3c8778cdf50e2b8bfb31:be8e1caf",
+		"charName": "124",
+		"charClass": "14",
+		"exePath": "",
+		"icon": "file:///C:/Users/bruno/OneDrive/%C3%81rea%20de%20Trabalho/bot/bot-pw/frontend/assets/Arqueiro.ico",
+		"id": "acc-1766331758330"
+	},
+	"accounts": [
+		{
+			"login": "brusz",
+			"password": "247138ab2de25e9c908e9dc4cbe2f89d:00901ee03ac295097fceb0c9f873c2d9:8158fb0b5fb1a03612a6",
+			"charName": "RyUzaki~",
+			"charClass": "Arqueiro",
+			"exePath": "",
+			"icon": "file:///C:/Users/bruno/OneDrive/%C3%81rea%20de%20Trabalho/bot/bot-pw/frontend/assets/Arqueiro.ico",
+			"id": "acc-1766358212163"
+		},
+		{
+			"login": "brusz2",
+			"password": "88e51d2708257a171b6c44673f8627a5:db185f2b22d1259640ec6ebb9d0ac05c:841655f322d0cfbb5f24",
+			"charName": "Shutra",
+			"charClass": "Mago",
+			"exePath": "",
+			"icon": "file:///C:/Users/bruno/OneDrive/%C3%81rea%20de%20Trabalho/bot/bot-pw/frontend/assets/Mago.ico",
+			"id": "acc-1766358229017"
+		}
+	]
+}
