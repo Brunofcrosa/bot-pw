@@ -17,6 +17,66 @@ class ProcessManager {
         this.runningBackgroundFocusBatchProcess = null;
         this.runningFocusByPidProcess = null;
         this.crashMonitorInterval = null;
+        this.sessionFilePath = path.join(__dirname, '..', 'data', 'session.json');
+    }
+
+    saveSession() {
+        try {
+            const sessionData = [];
+            for (const [accountId, pid] of this.activeGamePids.entries()) {
+                sessionData.push({ accountId, pid });
+            }
+            // Ensure directory exists
+            const dir = path.dirname(this.sessionFilePath);
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+            fs.writeFileSync(this.sessionFilePath, JSON.stringify(sessionData, null, 2));
+            log.debug(`Sessão salva com ${sessionData.length} processos.`);
+        } catch (error) {
+            log.error(`Erro ao salvar sessão: ${error.message}`);
+        }
+    }
+
+    restoreSession(webContents) {
+        if (!fs.existsSync(this.sessionFilePath)) return;
+
+        try {
+            const data = fs.readFileSync(this.sessionFilePath, 'utf-8');
+            const sessionData = JSON.parse(data);
+            let restoredCount = 0;
+
+            for (const { accountId, pid } of sessionData) {
+                try {
+                    // Check if process is still alive
+                    process.kill(pid, 0);
+
+                    // If alive, restore state
+                    this.activeGamePids.set(accountId, pid);
+                    this.startGameMonitor(accountId, pid, webContents);
+
+                    if (webContents) {
+                        webContents.send('element-opened', { success: true, pid: pid, accountId: accountId });
+                    }
+
+                    log.info(`Sessão restaurada para conta ${accountId} (PID: ${pid})`);
+                    restoredCount++;
+
+                    // Optional: Try to retake title control if possible?
+                    if (this.titleChangerService) {
+                        // We don't have characterName here easily unless we fetch from AccountStore...
+                        // For now, simpler is better. Persistence just keeps it alive in UI.
+                    }
+
+                } catch (e) {
+                    log.debug(`PID ${pid} da sessão anterior não está mais ativo.`);
+                }
+            }
+            // Update session file to reflect only currently valid processes
+            this.saveSession();
+
+        } catch (error) {
+            log.error(`Erro ao restaurar sessão: ${error.message}`);
+        }
     }
 
     _spawnHelper(exeName, onDataCallback) {
@@ -117,8 +177,10 @@ class ProcessManager {
                     if (status === "started" && pid && webContents) {
                         log.info(`Jogo iniciado com PID: ${pid}. ID da Conta: ${args.id}`);
 
+
                         this.activeGamePids.set(args.id, pid);
                         this.startGameMonitor(args.id, pid, webContents);
+                        this.saveSession(); // SAVE SESSION
 
                         webContents.send('element-opened', { success: true, pid: pid, accountId: args.id });
 
@@ -168,7 +230,9 @@ class ProcessManager {
                 log.info(`Jogo detectado como fechado (PID: ${pid}). Conta: ${accountId}`);
                 clearInterval(interval);
                 this.monitoringIntervals.delete(accountId);
+                this.monitoringIntervals.delete(accountId);
                 this.activeGamePids.delete(accountId);
+                this.saveSession(); // SAVE SESSION
 
                 if (webContents) {
                     webContents.send('element-closed', { success: true, accountId: accountId });
@@ -189,6 +253,7 @@ class ProcessManager {
                 if (gamePid === pid) {
                     this.stopGameMonitor(accountId);
                     this.activeGamePids.delete(accountId);
+                    this.saveSession(); // SAVE SESSION
                     break;
                 }
             }

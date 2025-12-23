@@ -166,6 +166,9 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts, show
                 loop: preset.loop || false
             });
             setActiveMacroTriggers(prev => [...prev, preset.triggerKey]);
+
+            // Auto-Start immediately
+            window.electronAPI.invoke('execute-macro', preset.triggerKey);
         }
     };
 
@@ -204,8 +207,18 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts, show
     };
 
     const updatePreset = (id, field, value) => {
+        // Auto-stop if running to prevent ghosting
+        const preset = presets.find(p => p.id === id);
+        if (preset) {
+            const isActive = activeMacroTriggers.includes(preset.triggerKey);
+            if (isActive) {
+                togglePreset(preset); // Force stop to apply changes next time
+            }
+        }
+
         const updated = presets.map(p => p.id === id ? { ...p, [field]: value } : p);
         setPresets(updated);
+        saveSettings(updated, backgroundMacroEnabled);
     };
 
     // Command Management
@@ -473,6 +486,18 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts, show
                                                     value={getActivePreset()?.name}
                                                     onChange={e => updatePreset(activePresetId, 'name', e.target.value)}
                                                     placeholder="Ex: Combo Guerreiro"
+                                                />
+                                            </div>
+
+                                            <div className="settings-group">
+                                                <label>Tecla Detonadora (Trigger)</label>
+                                                <input
+                                                    className="settings-input"
+                                                    value={getActivePreset()?.triggerKey || ''}
+                                                    maxLength={3}
+                                                    style={{ textTransform: 'uppercase', textAlign: 'center', fontWeight: 'bold' }}
+                                                    onChange={e => updatePreset(activePresetId, 'triggerKey', e.target.value.toUpperCase())}
+                                                    placeholder="Ex: F1"
                                                 />
                                             </div>
 

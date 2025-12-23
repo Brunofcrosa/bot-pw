@@ -8,30 +8,24 @@
     "keys": [],
     "presets": [
       {
-        "id": 1766353260990,
+        "id": 1766353787576,
         "name": "TESTE",
         "triggerKey": "F12",
         "commands": [
           {
-            "id": 1766353791715,
+            "id": 1766462491259,
             "accountId": "acc-1766358212163",
-            "key": "f1",
+            "key": "F1",
             "delay": 200
           },
           {
-            "id": 1766353795697,
-            "accountId": "acc-1766358229017",
-            "key": "f2",
+            "id": 1766462493688,
+            "accountId": "acc-1766358212163",
+            "key": "F8",
             "delay": 200
           }
         ],
-        "loop": true
-      },
-      {
-        "id": 1766353787576,
-        "name": "Novo Macro 2",
-        "triggerKey": "",
-        "commands": []
+        "loop": false
       }
     ],
     "focusOnMacro": true,

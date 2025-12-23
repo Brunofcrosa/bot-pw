@@ -172,6 +172,8 @@ class Application {
 
         this.mainWindow.once('ready-to-show', () => {
             this.mainWindow.show();
+            // Restore previous session if valid
+            this.processManager.restoreSession(this.mainWindow.webContents);
         });
     }
 

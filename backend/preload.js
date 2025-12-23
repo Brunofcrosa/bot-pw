@@ -40,6 +40,7 @@ const ALLOWED_INVOKE_CHANNELS = [
     // MacroService
     'unregister-all-macros',
     'list-macros',
+    'execute-macro',
     // SettingsService
     'load-settings',
     'save-settings',

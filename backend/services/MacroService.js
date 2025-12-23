@@ -173,18 +173,37 @@ class MacroService extends EventEmitter {
             if (batchCommands.length > 0) {
                 const jobId = `macro_${pressedVk}_${Date.now()}`;
 
-                // Register in active map
+                // Register in active map with ORIGINAL commands for looping
                 this.activeJobMap.set(pressedVk, {
                     jobId,
-                    batchCommands,
+                    batchCommands, // Original batch for loops
                     loop
                 });
                 this.emitActiveMacrosUpdate(); // Notify change
 
+                // OPTIMIZATION: Fast Start
+                // If the C# executor sleeps *before* key press, the first command causes input lag.
+                // We create a specific batch for the first run where the first delay is 0.
+                const firstRunBatch = batchCommands.map((cmd, index) => {
+                    if (index === 0) {
+                        return { ...cmd, delay: 0 };
+                    }
+                    return cmd;
+                });
+
                 // Send to EXE (Loop=false because Node handles repetition)
-                this.windowService.sendBatchSequence(jobId, batchCommands, false);
+                this.windowService.sendBatchSequence(jobId, firstRunBatch, false);
             }
         }
+    }
+
+    executeMacroByKey(keyName) {
+        const vk = KEY_TO_VK[keyName.toUpperCase()];
+        if (vk) {
+            this.checkAndExecute(vk);
+            return { success: true };
+        }
+        return { success: false, error: 'Tecla inválida' };
     }
 
     listMacros() {

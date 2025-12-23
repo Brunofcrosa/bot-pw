@@ -38,6 +38,11 @@ class MacroFeature {
             return this.macroService.unregisterMacro(triggerKeyName);
         });
 
+        // Execute Macro Manually (Auto-Start)
+        ipcMain.handle('execute-macro', (event, keyName) => {
+            return this.macroService.executeMacroByKey(keyName);
+        });
+
         // Handler to get initial state
         ipcMain.handle('macro-get-active', () => {
             // We need to return the list.
