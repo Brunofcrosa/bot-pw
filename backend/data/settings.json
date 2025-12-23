@@ -2,7 +2,11 @@
   "hotkeys": {
     "cycle": "Control+Shift+T",
     "toggle": null,
-    "macro": null
+    "macro": null,
+    "accounts": {
+      "acc-1766358212163": "1",
+      "acc-1766358229017": "2"
+    }
   },
   "macro": {
     "keys": [],

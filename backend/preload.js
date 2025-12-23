@@ -31,6 +31,7 @@ const ALLOWED_INVOKE_CHANNELS = [
     'set-macro-hotkey',
     'set-macro-keys',
     'set-focus-on-macro',
+    'set-focus-hotkey',
     'set-background-macro',
     'send-combo-to-all',
     'send-background-keys',

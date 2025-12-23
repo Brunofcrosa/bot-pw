@@ -65,6 +65,23 @@ class HotkeyFeature {
             }
         });
 
+        ipcMain.handle('set-focus-hotkey', (e, { accountId, key }) => {
+            const result = this.hotkeyService.setAccountFocusHotkey(accountId, key);
+
+            // Persist
+            // We need to load current hotkeys map from settings, update it, and save.
+            // Or simpler: settingsService.getSetting('hotkeys.accounts') -> update -> setSetting.
+            let accHotkeys = this.settingsService.getSetting('hotkeys.accounts') || {};
+            if (key) {
+                accHotkeys[accountId] = key;
+            } else {
+                delete accHotkeys[accountId];
+            }
+            this.settingsService.setSetting('hotkeys.accounts', accHotkeys);
+
+            return result;
+        });
+
         // Auto-Combo handlers also relate to sending keys/hotkeys.
         // Should we check if Application.js manages activeComboIntervals inside HotkeyService?
         // Application.js has `this.activeComboIntervals`.

@@ -115,12 +115,23 @@ class WindowService extends EventEmitter {
         return true;
     }
 
-    focusWindowByPid(pid) {
+    async focusWindowByPid(pid) {
         if (!pid) {
             log.error('Tentativa de focar janela sem PID.');
             return false;
         }
+
+        // 1. Tenta via C# EXE (Rápido)
         this.processManager.sendFocusPid(pid);
+
+        // 2. Fallback via PowerShell (Robusto)
+        // Isso garante que se o EXE falhar ou não tiver permissão, o PS tenta.
+        // O PS usa AttachThreadInput/SetForegroundWindow de forma mais agressiva.
+        const hwnd = await this.getHwndFromPid(pid);
+        if (hwnd) {
+            this.focusWindow(hwnd);
+        }
+
         return true;
     }
 

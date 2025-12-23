@@ -284,6 +284,22 @@ class ProcessManager {
         return instances;
     }
 
+    getPidForAccount(accountId) {
+        // Tenta buscar como string e como número
+        if (this.activeGamePids.has(accountId)) return this.activeGamePids.get(accountId);
+
+        // Conversões caso haja mismatch de tipos (JSON keys são strings)
+        // Se accounts.json usa IDs numéricos, args.id pode ser número.
+        // HotkeyService recebe string de Object.entries
+        const asString = String(accountId);
+        if (this.activeGamePids.has(asString)) return this.activeGamePids.get(asString);
+
+        const asNumber = Number(accountId);
+        if (!isNaN(asNumber) && this.activeGamePids.has(asNumber)) return this.activeGamePids.get(asNumber);
+
+        return undefined;
+    }
+
 
 
 

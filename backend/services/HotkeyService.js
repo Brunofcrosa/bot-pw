@@ -17,6 +17,9 @@ class HotkeyService {
         this.macro_keys_to_send = [];
         this.focus_on_macro_enabled = true;
         this.background_macro_enabled = false;
+
+        // Map<AccountId, HotkeyHandle>
+        this.account_focus_handles = new Map();
     }
 
     registerGlobalHotkey(hotkeyString, callback, hotkeyType) {
@@ -46,6 +49,65 @@ class HotkeyService {
         else if (hotkeyType === 'macro') this.global_macro_hotkey_handle = newHandle;
 
         return newHandle;
+    }
+
+    setAccountFocusHotkey(accountId, hotkeyString) {
+        // Remove existing for this account
+        if (this.account_focus_handles.has(accountId)) {
+            const oldHandle = this.account_focus_handles.get(accountId);
+            if (oldHandle) globalShortcut.unregister(oldHandle);
+            this.account_focus_handles.delete(accountId);
+        }
+
+        if (!hotkeyString) return true; // Just clearing
+
+        const callback = async () => {
+            log.info(`[Hotkey] Callback disparado para tecla: ${hotkeyString}`);
+            if (this.pidResolver) {
+                const pid = this.pidResolver(accountId);
+                log.debug(`[Hotkey] Acionado para conta ${accountId}. PID: ${pid}`);
+
+                if (pid) {
+                    this.windowService.focusWindowByPid(pid);
+                }
+            }
+        };
+
+        const isRegistered = globalShortcut.register(hotkeyString, callback);
+        if (isRegistered) {
+            this.account_focus_handles.set(accountId, hotkeyString);
+            log.info(`Atalho de foco [${hotkeyString}] registrado para conta ${accountId}.`);
+            return true;
+        } else {
+            log.error(`Falha ao registrar atalho de foco [${hotkeyString}] para ${accountId}.`);
+            return false;
+        }
+    }
+
+    setPidResolver(resolverFn) {
+        this.pidResolver = resolverFn;
+    }
+
+    // [New] Handle raw key events from KeyListenerService
+    handleRawKey(rawKey) {
+        if (!rawKey) return;
+
+        // Check Focus Hotkeys
+        for (const [accountId, hotkey] of this.account_focus_handles.entries()) {
+            if (hotkey && hotkey.toUpperCase() === rawKey.toUpperCase()) {
+                log.info(`[Hotkey] KeyListener detectou tecla ${rawKey} para conta ${accountId}`);
+
+                if (this.pidResolver) {
+                    const pid = this.pidResolver(accountId);
+                    if (pid) {
+                        this.windowService.focusWindowByPid(pid);
+                    } else {
+                        log.warn(`[Hotkey] PID não encontrado para conta ${accountId} (via KeyListener)`);
+                    }
+                }
+                return; // Triggered one, return.
+            }
+        }
     }
 
     setupInitialHotkeys() {

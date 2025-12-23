@@ -98,8 +98,17 @@ class Application {
 
     onReady() {
         this.createWindow();
+        this.setupServices();
 
         this.keyListenerService.start();
+
+        // [New] Focus Hotkey Listener via C# Hook (Bypasses Admin Restrictions)
+        this.keyListenerService.on('key-event', (event) => {
+            // Event format: { key: "F1", state: "DOWN" }
+            if (event.state === 'DOWN') {
+                this.hotkeyService.handleRawKey(event.key);
+            }
+        });
 
         this.registerIpcHandlers();
         this.applyStoredSettings();
@@ -143,6 +152,30 @@ class Application {
         if (settings.macro?.backgroundMacro !== undefined) {
             this.hotkeyService.setBackgroundMacro(settings.macro.backgroundMacro);
         }
+
+        // Aplicar hotkeys de contas (Focus)
+        if (settings.hotkeys?.accounts) {
+            for (const [accountId, hotkey] of Object.entries(settings.hotkeys.accounts)) {
+                this.hotkeyService.setAccountFocusHotkey(accountId, hotkey);
+            }
+        }
+    }
+
+    // Wire up Resolver to find PID for AccountId
+    setupServices() {
+        this.hotkeyService.setPidResolver((accountId) => {
+            // ProcessManager has `activeGamePids` which is Map<accountId, pid>
+            // But wait, ProcessManager doesn't expose it directly maybe?
+            // Let's check ProcessManager.
+            // If activeGamePids is public or has getter.
+            // Actually `runningInstances` in frontend comes from `getRunningInstances`.
+            // `getRunningInstances` returns list.
+            // We need to sync.
+
+            // Accessing private map if possible or add helper.
+            // Assuming ProcessManager has capability.
+            return this.processManager.getPidForAccount(accountId);
+        });
     }
 
     onWillQuit() {
