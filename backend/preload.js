@@ -55,7 +55,8 @@ const ALLOWED_RECEIVE_CHANNELS = [
     'element-opened',
     'element-closed',
     'auto-forge-event',
-    'auto-forge-stop'
+    'auto-forge-stop',
+    'macro-status-update'
 ];
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -75,7 +76,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     on: (channel, func) => {
         if (ALLOWED_RECEIVE_CHANNELS.includes(channel)) {
             ipcRenderer.removeAllListeners(channel);
-            ipcRenderer.on(channel, (event, ...args) => func(...args));
+            const subscription = (event, ...args) => func(...args);
+            ipcRenderer.on(channel, subscription);
+            return () => {
+                ipcRenderer.removeListener(channel, subscription);
+            };
         }
     }
 });

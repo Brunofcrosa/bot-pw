@@ -9,15 +9,24 @@ const { logger } = require('./Logger');
 const log = logger.child('MacroService');
 
 
-class MacroService {
+const EventEmitter = require('events');
+
+class MacroService extends EventEmitter {
     constructor(windowService, keyListenerService, processProvider) {
+        super();
         this.windowService = windowService;
         this.keyListenerService = keyListenerService;
         this.processProvider = processProvider || (() => []);
         // Map<TriggerVk, Array<{pid, actionKey, delay}>>
         this.macros = new Map();
+        this.activeJobMap = new Map(); // triggerVk -> { jobId, batchCommands, loop }
 
         this.initListener();
+
+        // Listen to WindowService events for Node-side looping
+        this.windowService.on('job-done', (jobId) => {
+            this.handleJobDone(jobId);
+        });
     }
 
     initListener() {
@@ -26,6 +35,39 @@ class MacroService {
                 this.checkAndExecute(event.vk);
             }
         });
+    }
+
+    handleJobDone(finishedJobId) {
+        // Find if this job corresponds to an active looping macro
+        for (const [triggerVk, activeJob] of this.activeJobMap.entries()) {
+            if (activeJob.jobId === finishedJobId) {
+                // It matches. Check if we should loop.
+                if (activeJob.loop) {
+                    // Re-trigger
+                    log.info(`[MACRO] Looping macro ${triggerVk}...`);
+                    const newJobId = `macro_${triggerVk}_${Date.now()}`;
+
+                    // Update the map with the new Job ID
+                    this.activeJobMap.set(triggerVk, {
+                        ...activeJob,
+                        jobId: newJobId
+                    });
+
+                    // Send again (loop=false because we handle repetition here)
+                    this.windowService.sendBatchSequence(newJobId, activeJob.batchCommands, false);
+                } else {
+                    // Not looping, just cleanup
+                    this.activeJobMap.delete(triggerVk);
+                }
+                this.emitActiveMacrosUpdate(); // Notify change
+                break;
+            }
+        }
+    }
+
+    emitActiveMacrosUpdate() {
+        const activeMacros = Array.from(this.activeJobMap.keys());
+        this.emit('active-macros-update', activeMacros);
     }
 
     registerMacro(triggerKeyName, commands, loop = false) {
@@ -49,19 +91,14 @@ class MacroService {
     unregisterMacro(triggerKeyName) {
         const triggerVk = KEY_TO_VK[triggerKeyName.toUpperCase()];
         if (this.macros.has(triggerVk)) {
-            // If it was valid and had a loop running, we might want to stop it?
-            // Current implementation of 'stop' is via stopBackgroundCombo logic but 
-            // unregistering just removes the hook response.
-            // If loop is handled by background process, we should probably send a stop signal too
-            // just in case it's currently running.
-
-            // Generate the jobId used in checkAndExecute to try and stop it?
-            // The jobId relies on timestamp, so we can't guess it here easily without storing it.
-            // But since 'unregister' means "I don't want to use this key anymore", 
-            // clearing the macro from map is enough to stop future executions.
-            // If a background loop is running, we might need a way to kill it.
-            // For now, let's just delete from map. 
-            // The User can use "Stop All" or we can implement tracking of running jobIds per key later if needed.
+            // STOP active loop if exists
+            if (this.activeJobMap.has(triggerVk)) {
+                const { jobId } = this.activeJobMap.get(triggerVk);
+                this.windowService.cancelBatchSequence(jobId);
+                this.activeJobMap.delete(triggerVk);
+                this.emitActiveMacrosUpdate();
+                log.info(`[MACRO] Loop cancelado para ${triggerKeyName} (Job: ${jobId})`);
+            }
 
             this.macros.delete(triggerVk);
             log.info(`Macro Global removido para tecla ${triggerKeyName}`);
@@ -71,7 +108,18 @@ class MacroService {
     }
 
     async checkAndExecute(pressedVk) {
-        // log.info(`Key pressed: ${pressedVk}`); // Debug raw key
+        // If already running (and potentially looping), do we want to stack start?
+        // Usually pressing the trigger again might mean "Restart" or "Stop"?
+        // For now, let's assume pressing trigger starts a NEW sequence.
+        // If one is already running, maybe we should stop it first to avoid overlap?
+        if (this.activeJobMap.has(pressedVk)) {
+            const { jobId } = this.activeJobMap.get(pressedVk);
+            this.windowService.cancelBatchSequence(jobId);
+            this.activeJobMap.delete(pressedVk);
+            this.emitActiveMacrosUpdate(); // Notify change
+            log.info(`[MACRO] Reiniciando macro ${pressedVk} (Cancelado job anterior: ${jobId})`);
+        }
+
         if (this.macros.has(pressedVk)) {
             const { commands, loop } = this.macros.get(pressedVk);
             log.info(`[MACRO] Executando macro global (${pressedVk}): ${commands.length} comandos`);
@@ -123,11 +171,18 @@ class MacroService {
             }
 
             if (batchCommands.length > 0) {
-
                 const jobId = `macro_${pressedVk}_${Date.now()}`;
 
-                // Send to EXE
-                this.windowService.sendBatchSequence(jobId, batchCommands, loop);
+                // Register in active map
+                this.activeJobMap.set(pressedVk, {
+                    jobId,
+                    batchCommands,
+                    loop
+                });
+                this.emitActiveMacrosUpdate(); // Notify change
+
+                // Send to EXE (Loop=false because Node handles repetition)
+                this.windowService.sendBatchSequence(jobId, batchCommands, false);
             }
         }
     }

@@ -7,8 +7,11 @@ const { logger } = require('./Logger');
 const log = logger.child('WindowService');
 
 
-class WindowService {
+const EventEmitter = require('events');
+
+class WindowService extends EventEmitter {
     constructor(processManager) {
+        super();
         this.processManager = processManager;
         this.window_handles_for_cycle = [];
         this.last_window_handles = [];
@@ -204,8 +207,13 @@ class WindowService {
                     const msg = JSON.parse(line);
                     if (msg.status === 'error') {
                         log.error(`[BackgroundSender Error]: ${msg.message}`);
-                    } else if (msg.status === 'done' || msg.status === 'cancelled') {
-                        log.info(`[BackgroundSender]: Job ${msg.jobId} ${msg.status}`);
+                        this.emit('job-error', msg.jobId, msg.message);
+                    } else if (msg.status === 'done') {
+                        log.info(`[BackgroundSender]: Job ${msg.jobId} done`);
+                        this.emit('job-done', msg.jobId);
+                    } else if (msg.status === 'cancelled') {
+                        log.info(`[BackgroundSender]: Job ${msg.jobId} cancelled`);
+                        this.emit('job-cancelled', msg.jobId);
                     }
                 } catch (e) {
                     log.debug(`[BackgroundSender Raw]: ${line}`);

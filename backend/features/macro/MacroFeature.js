@@ -34,8 +34,23 @@ class MacroFeature {
         });
 
         // Unregister Macro (Runtime)
-        ipcMain.handle('unregister-macro', async (event, triggerKey) => {
-            return this.macroService.unregisterMacro(triggerKey);
+        ipcMain.handle('unregister-macro', (event, triggerKeyName) => {
+            return this.macroService.unregisterMacro(triggerKeyName);
+        });
+
+        // Handler to get initial state
+        ipcMain.handle('macro-get-active', () => {
+            // We need to return the list.
+            // Converting iterator to array for transport.
+            // activeJobMap is private/internal, so we should probable add a getter method in MacroService 
+            // or just use Array.from(this.macroService.activeJobMap.keys()) if accessible.
+            // Since activeJobMap is a property on the instance:
+            return Array.from(this.macroService.activeJobMap.keys());
+        });
+
+        // Forward updates to frontend
+        this.macroService.on('active-macros-update', (activeMacros) => {
+            this.sendToAllWindows('macro-status-update', activeMacros);
         });
 
         // Background Combo Controls
@@ -45,6 +60,15 @@ class MacroFeature {
 
         ipcMain.handle('macro-stop-background', async (event, { jobId } = {}) => {
             return this.macroService.stopBackgroundCombo(jobId);
+        });
+    }
+
+    sendToAllWindows(channel, ...args) {
+        const { BrowserWindow } = require('electron');
+        BrowserWindow.getAllWindows().forEach(win => {
+            if (win.webContents) {
+                win.webContents.send(channel, ...args);
+            }
         });
     }
 }
