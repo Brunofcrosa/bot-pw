@@ -18,7 +18,9 @@ const ALLOWED_INVOKE_CHANNELS = [
     'save-groups',
     'get-app-version',
     'select-exe-file',
+    'select-exe-file',
     'open-group-overlay',
+    'resize-overlay',
 
     // BackupService
     'export-backup',

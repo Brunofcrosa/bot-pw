@@ -219,6 +219,13 @@ class Application {
             return { success: true };
         });
 
+        ipcMain.handle('resize-overlay', (_event, { width, height }) => {
+            if (this.overlayWindow && !this.overlayWindow.isDestroyed()) {
+                this.overlayWindow.setContentSize(width, height);
+            }
+            return { success: true };
+        });
+
         // BackupService handlers moved to BackupFeature
 
         // HotkeyService handlers moved to HotkeyFeature

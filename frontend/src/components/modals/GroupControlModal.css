@@ -142,26 +142,30 @@
     width: auto;
     height: auto;
     max-width: none;
-    border-radius: 8px;
-    /* Glass effect for the bar */
-    background: rgba(30, 30, 36, 0.85) !important;
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+    border-radius: 20px;
+    /* Pillow shape */
+    background: rgba(15, 15, 20, 0.6) !important;
+    /* Visualmente mais leve */
+    backdrop-filter: blur(4px);
+    border: none !important;
+    /* Sem borda branca dura */
+    box-shadow: none !important;
+    /* Sem sombra pesada no container */
     animation: none;
     display: flex;
     flex-direction: row;
     align-items: center;
-    padding: 6px 12px;
-    gap: 8px;
+    padding: 2px 6px;
+    /* Padding ultra reduzido */
+    gap: 2px;
+    /* Gap reduzido */
     -webkit-app-region: drag;
     pointer-events: auto;
 }
 
 /* Remove weird hover effect, maybe add a subtle glow instead */
 .group-control-modal.overlay-mode:hover {
-    background: rgba(30, 30, 36, 0.95) !important;
-    border-color: rgba(255, 255, 255, 0.2) !important;
+    background: rgba(15, 15, 20, 0.8) !important;
 }
 
 /* Esconder header no modo overlay */
