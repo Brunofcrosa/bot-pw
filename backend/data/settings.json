@@ -27,9 +27,28 @@
             "accountId": "acc-1766358212163",
             "key": "F8",
             "delay": 200
+          },
+          {
+            "id": 1766837121566,
+            "accountId": "acc-1766358229017",
+            "key": "f8",
+            "delay": 200
+          },
+          {
+            "id": 1766837121973,
+            "accountId": "acc-1766358229017",
+            "key": "f1",
+            "delay": 200
           }
         ],
-        "loop": false
+        "loop": true
+      },
+      {
+        "id": 1766837118558,
+        "name": "Novo Macro 2",
+        "triggerKey": "",
+        "loop": false,
+        "commands": []
       }
     ],
     "focusOnMacro": true,
