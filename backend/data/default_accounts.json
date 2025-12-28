@@ -20,21 +20,69 @@
 	"accounts": [
 		{
 			"login": "brusz",
-			"password": "247138ab2de25e9c908e9dc4cbe2f89d:00901ee03ac295097fceb0c9f873c2d9:8158fb0b5fb1a03612a6",
-			"charName": "RyUzaki~",
-			"charClass": "Arqueiro",
+			"password": "31fbdaf0ee527ea7cb2a723c92f1173e:e525f30cce7d7117512a523299679547:43505d7be3817b07cd10",
+			"charName": "Shutra",
+			"charClass": "",
 			"exePath": "",
-			"icon": "file:///C:/Users/bruno/OneDrive/%C3%81rea%20de%20Trabalho/bot/bot-pw/frontend/assets/Arqueiro.ico",
-			"id": "acc-1766358212163"
+			"icon": "file:///C:/Users/bruno/Desktop/bot/bot-pw/frontend/assets/Mago.ico",
+			"simpleLaunch": false,
+			"argument": "",
+			"id": "acc-1766933300427"
 		},
 		{
 			"login": "brusz2",
-			"password": "88e51d2708257a171b6c44673f8627a5:db185f2b22d1259640ec6ebb9d0ac05c:841655f322d0cfbb5f24",
-			"charName": "Shutra",
-			"charClass": "Mago",
+			"password": "212a0b0bff05761081e000aa3cbd0834:cd9f3a2df5a4c1a211c07efa87ebe534:f842d2d2c2d8a37aecd0",
+			"charName": "RyUzaki~",
+			"charClass": "",
 			"exePath": "",
-			"icon": "file:///C:/Users/bruno/OneDrive/%C3%81rea%20de%20Trabalho/bot/bot-pw/frontend/assets/Mago.ico",
-			"id": "acc-1766358229017"
+			"icon": "file:///C:/Users/bruno/Desktop/bot/bot-pw/frontend/assets/Arqueiro.ico",
+			"simpleLaunch": false,
+			"argument": "",
+			"id": "acc-1766933307597"
+		},
+		{
+			"login": "brusz3",
+			"password": "5be5e501c3553e8665a6ac128ef941ca:d8d78081ce5c548dc90856a44c793f22:15d84180c8fb452dcf42",
+			"charName": "Melvinus",
+			"charClass": "",
+			"exePath": "",
+			"icon": "file:///C:/Users/bruno/Desktop/bot/bot-pw/frontend/assets/Sacerdote.ico",
+			"simpleLaunch": false,
+			"argument": "",
+			"id": "acc-1766933314728"
+		},
+		{
+			"login": "brusz4",
+			"password": "47f69d6c3b71244e3d06903cda239aa5:87eb87ce6fd15bd3fd28adf8cc3d732a:7d7baf7a5299c60510c4",
+			"charName": "fera",
+			"charClass": "",
+			"exePath": "",
+			"icon": "file:///C:/Users/bruno/Desktop/bot/bot-pw/frontend/assets/Barbaro.ico",
+			"simpleLaunch": false,
+			"argument": "",
+			"id": "acc-1766933319766"
+		},
+		{
+			"login": "brusz5",
+			"password": "de0b94c28b04c10da84863d557d1e5f4:af62ea92fc5d11e00f95e47a73649ef7:e497b8a97d533719e7f3",
+			"charName": "nada",
+			"charClass": "",
+			"exePath": "",
+			"icon": "file:///C:/Users/bruno/Desktop/bot/bot-pw/frontend/assets/Feiticeira.ico",
+			"simpleLaunch": false,
+			"argument": "",
+			"id": "acc-1766933325084"
+		},
+		{
+			"login": "maissa",
+			"password": "8cc4d7524879e1ef0be1377ec3015c94:57204a7d0e194dc0e9681cda85b3fb10:f2d2c6bc43fb0e3dc730a2",
+			"charName": "Naeryn",
+			"charClass": "",
+			"exePath": "",
+			"icon": "file:///C:/Users/bruno/Desktop/bot/bot-pw/frontend/assets/Guerreiro.ico",
+			"simpleLaunch": false,
+			"argument": "",
+			"id": "acc-1766933347767"
 		}
 	]
 }

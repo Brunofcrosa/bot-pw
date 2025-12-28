@@ -156,13 +156,28 @@ class ProcessManager {
                 return { success: false, error: 'Executável auxiliar open-element.exe não encontrado.' };
             }
 
-            // Argumentos para o open-element.exe (formato key:value)
+            // Configuração dos argumentos para o open-element.exe
+            // Se for simpleLaunch, enviamos credenciais vazias para que o open-element use o modo ShellExecute/Sem Login.
+
+            const userArg = args.simpleLaunch ? "" : (args.login || "");
+            const pwdArg = args.simpleLaunch ? "" : (args.password || "");
+            const roleArg = args.simpleLaunch ? "" : (args.characterName || "");
+
+            // Se simpleLaunch, enviamos APENAS os argumentos customizados (ex: sds_console:1314)
+            // Se Normal, enviamos startbypatcher + argumentos
+            let extraArg = "";
+            if (args.simpleLaunch) {
+                extraArg = args.argument || "";
+            } else {
+                extraArg = `startbypatcher${args.argument ? ` ${args.argument}` : ''}`;
+            }
+
             const spawnArgs = [
                 `exe:${args.exePath}`,
-                `user:${args.login}`,
-                `pwd:${args.password}`,
-                `role:${args.characterName || ''}`,
-                `extra:startbypatcher${args.argument ? ` ${args.argument}` : ''}`,
+                `user:${userArg}`,
+                `pwd:${pwdArg}`,
+                `role:${roleArg}`,
+                `extra:${extraArg}`,
                 `onlyAdd:false`
             ];
 
@@ -170,11 +185,16 @@ class ProcessManager {
 
             this.runningProcesses.set(args.id, child);
 
+            let hasStarted = false; // Flag to track if the game actually started
+
             child.stdout.on('data', (data) => {
                 log.debug(`[Launcher Helper]: ${data.toString()}`);
                 try {
-                    const { status, pid } = JSON.parse(data.toString());
+                    const msg = JSON.parse(data.toString());
+                    const { status, pid, message } = msg;
+
                     if (status === "started" && pid && webContents) {
+                        hasStarted = true; // Mark as started
                         log.info(`Jogo iniciado com PID: ${pid}. ID da Conta: ${args.id}`);
 
 
@@ -185,10 +205,16 @@ class ProcessManager {
                         webContents.send('element-opened', { success: true, pid: pid, accountId: args.id });
 
                         // Tenta mudar o título da janela (aguarda 10s para a janela criar)
-                        if (this.titleChangerService && args.characterName) {
+                        if (this.titleChangerService && args.characterName && !args.simpleLaunch) {
                             setTimeout(() => {
                                 this.titleChangerService.changeTitle(pid, args.characterName);
                             }, 10000);
+                        }
+                    } else if (status === "error") {
+                        log.error(`[Launcher Helper] Erro retornado: ${message} (Conta: ${args.id})`);
+                        if (webContents) {
+                            // Poderiamos avisar o front do erro especifico?
+                            // Por enquanto o log ajuda a debugar e o 'close' vai resetar o status.
                         }
                     }
                 } catch (e) {
@@ -198,14 +224,21 @@ class ProcessManager {
 
             child.stderr.on('data', (data) => {
                 log.error(`Falha ao iniciar processo helper (conta ${args.id}):`, data.toString());
-                this.runningProcesses.delete(args.id);
+                // Don't delete here immediately, let close handle it or if critical error
             });
 
             child.on('close', (code) => {
                 log.info(`Processo helper (conta ${args.id}) fechado com código ${code}`);
                 this.runningProcesses.delete(args.id);
-                // NÃO envia element-closed aqui se for código 0, pois o jogo continua rodando.
-                // O monitoramento via PID cuidará de avisar quando o jogo fechar.
+
+                // If helper closed but game didn't start, we must notify frontend to reset state
+                if (!hasStarted) {
+                    log.warn(`Helper fechou mas o jogo não iniciou (Code: ${code}). Conta: ${args.id}`);
+                    if (webContents) {
+                        // Send element-closed to ensure frontend removes "Starting..." state
+                        webContents.send('element-closed', { success: true, accountId: args.id });
+                    }
+                }
             });
 
             return { success: true, pid: child.pid, accountId: args.id };
@@ -226,8 +259,15 @@ class ProcessManager {
                 // process.kill(pid, 0) lança erro se o processo não existe
                 process.kill(pid, 0);
             } catch (e) {
-                // Processo não existe mais
-                log.info(`Jogo detectado como fechado (PID: ${pid}). Conta: ${accountId}`);
+                // Se o erro for EPERM (sem permissão), o processo EXISTE mas é de outro usuário/Admin.
+                // Então consideramos que ele ESTÁ RODANDO.
+                if (e.code === 'EPERM') {
+                    // O processo está vivo, apenas não temos permissão para sinalizá-lo.
+                    return;
+                }
+
+                // Processo não existe mais (ESRCH ou outro erro fatal)
+                log.info(`Jogo detectado como fechado (PID: ${pid}). Conta: ${accountId}. Motivo: ${e.code}`);
                 clearInterval(interval);
                 this.monitoringIntervals.delete(accountId);
                 this.monitoringIntervals.delete(accountId);
@@ -244,6 +284,11 @@ class ProcessManager {
     }
 
     killGameByPid(pid) {
+        if (!pid) {
+            log.warn('Tentativa de finalizar processo sem PID informado.');
+            return { success: false, error: 'PID inválido ou não fornecido.' };
+        }
+
         try {
             process.kill(pid);
             log.info(`Processo ${pid} finalizado.`);
@@ -306,6 +351,13 @@ class ProcessManager {
     async launchGroup(accounts, delayMs = 2000, webContents) {
         const results = [];
         for (const acc of accounts) {
+            // Check if already running
+            if (this.activeGamePids.has(acc.id) || this.activeGamePids.has(String(acc.id))) {
+                log.info(`Conta ${acc.id} já está rodando. Pulando.`);
+                results.push({ accountId: acc.id, success: true, skipped: true });
+                continue;
+            }
+
             const result = this.launchGame({
                 id: acc.id,
                 exePath: acc.exePath,
@@ -320,8 +372,21 @@ class ProcessManager {
             // Delay não bloqueante
             await new Promise(r => setTimeout(r, delayMs));
         }
-        log.info(`Grupo processado: ${results.length} contas iniciadas.`);
+        log.info(`Grupo processado: ${results.length} contas verificadas.`);
         return { success: true, results };
+    }
+
+    stopGroup(accounts) {
+        let count = 0;
+        for (const acc of accounts) {
+            const pid = this.getPidForAccount(acc.id);
+            if (pid) {
+                this.killGameByPid(pid);
+                count++;
+            }
+        }
+        log.info(`Grupo parado: ${count} contas finalizadas.`);
+        return { success: true, count };
     }
 
     async startBackgroundCombo(accountId, pid, keys, delayMs, windowService) {

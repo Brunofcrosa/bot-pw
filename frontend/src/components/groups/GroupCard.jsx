@@ -1,11 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FaPlay, FaGamepad, FaList, FaTrash, FaEdit } from 'react-icons/fa';
+import { FaPlay, FaStop, FaGamepad, FaList, FaTrash, FaEdit } from 'react-icons/fa';
 
 const GroupCard = ({
     group,
     groupAccounts,
     onOpenGroup,
+    onStopGroup,
     onEditGroup,
     onOpenOverlay,
     onShowInstances,
@@ -44,6 +45,14 @@ const GroupCard = ({
                         onClick={() => onOpenGroup(group)}
                     >
                         <FaPlay /> Iniciar
+                    </button>
+                    <button
+                        className="btn-stop-group"
+                        onClick={() => onStopGroup && onStopGroup(group)}
+                        title="Parar todas as contas do grupo"
+                        style={{ marginLeft: '0.5rem', backgroundColor: '#e74c3c' }}
+                    >
+                        <FaStop />
                     </button>
                     <button
                         className="btn-control-group"
@@ -86,6 +95,7 @@ GroupCard.propTypes = {
     group: PropTypes.object.isRequired,
     groupAccounts: PropTypes.array.isRequired,
     onOpenGroup: PropTypes.func.isRequired,
+    onStopGroup: PropTypes.func,
     onEditGroup: PropTypes.func.isRequired,
     onOpenOverlay: PropTypes.func.isRequired,
     onShowInstances: PropTypes.func.isRequired,

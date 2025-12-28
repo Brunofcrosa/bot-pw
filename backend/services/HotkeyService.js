@@ -53,33 +53,34 @@ class HotkeyService {
 
     setAccountFocusHotkey(accountId, hotkeyString) {
         // Remove existing for this account
-        if (this.account_focus_handles.has(accountId)) {
-            const oldHandle = this.account_focus_handles.get(accountId);
-            if (oldHandle) globalShortcut.unregister(oldHandle);
+        const oldHandle = this.account_focus_handles.get(accountId);
+        if (oldHandle) {
+            globalShortcut.unregister(oldHandle);
             this.account_focus_handles.delete(accountId);
+            log.info(`Atalho anterior [${oldHandle}] para conta ${accountId} removido.`);
         }
 
         if (!hotkeyString) return true; // Just clearing
 
-        const callback = async () => {
-            log.info(`[Hotkey] Callback disparado para tecla: ${hotkeyString}`);
+        // Reverting to globalShortcut (steals key but reliable)
+        const isRegistered = globalShortcut.register(hotkeyString, () => {
+            log.info(`[Hotkey] Atalho global ${hotkeyString} acionado para conta ${accountId}`);
             if (this.pidResolver) {
                 const pid = this.pidResolver(accountId);
-                log.debug(`[Hotkey] Acionado para conta ${accountId}. PID: ${pid}`);
-
                 if (pid) {
                     this.windowService.focusWindowByPid(pid);
+                } else {
+                    log.warn(`[Hotkey] PID não encontrado para conta ${accountId}`);
                 }
             }
-        };
+        });
 
-        const isRegistered = globalShortcut.register(hotkeyString, callback);
         if (isRegistered) {
             this.account_focus_handles.set(accountId, hotkeyString);
-            log.info(`Atalho de foco [${hotkeyString}] registrado para conta ${accountId}.`);
+            log.info(`Atalho de foco [${hotkeyString}] registrado globalmente para conta ${accountId}.`);
             return true;
         } else {
-            log.error(`Falha ao registrar atalho de foco [${hotkeyString}] para ${accountId}.`);
+            log.error(`Falha ao registrar atalho global de foco [${hotkeyString}] para conta ${accountId}.`);
             return false;
         }
     }
@@ -88,27 +89,8 @@ class HotkeyService {
         this.pidResolver = resolverFn;
     }
 
-    // [New] Handle raw key events from KeyListenerService
-    handleRawKey(rawKey) {
-        if (!rawKey) return;
-
-        // Check Focus Hotkeys
-        for (const [accountId, hotkey] of this.account_focus_handles.entries()) {
-            if (hotkey && hotkey.toUpperCase() === rawKey.toUpperCase()) {
-                log.info(`[Hotkey] KeyListener detectou tecla ${rawKey} para conta ${accountId}`);
-
-                if (this.pidResolver) {
-                    const pid = this.pidResolver(accountId);
-                    if (pid) {
-                        this.windowService.focusWindowByPid(pid);
-                    } else {
-                        log.warn(`[Hotkey] PID não encontrado para conta ${accountId} (via KeyListener)`);
-                    }
-                }
-                return; // Triggered one, return.
-            }
-        }
-    }
+    // KeyListenerService handler removed (using globalShortcut again)
+    // handleRawKey(rawKey) { ... }
 
     setupInitialHotkeys() {
         this.setCycleHotkey(DEFAULT_CYCLE_HOTKEY);

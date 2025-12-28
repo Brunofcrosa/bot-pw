@@ -69,6 +69,9 @@ class KeyListenerService extends EventEmitter {
             this.buffer = this.buffer.substring(boundary + 1);
 
             if (jsonStr) {
+                // DEBUG LOG
+                // log.info(`[KeyListener] Raw Data: ${jsonStr}`);
+
                 try {
                     const event = JSON.parse(jsonStr);
                     this.emit('key-event', event);

@@ -49,6 +49,10 @@ const ALLOWED_INVOKE_CHANNELS = [
     'save-settings',
     // Grupos
     'open-group-accounts',
+    'stop-group-accounts',
+    // Accounts
+    'import-accounts',
+    'export-accounts',
     // Auto Forge & Utils
     'start-auto-forge',
     'stop-auto-forge',

@@ -1,56 +1,20 @@
 {
   "hotkeys": {
     "cycle": "Control+Shift+T",
-    "toggle": null,
-    "macro": null,
+    "toggle": "",
+    "macro": "",
     "accounts": {
-      "acc-1766358212163": "1",
-      "acc-1766358229017": "2"
+      "acc-1766933300427": "F1",
+      "acc-1766933307597": "F2",
+      "acc-1766933319766": "F4",
+      "acc-1766933325084": "F5",
+      "acc-1766933347767": "6",
+      "acc-1766933314728": "F3"
     }
   },
   "macro": {
     "keys": [],
-    "presets": [
-      {
-        "id": 1766353787576,
-        "name": "TESTE",
-        "triggerKey": "F12",
-        "commands": [
-          {
-            "id": 1766462491259,
-            "accountId": "acc-1766358212163",
-            "key": "F1",
-            "delay": 200
-          },
-          {
-            "id": 1766462493688,
-            "accountId": "acc-1766358212163",
-            "key": "F8",
-            "delay": 200
-          },
-          {
-            "id": 1766837121566,
-            "accountId": "acc-1766358229017",
-            "key": "f8",
-            "delay": 200
-          },
-          {
-            "id": 1766837121973,
-            "accountId": "acc-1766358229017",
-            "key": "f1",
-            "delay": 200
-          }
-        ],
-        "loop": true
-      },
-      {
-        "id": 1766837118558,
-        "name": "Novo Macro 2",
-        "triggerKey": "",
-        "loop": false,
-        "commands": []
-      }
-    ],
+    "presets": [],
     "focusOnMacro": true,
     "backgroundMacro": false,
     "interval": 200

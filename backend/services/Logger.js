@@ -3,6 +3,7 @@
  * Substitui console.log por logs formatados com níveis e timestamps
  */
 
+const { app } = require('electron');
 const fs = require('fs');
 const path = require('path');
 
@@ -18,7 +19,10 @@ class Logger {
         this.level = LOG_LEVELS[options.level?.toUpperCase()] ?? LOG_LEVELS.INFO;
         this.serviceName = options.serviceName || 'App';
         this.logToFile = options.logToFile || false;
-        this.logDir = options.logDir || path.join(__dirname, '..', 'logs');
+        
+        // Use userData path for logs to avoid writing to ASAR in production
+        const basePath = app ? app.getPath('userData') : path.join(__dirname, '..');
+        this.logDir = options.logDir || path.join(basePath, 'logs');
 
         if (this.logToFile && !fs.existsSync(this.logDir)) {
             fs.mkdirSync(this.logDir, { recursive: true });

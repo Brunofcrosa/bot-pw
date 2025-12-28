@@ -32,7 +32,9 @@ const log = logger.child('Application');
 
 const PRELOAD_SCRIPT = path.join(__dirname, 'preload.js');
 const HTML_FILE = path.join(__dirname, '..', 'frontend', 'index.html');
-const EXECUTABLES_PATH = path.join(__dirname, '..', 'executaveis');
+const EXECUTABLES_PATH = app.isPackaged
+    ? path.join(process.resourcesPath, 'executaveis')
+    : path.join(__dirname, '..', 'executaveis');
 
 class Application {
     constructor() {
@@ -100,15 +102,18 @@ class Application {
         this.createWindow();
         this.setupServices();
 
-        this.keyListenerService.start();
+        // this.keyListenerService.start();
 
         // [New] Focus Hotkey Listener via C# Hook (Bypasses Admin Restrictions)
-        this.keyListenerService.on('key-event', (event) => {
-            // Event format: { key: "F1", state: "DOWN" }
-            if (event.state === 'DOWN') {
-                this.hotkeyService.handleRawKey(event.key);
-            }
-        });
+        // this.keyListenerService.on('key-event', (event) => {
+        //     // DEBUG LOG
+        //     log.info(`[Application] Key Event: ${JSON.stringify(event)}`);
+        //
+        //     // Event format: { key: "F1", state: "DOWN" }
+        //     if (event.state === 'DOWN') {
+        //         this.hotkeyService.handleRawKey(event.key);
+        //     }
+        // });
 
         this.registerIpcHandlers();
         this.applyStoredSettings();
@@ -221,6 +226,48 @@ class Application {
         ipcMain.handle('load-accounts', (_event, s) => this.accountStore.getAccounts(s));
         ipcMain.handle('save-accounts', async (_event, s, acc) => this.accountStore.saveAccounts(s, acc));
         ipcMain.handle('delete-accounts-file', (e, s) => this.accountStore.deleteStore(s));
+
+        ipcMain.handle('export-accounts', async (e, accounts) => {
+            const { canceled, filePath } = await dialog.showSaveDialog({
+                title: 'Exportar Contas',
+                defaultPath: 'contas.json',
+                filters: [{ name: 'JSON', extensions: ['json'] }]
+            });
+
+            if (canceled || !filePath) return { success: false };
+
+            try {
+                // Ensure sensitive data might be stripped if needed, but for now export all relevant fields
+                // Maybe exclude internal fields if any? User probably wants to export passwords too for backup.
+                require('fs').writeFileSync(filePath, JSON.stringify(accounts, null, 2), 'utf-8');
+                return { success: true, filePath };
+            } catch (error) {
+                log.error(`Erro ao exportar contas: ${error.message}`);
+                return { success: false, error: error.message };
+            }
+        });
+
+        ipcMain.handle('import-accounts', async () => {
+            const { canceled, filePaths } = await dialog.showOpenDialog({
+                title: 'Importar Contas',
+                properties: ['openFile'],
+                filters: [{ name: 'JSON', extensions: ['json'] }]
+            });
+
+            if (canceled || filePaths.length === 0) return { success: false };
+
+            try {
+                const data = require('fs').readFileSync(filePaths[0], 'utf-8');
+                const imported = JSON.parse(data);
+                if (!Array.isArray(imported)) {
+                    return { success: false, error: 'Arquivo inválido: formato deve ser uma lista de contas.' };
+                }
+                return { success: true, accounts: imported };
+            } catch (error) {
+                log.error(`Erro ao importar contas: ${error.message}`);
+                return { success: false, error: error.message };
+            }
+        });
 
         ipcMain.handle('open-element', (e, args) => this.processManager.launchGame(args, this.getWebContents()));
         ipcMain.handle('close-element', (e, pid) => this.processManager.killGameByPid(pid));
@@ -346,11 +393,11 @@ class Application {
 
         // Abertura automática de grupo
         ipcMain.handle('open-group-accounts', async (e, { serverName, groupId, delayMs = 2000 }) => {
-            const groups = this.persistenceService.loadGroups(serverName);
+            const groups = this.groupStore.getGroups(serverName);
             const group = groups.find(g => g.id === groupId);
             if (!group) return { success: false, error: 'Grupo não encontrado' };
 
-            const accounts = this.persistenceService.loadAccounts(serverName);
+            const accounts = this.accountStore.getAccounts(serverName);
             const groupAccounts = accounts.filter(a => group.accountIds.includes(a.id));
 
             if (groupAccounts.length === 0) {
@@ -358,6 +405,17 @@ class Application {
             }
 
             return this.processManager.launchGroup(groupAccounts, delayMs, this.getWebContents());
+        });
+
+        ipcMain.handle('stop-group-accounts', async (e, { serverName, groupId }) => {
+            const groups = this.groupStore.getGroups(serverName);
+            const group = groups.find(g => g.id === groupId);
+            if (!group) return { success: false, error: 'Grupo não encontrado' };
+
+            const accounts = this.accountStore.getAccounts(serverName);
+            const groupAccounts = accounts.filter(a => group.accountIds.includes(a.id));
+
+            return this.processManager.stopGroup(groupAccounts);
         });
     }
 

@@ -1,18 +1,23 @@
 {
-	"0": {
-		"id": "default",
-		"name": "Servidor Padrão",
-		"exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe"
-	},
-	"1": {
-		"id": "teste",
-		"name": "teste"
-	},
-	"servers": [
-		{
-			"id": "default",
-			"name": "CLASSIC PW",
-			"exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe"
-		}
-	]
+  "0": {
+    "id": "default",
+    "name": "Servidor Padrão",
+    "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe"
+  },
+  "1": {
+    "id": "teste",
+    "name": "teste"
+  },
+  "servers": [
+    {
+      "id": "default",
+      "name": "CLASSIC PW",
+      "exePath": "C:\\Jogos\\THE CLASSIC PW - Copia\\The Classic PW 1.2.6\\ElementClient.exe"
+    },
+    {
+      "id": "c21f8b9e-ada6-4755-a6d4-a855a4990213",
+      "name": "Saint Seiya",
+      "exePath": "D:\\UTEIS\\SSO\\RLRSJYJSDS\\cliente\\bin\\seiya.exe"
+    }
+  ]
 }

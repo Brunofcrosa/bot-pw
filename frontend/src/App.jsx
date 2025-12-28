@@ -128,7 +128,9 @@ const App = () => {
                 exePath: exePath,
                 login: acc.login,
                 password: acc.password,
-                characterName: acc.charName
+                characterName: acc.charName,
+                simpleLaunch: acc.simpleLaunch,
+                argument: acc.argument
             });
 
             if (!result || !result.success) {
@@ -144,6 +146,48 @@ const App = () => {
             removeInstance(acc.id);
         }
     }, [currentServer.exePath, registerStartingInstance, removeInstance, showConfirm, hideConfirm]);
+
+    const handleExportAccounts = useCallback(async () => {
+        try {
+            if (accounts.length === 0) {
+                showConfirm('Exportar', 'Não há contas para exportar.', hideConfirm, 'warning');
+                return;
+            }
+            await window.electronAPI.invoke('export-accounts', accounts);
+        } catch (error) {
+            showConfirm('Erro na Exportação', error.message, hideConfirm, 'danger');
+        }
+    }, [accounts, showConfirm, hideConfirm]);
+
+    const handleImportAccounts = useCallback(async () => {
+        try {
+            const result = await window.electronAPI.invoke('import-accounts');
+            if (result.success && result.accounts) {
+                // Merge logic: avoid duplicates based on ID or Login?
+                // Simple approach: verify if ID exists. If yes, update? Or skip?
+                // Let's create new IDs to avoid conflicts if they come from another machine?
+                // But user might want to restore backups.
+                // Strategy: Merge. If ID exists, overwrite. If not, add.
+                const mergedAccounts = [...accounts];
+                let count = 0;
+                result.accounts.forEach(imported => {
+                    const index = mergedAccounts.findIndex(a => a.id === imported.id);
+                    if (index >= 0) {
+                        mergedAccounts[index] = imported;
+                    } else {
+                        mergedAccounts.push(imported);
+                    }
+                    count++;
+                });
+                saveAccounts(mergedAccounts);
+                showConfirm('Importação', `${count} contas importadas/atualizadas com sucesso.`, hideConfirm, 'success');
+            } else if (result.error) {
+                showConfirm('Erro na Importação', result.error, hideConfirm, 'danger');
+            }
+        } catch (error) {
+            showConfirm('Erro na Importação', error.message, hideConfirm, 'danger');
+        }
+    }, [accounts, saveAccounts, showConfirm, hideConfirm]);
 
     const handleCloseGame = useCallback(async (pid) => {
         try {
@@ -190,6 +234,18 @@ const App = () => {
             );
         }
     }, [accounts, handleOpenGame, showConfirm, hideConfirm]);
+
+    const handleStopGroup = useCallback(async (group) => {
+        try {
+            if (!group || !group.id) return;
+            await window.electronAPI.invoke('stop-group-accounts', {
+                serverName: currentServerId,
+                groupId: group.id
+            });
+        } catch (error) {
+            showConfirm('Erro', 'Falha ao parar grupo: ' + error.message, hideConfirm, 'danger');
+        }
+    }, [currentServerId, showConfirm, hideConfirm]);
 
     if (isOverlay) {
         return (
@@ -277,6 +333,8 @@ const App = () => {
                             onCloseGame={handleCloseGame}
                             onEdit={(a) => { setAccountToEdit(a); setIsAccountModalOpen(true); }}
                             onDelete={handleDeleteAccount}
+                            onExport={handleExportAccounts}
+                            onImport={handleImportAccounts}
                         />
                     )}
                     {activeTab === 'groups' && (
@@ -287,6 +345,7 @@ const App = () => {
                             currentServerId={currentServerId}
                             onSaveGroups={saveGroups}
                             onOpenGroup={(group) => handleOpenGroup(group)}
+                            onStopGroup={(group) => handleStopGroup(group)}
                             showConfirm={showConfirm}
                             hideConfirm={hideConfirm}
                         />

@@ -12,6 +12,7 @@ const GroupsView = ({
     currentServerId,
     onSaveGroups,
     onOpenGroup,
+    onStopGroup,
     showConfirm,
     hideConfirm
 }) => {
@@ -183,6 +184,7 @@ const GroupsView = ({
                                 group={group}
                                 groupAccounts={groupAccounts}
                                 onOpenGroup={onOpenGroup}
+                                onStopGroup={onStopGroup}
                                 onEditGroup={handleOpenGroupEditor}
                                 onOpenOverlay={(groupId) => window.electronAPI.invoke('open-group-overlay', groupId, currentServerId)}
                                 onShowInstances={handleShowInstances}
@@ -212,6 +214,7 @@ GroupsView.propTypes = {
     currentServerId: PropTypes.string,
     onSaveGroups: PropTypes.func.isRequired,
     onOpenGroup: PropTypes.func.isRequired,
+    onStopGroup: PropTypes.func,
     showConfirm: PropTypes.func.isRequired,
     hideConfirm: PropTypes.func.isRequired
 };

@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import PropTypes from 'prop-types';
 import ServerCard from '../server/ServerCard';
-import { FaFolderOpen } from 'react-icons/fa';
+import { FaFolderOpen, FaFileExport, FaFileImport } from 'react-icons/fa';
 import './AccountsView.css';
 
 const AccountsView = ({
@@ -10,10 +10,20 @@ const AccountsView = ({
     onOpenGame,
     onCloseGame,
     onEdit,
-    onDelete
+    onDelete,
+    onExport,
+    onImport
 }) => {
     return (
         <div className="accounts-view">
+            <div className="accounts-header-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginBottom: '15px' }}>
+                <button className="btn-action-secondary" onClick={onImport} title="Importar Contas">
+                    <FaFileImport /> Importar
+                </button>
+                <button className="btn-action-secondary" onClick={onExport} title="Exportar Contas">
+                    <FaFileExport /> Exportar
+                </button>
+            </div>
             {accounts.length === 0 ? (
                 <div className="empty-accounts">
                     <FaFolderOpen size={60} />
@@ -52,7 +62,9 @@ AccountsView.propTypes = {
     onOpenGame: PropTypes.func.isRequired,
     onCloseGame: PropTypes.func.isRequired,
     onEdit: PropTypes.func.isRequired,
-    onDelete: PropTypes.func.isRequired
+    onDelete: PropTypes.func.isRequired,
+    onExport: PropTypes.func,
+    onImport: PropTypes.func
 };
 
 export default memo(AccountsView);

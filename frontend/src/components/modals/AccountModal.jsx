@@ -23,10 +23,13 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
                     charName: accountToEdit.charName || '',
                     charClass: accountToEdit.charClass || '',
                     exePath: accountToEdit.exePath || '',
-                    icon: accountToEdit.icon || ''
+                    icon: accountToEdit.icon || '',
+                    icon: accountToEdit.icon || '',
+                    simpleLaunch: accountToEdit.simpleLaunch || false,
+                    argument: accountToEdit.argument || ''
                 });
             } else {
-                setFormData({ login: '', password: '', charName: '', charClass: '', exePath: '', icon: '' });
+                setFormData({ login: '', password: '', charName: '', charClass: '', exePath: '', icon: '', simpleLaunch: false, argument: '' });
             }
             setShowPassword(false);
         }
@@ -175,6 +178,24 @@ const AccountModal = ({ isOpen, onClose, onSave, accountToEdit }) => {
                                 Apenas se diferente do servidor.
                             </small>
                         </div>
+                        <div className="form-group checkbox-group" style={{ marginTop: '1rem', display: 'flex', alignItems: 'center' }}>
+                            <label className="checkbox-container" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px' }}>
+                                <input
+                                    type="checkbox"
+                                    id="simpleLaunch"
+                                    name="simpleLaunch"
+                                    checked={formData.simpleLaunch || false}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, simpleLaunch: e.target.checked }))}
+                                    style={{ width: 'auto' }}
+                                />
+                                <div className="label-text">
+                                    <span style={{ fontWeight: 500 }}>Apenas Abrir (Modo Compatibilidade)</span>
+                                    <small className="hint-text d-block" style={{ color: 'var(--text-muted)', display: 'block' }}>
+                                        Apenas inicia o executável. Login automático desativado.
+                                    </small>
+                                </div>
+                            </label>
+                        </div>
                     </div>
 
                     <div className="modal-footer">
@@ -202,7 +223,10 @@ AccountModal.propTypes = {
         charName: PropTypes.string,
         charClass: PropTypes.string,
         exePath: PropTypes.string,
-        icon: PropTypes.string
+        icon: PropTypes.string,
+        icon: PropTypes.string,
+        simpleLaunch: PropTypes.bool,
+        argument: PropTypes.string
     })
 };
 

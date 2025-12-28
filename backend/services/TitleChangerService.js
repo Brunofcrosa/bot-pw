@@ -22,8 +22,10 @@ class TitleChangerService {
 
         log.info(`Alterando título da janela (PID: ${pid}) para: "${newTitle}"`);
 
-        const process = spawn(exePath, args, {
-            windowsHide: true
+        // Quote the path to handle spaces when using shell: true
+        const process = spawn(`"${exePath}"`, args, {
+            windowsHide: true,
+            shell: true // REQUIRED for Admin/Elevation (UAC)
         });
 
         process.stdout.on('data', (data) => {
