@@ -35,10 +35,6 @@ const OverlayView = ({ groupId, groups: initialGroups, accounts: initialAccounts
     useEffect(() => {
         const resizeObserver = new ResizeObserver((entries) => {
             for (let entry of entries) {
-                const { width, height } = entry.contentRect;
-                // Add minor padding to avoid scrollbars or clipping
-                // contentRect does not include padding/border if box-sizing is border-box? 
-                // Using entry.target.getBoundingClientRect() might be safer.
                 const rect = entry.target.getBoundingClientRect();
                 const w = Math.ceil(rect.width);
                 const h = Math.ceil(rect.height);
@@ -49,9 +45,6 @@ const OverlayView = ({ groupId, groups: initialGroups, accounts: initialAccounts
             }
         });
 
-        // We need to target the actual modal content
-        // Since GroupControlModal is a child, we can wrap it or assume a class selector.
-        // Better: wrap GroupControlModal in a div with a ref.
         const target = document.querySelector('.group-control-modal.overlay-mode');
         if (target) {
             resizeObserver.observe(target);
@@ -64,10 +57,7 @@ const OverlayView = ({ groupId, groups: initialGroups, accounts: initialAccounts
         }
 
         return () => resizeObserver.disconnect();
-    }, [groups, accounts, runningInstances, groupId]); // Re-attach if content changes significantly
-
-
-
+    }, [groups, accounts, runningInstances, groupId]);
 
     const overlayGroup = useMemo(() => {
         if (!groups.length) return null;

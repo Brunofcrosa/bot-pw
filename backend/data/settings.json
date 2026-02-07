@@ -14,7 +14,28 @@
   },
   "macro": {
     "keys": [],
-    "presets": [],
+    "presets": [
+      {
+        "id": 1770493391011,
+        "name": "Novo Macro 1",
+        "triggerKey": "1",
+        "loop": true,
+        "commands": [
+          {
+            "actionKey": "1",
+            "delay": 100
+          },
+          {
+            "actionKey": "2",
+            "delay": 100
+          },
+          {
+            "actionKey": "3",
+            "delay": 100
+          }
+        ]
+      }
+    ],
     "focusOnMacro": true,
     "backgroundMacro": false,
     "interval": 200

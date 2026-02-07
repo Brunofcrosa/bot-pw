@@ -7,6 +7,25 @@ class MacroFeature {
         this.macroService = macroService;
         this.macroStore = macroStore;
         this.registerIpcHandlers();
+        this.loadStoredMacros();
+    }
+
+    loadStoredMacros() {
+        try {
+            const presets = this.macroStore.getPresets();
+            if (Array.isArray(presets)) {
+                let count = 0;
+                presets.forEach(p => {
+                    if (p.triggerKey && p.commands) {
+                        this.macroService.registerMacro(p.triggerKey, p.commands, p.loop);
+                        count++;
+                    }
+                });
+                log.info(`${count} macros restaurados do armazenamento.`);
+            }
+        } catch (error) {
+            log.error('Erro ao restaurar macros:', error);
+        }
     }
 
     registerIpcHandlers() {

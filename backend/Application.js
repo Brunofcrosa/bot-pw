@@ -192,10 +192,10 @@ class Application {
 
     createWindow() {
         this.mainWindow = new BrowserWindow({
-            width: 1000,
-            height: 720,
-            minWidth: 800,
-            minHeight: 600,
+            width: 450,
+            height: 700,
+            minWidth: 380,
+            minHeight: 500,
             backgroundColor: '#1e1e24',
             webPreferences: {
                 preload: PRELOAD_SCRIPT,

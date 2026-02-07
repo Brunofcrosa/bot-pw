@@ -41,13 +41,21 @@ ServerItem.propTypes = {
 
 const ServerList = ({ servers, currentServerId, onSelectServer, onOpenAddModal, onEditServer }) => (
     <div className="server-list-container">
+        {/* Title removed or styled better via CSS, but let's keep checks */}
         <h5 className="server-list-title">Servidores</h5>
+
+        {/* Direct children for Flex container? Or group? 
+            If we crowd everything in server-item-group, the title is outside.
+            .server-list-container is flex. 
+            So Title (flex-child) + Group (flex-child).
+            Inside Group -> Button + List.
+        */}
         <div className="server-item-group">
             <button
-                className="btn btn-sm btn-outline-info btn-add-server-custom"
+                className="btn-add-server-custom"
                 onClick={onOpenAddModal}
             >
-                <FaPlus className="me-1" /> Adicionar Novo Servidor
+                <FaPlus className="me-1" /> Novo
             </button>
 
             {servers.map(server => (

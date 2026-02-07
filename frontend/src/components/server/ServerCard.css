@@ -1,47 +1,38 @@
 .account-card {
     background-color: var(--bg-card);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     overflow: hidden;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     position: relative;
     height: 100%;
+    box-shadow: var(--shadow-sm);
 }
 
 .account-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-lg);
     border-color: var(--accent-primary);
 }
 
 .account-card.running {
-    border-color: var(--accent-success);
-}
-
-.card-status-bar {
-    height: 4px;
-    width: 100%;
-}
-
-.card-content {
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+    border-top: 4px solid var(--accent-success);
 }
 
 .card-header {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .char-avatar {
-    width: 48px;
-    height: 48px;
-    background-color: var(--bg-hover);
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--bg-hover) 0%, var(--bg-input) 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -50,16 +41,13 @@
     font-weight: bold;
     color: var(--text-primary);
     flex-shrink: 0;
-}
-
-.char-info {
-    flex-grow: 1;
-    overflow: hidden;
+    border: 2px solid var(--border-color);
 }
 
 .char-name {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
+    font-weight: 700;
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
@@ -69,49 +57,42 @@
 .char-class {
     font-size: 0.85rem;
     color: var(--text-secondary);
-}
-
-.status-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.card-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: auto;
+    font-weight: 500;
 }
 
 .btn-control {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius-md);
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.2s;
     color: white;
+    flex: 1;
 }
 
 .btn-control.start {
-    background-color: var(--accent-primary);
+    background: var(--accent-success);
+    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
 }
 
 .btn-control.start:hover {
-    background-color: var(--accent-hover);
+    background-color: #059669;
+    transform: translateY(-1px);
 }
 
 .btn-control.stop {
-    background-color: var(--accent-danger);
+    background: var(--accent-danger);
+    box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);
 }
 
 .btn-control.stop:hover {
-    background-color: #c03537;
+    background-color: #dc2626;
+    transform: translateY(-1px);
 }
 
 .secondary-actions {

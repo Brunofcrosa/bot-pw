@@ -56,7 +56,14 @@ const ALLOWED_INVOKE_CHANNELS = [
     // Auto Forge & Utils
     'start-auto-forge',
     'stop-auto-forge',
-    'capture-coordinates'
+    'capture-coordinates',
+    // MacroFeature
+    'save-macro-presets',
+    'get-macro-presets',
+    'unregister-macro',
+    'macro-get-active',
+    'macro-start-background',
+    'macro-stop-background'
 ];
 
 const ALLOWED_RECEIVE_CHANNELS = [

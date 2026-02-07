@@ -12,7 +12,8 @@ import GroupsView from './components/views/GroupsView';
 import AutoForgeView from './components/views/AutoForgeView';
 import BottomBar from './components/server/BottomBar';
 import OverlayView from './components/views/OverlayView';
-import { FaUser, FaUsers, FaPlus, FaCog, FaHammer } from 'react-icons/fa';
+import MacroModal from './components/modals/MacroModal';
+import { FaUser, FaUsers, FaPlus, FaCog, FaHammer, FaKeyboard } from 'react-icons/fa';
 import './App.css';
 
 const App = () => {
@@ -52,6 +53,7 @@ const App = () => {
     const [isAddServerModalOpen, setIsAddServerModalOpen] = useState(false);
     const [isAccountsListModalOpen, setIsAccountsListModalOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+    const [isMacroModalOpen, setIsMacroModalOpen] = useState(false);
 
     const [serverToEdit, setServerToEdit] = useState(null);
     const [accountToEdit, setAccountToEdit] = useState(null);
@@ -315,6 +317,15 @@ const App = () => {
 
                             <button
                                 className="btn-settings"
+                                onClick={() => setIsMacroModalOpen(true)}
+                                title="Macros"
+                                style={{ marginRight: '8px' }}
+                            >
+                                <FaKeyboard />
+                            </button>
+
+                            <button
+                                className="btn-settings"
                                 onClick={() => setIsSettingsModalOpen(true)}
                                 title="Configurações"
                             >
@@ -387,6 +398,13 @@ const App = () => {
             <SettingsModal
                 isOpen={isSettingsModalOpen}
                 onClose={() => setIsSettingsModalOpen(false)}
+                showConfirm={showConfirm}
+                hideConfirm={hideConfirm}
+            />
+
+            <MacroModal
+                isOpen={isMacroModalOpen}
+                onClose={() => setIsMacroModalOpen(false)}
                 showConfirm={showConfirm}
                 hideConfirm={hideConfirm}
             />

@@ -113,11 +113,17 @@ class MacroService extends EventEmitter {
         // For now, let's assume pressing trigger starts a NEW sequence.
         // If one is already running, maybe we should stop it first to avoid overlap?
         if (this.activeJobMap.has(pressedVk)) {
-            const { jobId } = this.activeJobMap.get(pressedVk);
+            const { jobId, loop } = this.activeJobMap.get(pressedVk);
             this.windowService.cancelBatchSequence(jobId);
             this.activeJobMap.delete(pressedVk);
             this.emitActiveMacrosUpdate(); // Notify change
-            log.info(`[MACRO] Reiniciando macro ${pressedVk} (Cancelado job anterior: ${jobId})`);
+            log.info(`[MACRO] Interrompido macro ${pressedVk} (Job: ${jobId})`);
+
+            // Se era um loop, o usuário provavelmente queria parar (Toggle OFF).
+            // Se não era loop, permitimos reiniciar (spamming).
+            if (loop) {
+                return;
+            }
         }
 
         if (this.macros.has(pressedVk)) {
