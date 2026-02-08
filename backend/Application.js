@@ -102,7 +102,7 @@ class Application {
         this.createWindow();
         this.setupServices();
 
-        // this.keyListenerService.start();
+        this.keyListenerService.start();
 
         // [New] Focus Hotkey Listener via C# Hook (Bypasses Admin Restrictions)
         // this.keyListenerService.on('key-event', (event) => {
