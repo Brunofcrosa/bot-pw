@@ -16,22 +16,23 @@
     "keys": [],
     "presets": [
       {
-        "id": 1770493391011,
+        "id": 1770515347060,
         "name": "Novo Macro 1",
-        "triggerKey": "1",
+        "triggerKey": "F1",
         "loop": true,
+        "mode": "seiya",
         "commands": [
           {
-            "actionKey": "1",
-            "delay": 100
+            "id": 1770515349516,
+            "accountId": "acc-1770501938201",
+            "key": "1",
+            "delay": "100"
           },
           {
-            "actionKey": "2",
-            "delay": 100
-          },
-          {
-            "actionKey": "3",
-            "delay": 100
+            "id": 1770515350916,
+            "accountId": "acc-1770515218620",
+            "key": "1",
+            "delay": "100"
           }
         ]
       }

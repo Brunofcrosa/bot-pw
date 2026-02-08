@@ -17,7 +17,7 @@ class MacroFeature {
                 let count = 0;
                 presets.forEach(p => {
                     if (p.triggerKey && p.commands) {
-                        this.macroService.registerMacro(p.triggerKey, p.commands, p.loop);
+                        this.macroService.registerMacro(p.triggerKey, p.commands, p.loop, p.mode);
                         count++;
                     }
                 });
@@ -48,8 +48,8 @@ class MacroFeature {
         });
 
         // Register Active Macro (Runtime)
-        ipcMain.handle('register-macro', async (event, { triggerKey, commands, loop }) => {
-            return this.macroService.registerMacro(triggerKey, commands, loop);
+        ipcMain.handle('register-macro', async (event, { triggerKey, commands, loop, mode }) => {
+            return this.macroService.registerMacro(triggerKey, commands, loop, mode);
         });
 
         // Unregister Macro (Runtime)

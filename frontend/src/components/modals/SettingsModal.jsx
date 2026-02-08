@@ -8,9 +8,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
     const [cycleHotkey, setCycleHotkey] = useState('Control+Shift+T');
     const [toggleHotkey, setToggleHotkey] = useState('');
     const [macroHotkey, setMacroHotkey] = useState('');
-    const [macroKeys, setMacroKeys] = useState('');
-    const [focusOnMacro, setFocusOnMacro] = useState(true);
-    const [backgroundMacro, setBackgroundMacro] = useState(false);
     const [autoBackup, setAutoBackup] = useState(true);
     const [message, setMessage] = useState('');
 
@@ -31,9 +28,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
                 setCycleHotkey(settings.hotkeys?.cycle || 'Control+Shift+T');
                 setToggleHotkey(settings.hotkeys?.toggle || '');
                 setMacroHotkey(settings.hotkeys?.macro || '');
-                setMacroKeys(settings.macro?.keys?.join(', ') || '');
-                setFocusOnMacro(settings.macro?.focusOnMacro ?? true);
-                setBackgroundMacro(settings.macro?.backgroundMacro ?? false);
                 setAutoBackup(settings.general?.autoBackup ?? true);
             }
         } catch (err) {
@@ -46,11 +40,8 @@ const SettingsModal = ({ isOpen, onClose }) => {
 
     const handleSave = async () => {
         try {
-            const keysArray = macroKeys.split(',').map(k => k.trim().toUpperCase()).filter(k => k);
-
             const settings = {
                 hotkeys: { cycle: cycleHotkey, toggle: toggleHotkey, macro: macroHotkey },
-                macro: { keys: keysArray, focusOnMacro, backgroundMacro },
                 general: { autoBackup }
             };
 
@@ -60,9 +51,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
             if (cycleHotkey) await window.electronAPI.invoke('set-cycle-hotkey', cycleHotkey);
             if (toggleHotkey) await window.electronAPI.invoke('set-toggle-hotkey', toggleHotkey);
             if (macroHotkey) await window.electronAPI.invoke('set-macro-hotkey', macroHotkey);
-            if (keysArray.length > 0) await window.electronAPI.invoke('set-macro-keys', keysArray);
-            await window.electronAPI.invoke('set-focus-on-macro', focusOnMacro);
-            await window.electronAPI.invoke('set-background-macro', backgroundMacro);
 
             setMessage('Configurações salvas!');
             setTimeout(() => setMessage(''), 3000);
@@ -123,12 +111,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
                             <FaKeyboard className="nav-icon" /> Atalhos
                         </button>
                         <button
-                            className={`nav-item ${activeTab === 'macro' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('macro')}
-                        >
-                            <FaRobot className="nav-icon" /> Macros
-                        </button>
-                        <button
                             className={`nav-item ${activeTab === 'backup' ? 'active' : ''}`}
                             onClick={() => setActiveTab('backup')}
                         >
@@ -141,7 +123,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
                     <div className="content-header">
                         <h3>
                             {activeTab === 'hotkeys' && 'Atalhos Globais'}
-                            {activeTab === 'macro' && 'Configuração de Macros'}
                             {activeTab === 'backup' && 'Gerenciamento de Dados'}
                         </h3>
                         <button className="close-button" onClick={onClose}><FaTimes /></button>
@@ -188,44 +169,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
                                         placeholder="Ex: Control+Shift+M"
                                     />
                                     <span className="control-hint">Dispara a macro configurada.</span>
-                                </div>
-                            </>
-                        )}
-
-                        {activeTab === 'macro' && (
-                            <>
-                                <div className="settings-group">
-                                    <label className="control-label">Sequência de Teclas</label>
-                                    <input
-                                        type="text"
-                                        className="control-input"
-                                        value={macroKeys}
-                                        onChange={e => setMacroKeys(e.target.value)}
-                                        placeholder="F1, F2, 1, 2"
-                                    />
-                                    <span className="control-hint">Teclas separadas por vírgula.</span>
-                                </div>
-
-                                <div className="toggle-control" onClick={() => setFocusOnMacro(!focusOnMacro)}>
-                                    <div className="toggle-info">
-                                        <div className="toggle-title">Focar Janela</div>
-                                        <div className="toggle-desc">Traz a janela para frente antes de enviar teclas</div>
-                                    </div>
-                                    <label className="checkbox-wrapper">
-                                        <input type="checkbox" checked={focusOnMacro} readOnly />
-                                        <span className="slider"></span>
-                                    </label>
-                                </div>
-
-                                <div className="toggle-control" onClick={() => setBackgroundMacro(!backgroundMacro)}>
-                                    <div className="toggle-info">
-                                        <div className="toggle-title">Modo Background</div>
-                                        <div className="toggle-desc">Envia teclas sem focar (experimental)</div>
-                                    </div>
-                                    <label className="checkbox-wrapper">
-                                        <input type="checkbox" checked={backgroundMacro} readOnly />
-                                        <span className="slider"></span>
-                                    </label>
                                 </div>
                             </>
                         )}

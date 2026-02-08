@@ -61,14 +61,21 @@ class ProcessManager {
                     log.info(`Sessão restaurada para conta ${accountId} (PID: ${pid})`);
                     restoredCount++;
 
-                    // Optional: Try to retake title control if possible?
-                    if (this.titleChangerService) {
-                        // We don't have characterName here easily unless we fetch from AccountStore...
-                        // For now, simpler is better. Persistence just keeps it alive in UI.
-                    }
-
                 } catch (e) {
-                    log.debug(`PID ${pid} da sessão anterior não está mais ativo.`);
+                    if (e.code === 'EPERM') {
+                        // Process exists but we don't have permission. Treat as ALIVE.
+                        this.activeGamePids.set(accountId, pid);
+                        this.startGameMonitor(accountId, pid, webContents);
+
+                        if (webContents) {
+                            webContents.send('element-opened', { success: true, pid: pid, accountId: accountId });
+                        }
+
+                        log.info(`Sessão restaurada (EPERM) para conta ${accountId} (PID: ${pid})`);
+                        restoredCount++;
+                    } else {
+                        log.debug(`PID ${pid} da sessão anterior não está mais ativo. Erro: ${e.code}`);
+                    }
                 }
             }
             // Update session file to reflect only currently valid processes

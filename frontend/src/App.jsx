@@ -315,14 +315,7 @@ const App = () => {
                                 </button>
                             )}
 
-                            <button
-                                className="btn-settings"
-                                onClick={() => setIsMacroModalOpen(true)}
-                                title="Macros"
-                                style={{ marginRight: '8px' }}
-                            >
-                                <FaKeyboard />
-                            </button>
+
 
                             <button
                                 className="btn-settings"

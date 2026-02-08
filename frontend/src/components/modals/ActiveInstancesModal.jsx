@@ -163,7 +163,8 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts, show
             await window.electronAPI.invoke('register-macro', {
                 triggerKey: preset.triggerKey,
                 commands: validCommands,
-                loop: preset.loop || false
+                loop: preset.loop || false,
+                mode: preset.mode || 'pw'
             });
             setActiveMacroTriggers(prev => [...prev, preset.triggerKey]);
 
@@ -188,6 +189,7 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts, show
             name: `Novo Macro ${presets.length + 1}`,
             triggerKey: '',
             loop: false,
+            mode: 'pw',
             commands: []
         };
         const updated = [...presets, newPreset];
@@ -499,6 +501,23 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts, show
                                                     onChange={e => updatePreset(activePresetId, 'triggerKey', e.target.value.toUpperCase())}
                                                     placeholder="Ex: F1"
                                                 />
+                                            </div>
+
+                                            <div className="settings-group">
+                                                <label>Modo de Envio</label>
+                                                <select
+                                                    className="settings-input"
+                                                    value={getActivePreset()?.mode || 'pw'}
+                                                    onChange={e => updatePreset(activePresetId, 'mode', e.target.value)}
+                                                >
+                                                    <option value="pw">Modo PW (Background)</option>
+                                                    <option value="seiya">Modo Saint Seiya (Foreground)</option>
+                                                </select>
+                                                <small style={{ color: '#888', marginTop: '4px', display: 'block' }}>
+                                                    {getActivePreset()?.mode === 'seiya'
+                                                        ? 'Foca a janela e simula teclado real. Mantém a janela ativa.'
+                                                        : 'Envia teclas em segundo plano sem focar.'}
+                                                </small>
                                             </div>
 
 

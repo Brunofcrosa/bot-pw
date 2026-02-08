@@ -19,8 +19,12 @@ class WindowService extends EventEmitter {
 
         this.senderProcess = null;
         this.backgroundSenderProcess = null;
+        this.foregroundSenderProcess = null;
+
         this.startSender();
         this.startBackgroundSender();
+        this.startForegroundSender();
+        this.startSeiyaSender();
     }
 
     startSender() {
@@ -40,6 +44,26 @@ class WindowService extends EventEmitter {
         this.senderProcess.on('close', (code) => {
             log.warn(`Sender process closed with code ${code}. Restarting...`);
             setTimeout(() => this.startSender(), 2000);
+        });
+    }
+
+    startForegroundSender() {
+        const psScript = path.join(__dirname, '..', 'scripts', 'ps-foreground-sender.ps1');
+        log.info(`Iniciando sender de teclas Foreground persistente: ${psScript}`);
+
+        this.foregroundSenderProcess = spawn('powershell', ['-ExecutionPolicy', 'Bypass', '-File', psScript]);
+
+        this.foregroundSenderProcess.stdout.on('data', (data) => {
+            // log.debug(`[ForegroundSender]: ${data}`);
+        });
+
+        this.foregroundSenderProcess.stderr.on('data', (data) => {
+            log.error(`[ForegroundSender Error]: ${data}`);
+        });
+
+        this.foregroundSenderProcess.on('close', (code) => {
+            log.warn(`Foreground Sender process closed with code ${code}. Restarting...`);
+            setTimeout(() => this.startForegroundSender(), 2000);
         });
     }
 
@@ -187,6 +211,29 @@ class WindowService extends EventEmitter {
         }
     }
 
+    sendForegroundKey(key) {
+        if (!this.foregroundSenderProcess || this.foregroundSenderProcess.killed) {
+            log.error('Foreground Sender not running. Restarting...');
+            this.startForegroundSender();
+            return;
+        }
+
+        // Map Key Name -> VK Code
+        const vkCode = VK_MAP[key.toUpperCase()];
+
+        if (!vkCode) {
+            log.warn(`VK Code não encontrado para tecla: ${key}. Ignorando.`);
+            return;
+        }
+
+        try {
+            this.foregroundSenderProcess.stdin.write(vkCode.toString() + '\n');
+            // log.info(`[Foreground] Enviado VK: ${vkCode} para ${key}`);
+        } catch (e) {
+            log.error(`Erro ao escrever no Foreground Sender: ${e.message}`);
+        }
+    }
+
     // --- Background Combo Implementation ---
 
     startBackgroundSender() {
@@ -305,6 +352,78 @@ class WindowService extends EventEmitter {
                 }
             });
         });
+    }
+
+    // --- Seiya (Hybrid Background) Implementation ---
+
+    startSeiyaSender() {
+        const psScript = path.join(__dirname, '..', 'scripts', 'ps-seiya-sender.ps1');
+        log.info(`Iniciando Seiya Hybrid Sender: ${psScript}`);
+
+        this.seiyaSenderProcess = spawn('powershell', ['-ExecutionPolicy', 'Bypass', '-File', psScript], {
+            stdio: ['pipe', 'pipe', 'ignore'],
+            windowsHide: true
+        });
+
+        this.seiyaSenderProcess.stdout.on('data', (data) => {
+            const lines = data.toString().split(/\r?\n/).filter(Boolean);
+            for (const line of lines) {
+                try {
+                    const msg = JSON.parse(line);
+                    if (msg.status === 'error') {
+                        log.error(`[SeiyaSender Error]: ${msg.message}`);
+                        this.emit('job-error', msg.jobId, msg.message);
+                    } else if (msg.status === 'done') {
+                        log.info(`[SeiyaSender]: Job ${msg.jobId} done`);
+                        this.emit('job-done', msg.jobId);
+                    } else if (msg.status === 'cancelled') {
+                        log.info(`[SeiyaSender]: Job ${msg.jobId} cancelled`);
+                        this.emit('job-cancelled', msg.jobId);
+                    }
+                } catch (e) {
+                    // log.debug(`[SeiyaSender Raw]: ${line}`);
+                }
+            }
+        });
+
+        this.seiyaSenderProcess.on('close', (code) => {
+            log.warn(`Seiya Hybrid Sender process closed with code ${code}. Restarting...`);
+            setTimeout(() => this.startSeiyaSender(), 3000);
+        });
+
+        this.seiyaSenderProcess.on('error', (err) => {
+            log.error(`Falha ao iniciar Seiya Hybrid Sender: ${err.message}`);
+        });
+    }
+
+    sendSeiyaBatchSequence(jobId, commands, loop = false) {
+        if (!this.seiyaSenderProcess || this.seiyaSenderProcess.killed) {
+            log.error('Seiya Hybrid Sender process not running');
+            return false;
+        }
+
+        const payload = JSON.stringify({
+            type: "execute",
+            jobId,
+            commands,
+            loop
+        }) + "\n";
+
+        this.seiyaSenderProcess.stdin.write(payload);
+        log.info(`Enviado para Seiya Hybrid Sender (Job: ${jobId}, Loop: ${loop})`);
+        return true;
+    }
+
+    cancelSeiyaBatchSequence(jobId) {
+        if (!this.seiyaSenderProcess || this.seiyaSenderProcess.killed) return;
+
+        const payload = JSON.stringify({
+            type: "cancel",
+            jobId
+        }) + "\n";
+
+        this.seiyaSenderProcess.stdin.write(payload);
+        log.info(`Cancelamento Seiya enviado para Job: ${jobId}`);
     }
 
     _updateLastWindow(hwnd) {

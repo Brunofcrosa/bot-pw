@@ -481,6 +481,7 @@ input:checked+.slider:before {
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow: hidden;
 }
 
 /* Tabs Bar */
@@ -552,6 +553,7 @@ input:checked+.slider:before {
     display: flex;
     flex: 1;
     background: var(--bg-body);
+    overflow: hidden;
 }
 
 .commands-panel {
@@ -560,6 +562,7 @@ input:checked+.slider:before {
     background: var(--bg-card);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .panel-header {
@@ -714,11 +717,12 @@ input:checked+.slider:before {
 .settings-panel {
     flex: 1.2;
     padding: 32px;
-    background: var(--bg-body);
+    background: rgba(30, 30, 36, 0.5);
     display: flex;
     flex-direction: column;
     gap: 24px;
     box-shadow: -5px 0 20px rgba(0, 0, 0, 0.05);
+    overflow-y: auto;
 }
 
 .settings-header {
@@ -746,6 +750,9 @@ input:checked+.slider:before {
     color: var(--text-primary);
     font-size: 1rem;
     transition: all 0.2s;
+    background-color: var(--bg-input);
+    /* Explicit solid background */
+    color: var(--text-primary);
 }
 
 .settings-input:focus {
@@ -798,6 +805,8 @@ input:checked+.slider:before {
     background: var(--bg-modal-header);
     border-top: 1px solid var(--border-color);
     display: flex;
+    flex-shrink: 0;
+    z-index: 10;
     align-items: center;
 }
 

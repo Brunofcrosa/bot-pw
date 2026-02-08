@@ -70,7 +70,7 @@ class MacroService extends EventEmitter {
         this.emit('active-macros-update', activeMacros);
     }
 
-    registerMacro(triggerKeyName, commands, loop = false) {
+    registerMacro(triggerKeyName, commands, loop = false, mode = 'pw') {
         const triggerVk = KEY_TO_VK[triggerKeyName.toUpperCase()];
 
         if (!triggerVk) {
@@ -82,8 +82,8 @@ class MacroService extends EventEmitter {
             return { success: false, error: 'Lista de comandos vazia' };
         }
 
-        this.macros.set(triggerVk, { commands, loop });
-        log.info(`Macro Global registrado: ${triggerKeyName}(${triggerVk}) -> ${commands.length} comandos, Loop: ${loop}`);
+        this.macros.set(triggerVk, { commands, loop, mode });
+        log.info(`Macro Global registrado: ${triggerKeyName}(${triggerVk}) -> ${commands.length} comandos, Loop: ${loop}, Modo: ${mode}`);
 
         return { success: true };
     }
@@ -93,11 +93,17 @@ class MacroService extends EventEmitter {
         if (this.macros.has(triggerVk)) {
             // STOP active loop if exists
             if (this.activeJobMap.has(triggerVk)) {
-                const { jobId } = this.activeJobMap.get(triggerVk);
-                this.windowService.cancelBatchSequence(jobId);
+                const { jobId, mode } = this.activeJobMap.get(triggerVk);
+
+                if (mode === 'seiya') {
+                    this.windowService.cancelSeiyaBatchSequence(jobId);
+                } else {
+                    this.windowService.cancelBatchSequence(jobId);
+                }
+
                 this.activeJobMap.delete(triggerVk);
                 this.emitActiveMacrosUpdate();
-                log.info(`[MACRO] Loop cancelado para ${triggerKeyName} (Job: ${jobId})`);
+                log.info(`[MACRO] Loop cancelado para ${triggerKeyName} (Job: ${jobId}, Mode: ${mode})`);
             }
 
             this.macros.delete(triggerVk);
@@ -113,11 +119,17 @@ class MacroService extends EventEmitter {
         // For now, let's assume pressing trigger starts a NEW sequence.
         // If one is already running, maybe we should stop it first to avoid overlap?
         if (this.activeJobMap.has(pressedVk)) {
-            const { jobId, loop } = this.activeJobMap.get(pressedVk);
-            this.windowService.cancelBatchSequence(jobId);
+            const { jobId, loop, mode } = this.activeJobMap.get(pressedVk);
+
+            if (mode === 'seiya') {
+                this.windowService.cancelSeiyaBatchSequence(jobId);
+            } else {
+                this.windowService.cancelBatchSequence(jobId);
+            }
+
             this.activeJobMap.delete(pressedVk);
             this.emitActiveMacrosUpdate(); // Notify change
-            log.info(`[MACRO] Interrompido macro ${pressedVk} (Job: ${jobId})`);
+            log.info(`[MACRO] Interrompido macro ${pressedVk} (Job: ${jobId}, Mode: ${mode})`);
 
             // Se era um loop, o usuário provavelmente queria parar (Toggle OFF).
             // Se não era loop, permitimos reiniciar (spamming).
@@ -178,27 +190,38 @@ class MacroService extends EventEmitter {
 
             if (batchCommands.length > 0) {
                 const jobId = `macro_${pressedVk}_${Date.now()}`;
+                const mode = this.macros.get(pressedVk).mode || 'pw';
 
-                // Register in active map with ORIGINAL commands for looping
+                // Register in active map
                 this.activeJobMap.set(pressedVk, {
                     jobId,
-                    batchCommands, // Original batch for loops
-                    loop
+                    batchCommands,
+                    loop,
+                    mode
                 });
-                this.emitActiveMacrosUpdate(); // Notify change
+                this.emitActiveMacrosUpdate();
 
-                // OPTIMIZATION: Fast Start
-                // If the C# executor sleeps *before* key press, the first command causes input lag.
-                // We create a specific batch for the first run where the first delay is 0.
-                const firstRunBatch = batchCommands.map((cmd, index) => {
-                    if (index === 0) {
-                        return { ...cmd, delay: 0 };
-                    }
-                    return cmd;
-                });
+                if (mode === 'seiya') {
+                    // Hybrid Seiya Mode (Background Loop + Scancodes)
+                    log.info(`[MACRO] Iniciando modo SEIYA (Hybrid) para ${pressedVk}`);
 
-                // Send to EXE (Loop=false because Node handles repetition)
-                this.windowService.sendBatchSequence(jobId, firstRunBatch, false);
+                    // Same as PW, we optimize for fast start
+                    const firstRunBatch = batchCommands.map((cmd, index) => {
+                        if (index === 0) return { ...cmd, delay: 0 };
+                        return cmd;
+                    });
+                    this.windowService.sendSeiyaBatchSequence(jobId, firstRunBatch, loop);
+                } else {
+                    // Background Mode (PW)
+                    // OPTIMIZATION: Fast Start
+                    const firstRunBatch = batchCommands.map((cmd, index) => {
+                        if (index === 0) {
+                            return { ...cmd, delay: 0 };
+                        }
+                        return cmd;
+                    });
+                    this.windowService.sendBatchSequence(jobId, firstRunBatch, false);
+                }
             }
         }
     }
@@ -272,6 +295,59 @@ class MacroService extends EventEmitter {
             this.windowService.stopAllBackground();
         }
         return { success: true };
+    }
+
+    async executeSeiyaLoop(jobId, commands, loop) {
+        let running = true;
+        log.info(`[MACRO] Iniciando Loop Seiya (Background Scancodes) - Job: ${jobId}`);
+
+        while (running) {
+            // Check if job is still active
+            let isActive = false;
+            for (const [key, job] of this.activeJobMap.entries()) {
+                if (job.jobId === jobId) {
+                    isActive = true;
+                    break;
+                }
+            }
+
+            if (!isActive) {
+                running = false;
+                break;
+            }
+
+            for (const cmd of commands) {
+                // Check active again inside loop
+                isActive = false;
+                for (const [key, job] of this.activeJobMap.entries()) {
+                    if (job.jobId === jobId) {
+                        isActive = true;
+                        break;
+                    }
+                }
+                if (!isActive) {
+                    running = false;
+                    break;
+                }
+
+                // NO FOCUS - Background Mode requested by user
+                // "quero que tu aplique o modo 'foreground que existe no pw, quero que use o envio de teclas do modo saint seiya com o enviar em segundo plano do modo pw'"
+
+                // Send Key using sendKeySequence which now maps to ps-sender.ps1 (Background Scancode)
+                if (cmd.pid) {
+                    // We use sendKeySequence to single target
+                    this.windowService.sendKeySequence(cmd.pid, [cmd.actionKey], 100);
+                }
+
+                // Wait Delay
+                await new Promise(r => setTimeout(r, cmd.delay || 50));
+            }
+
+            if (!loop) running = false;
+            // Small delay between loops
+            if (running) await new Promise(r => setTimeout(r, 50));
+        }
+        log.info(`[MACRO] Loop Seiya finalizado (Job: ${jobId})`);
     }
 }
 
