@@ -25,13 +25,13 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding-bottom: 1rem;
+    padding-bottom: 0.75rem;
     border-bottom: 1px solid var(--border-color);
 }
 
 .char-avatar {
-    width: 50px;
-    height: 50px;
+    width: 38px;
+    height: 38px;
     background: linear-gradient(135deg, var(--bg-hover) 0%, var(--bg-input) 100%);
     border-radius: 50%;
     display: flex;
@@ -46,7 +46,7 @@
 
 .char-name {
     margin: 0;
-    font-size: 1.15rem;
+    font-size: 0.95rem;
     font-weight: 700;
     color: var(--text-primary);
     white-space: nowrap;
@@ -55,7 +55,7 @@
 }
 
 .char-class {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     color: var(--text-secondary);
     font-weight: 500;
 }
@@ -65,7 +65,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.6rem 1.2rem;
+    padding: 0.4rem 0.8rem;
     border: none;
     border-radius: var(--radius-md);
     font-weight: 600;
@@ -96,22 +96,37 @@
 }
 
 .secondary-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
     display: flex;
-    gap: 8px;
+    gap: 4px;
+    z-index: 10;
+    opacity: 0;
+    transform: translateX(10px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.account-card:hover .secondary-actions {
+    opacity: 1;
+    transform: translateX(0);
 }
 
 .btn-icon {
-    background: transparent;
+    background: rgba(0, 0, 0, 0.4);
     border: none;
     color: var(--text-secondary);
     cursor: pointer;
-    padding: 8px;
-    border-radius: 4px;
-    transition: color 0.2s, background-color 0.2s;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
+    backdrop-filter: blur(4px);
 }
+
 
 .btn-icon:hover {
     color: var(--text-primary);

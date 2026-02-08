@@ -57,6 +57,9 @@
           "**/*"
         ]
       }
-    ]
+    ],
+    "win": {
+      "requestedExecutionLevel": "requireAdministrator"
+    }
   }
 }

@@ -189,7 +189,7 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts, show
             name: `Novo Macro ${presets.length + 1}`,
             triggerKey: '',
             loop: false,
-            mode: 'pw',
+            mode: 'seiya',
             commands: []
         };
         const updated = [...presets, newPreset];
@@ -510,12 +510,11 @@ const ActiveInstancesModal = ({ isOpen, onClose, runningAccounts, accounts, show
                                                     value={getActivePreset()?.mode || 'pw'}
                                                     onChange={e => updatePreset(activePresetId, 'mode', e.target.value)}
                                                 >
-                                                    <option value="pw">Modo PW (Background)</option>
-                                                    <option value="seiya">Modo Saint Seiya (Foreground)</option>
+                                                    <option value="seiya">Método 1</option>
                                                 </select>
                                                 <small style={{ color: '#888', marginTop: '4px', display: 'block' }}>
                                                     {getActivePreset()?.mode === 'seiya'
-                                                        ? 'Foca a janela e simula teclado real. Mantém a janela ativa.'
+                                                        ? 'Método padrão: Foca a janela rapidamente para enviar teclas, compatível com Perfect World e Saint Seiya.'
                                                         : 'Envia teclas em segundo plano sem focar.'}
                                                 </small>
                                             </div>

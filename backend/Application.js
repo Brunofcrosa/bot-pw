@@ -8,7 +8,7 @@ const { HotkeyService } = require('./services/HotkeyService');
 const KeyListenerService = require('./services/KeyListenerService');
 const { BackupService } = require('./services/BackupService');
 const { SettingsService } = require('./services/SettingsService');
-const { AutoForgeService } = require('./services/AutoForgeService');
+
 const { ClickListenerService } = require('./services/ClickListenerService');
 const { TitleChangerService } = require('./services/TitleChangerService');
 const { logger } = require('./services/Logger');
@@ -21,7 +21,7 @@ const MacroStore = require('./stores/MacroStore');
 
 // Features
 const MacroFeature = require('./features/macro/MacroFeature');
-const AutoForgeFeature = require('./features/auto-forge/AutoForgeFeature');
+
 const BackupFeature = require('./features/backup/BackupFeature');
 const HotkeyFeature = require('./features/hotkey/HotkeyFeature');
 
@@ -68,8 +68,7 @@ class Application {
         this.macroFeature = new MacroFeature(this.macroService, this.macroStore);
 
 
-        this.autoForgeService = new AutoForgeService(EXECUTABLES_PATH);
-        this.autoForgeFeature = new AutoForgeFeature(this.autoForgeService);
+
 
         this.clickListenerService = new ClickListenerService(EXECUTABLES_PATH, this.windowService);
 
@@ -385,12 +384,45 @@ class Application {
         ipcMain.handle('save-settings', (e, settings) => this.settingsService.saveSettings(settings));
 
         // Auto Forge handlers
-        ipcMain.handle('start-auto-forge', (e, config) => this.autoForgeService.start(config, this.getWebContents()));
-        ipcMain.handle('stop-auto-forge', () => this.autoForgeService.stop());
+
 
         // Click Listener handlers
         ipcMain.handle('capture-coordinates', (e, pid) => this.clickListenerService.getCoordinates(pid));
 
+        ipcMain.handle('open-macros-window', (event, groupId) => {
+            const win = this.windowService.createMacrosWindow(groupId);
+            // Store mapping of webContentsId -> groupId for when the window calls 'ready'
+            win._macrosGroupId = groupId;
+        });
+
+        ipcMain.handle('macros-window-ready', (event) => {
+            const win = BrowserWindow.fromWebContents(event.sender);
+            if (win && win._macrosGroupId) {
+                win.webContents.send('macros-window-data', { groupId: win._macrosGroupId });
+            }
+        });
+
+        ipcMain.handle('get-accounts', () => {
+            const servers = this.serverStore.getServers();
+            let allAccounts = [];
+            for (const server of servers) {
+                const accounts = this.accountStore.getAccounts(server.id);
+                allAccounts = allAccounts.concat(accounts);
+            }
+            return allAccounts;
+        });
+
+        ipcMain.handle('get-group-details', (event, groupId) => {
+            const servers = this.serverStore.getServers();
+            for (const server of servers) {
+                const groups = this.groupStore.getGroups(server.id);
+                const group = groups.find(g => g.id === groupId);
+                if (group) return group;
+            }
+            return null;
+        });
+
+        // --- Features Init ---
         // Abertura automática de grupo
         ipcMain.handle('open-group-accounts', async (e, { serverName, groupId, delayMs = 2000 }) => {
             const groups = this.groupStore.getGroups(serverName);

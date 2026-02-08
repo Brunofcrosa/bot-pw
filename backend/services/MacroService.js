@@ -70,7 +70,7 @@ class MacroService extends EventEmitter {
         this.emit('active-macros-update', activeMacros);
     }
 
-    registerMacro(triggerKeyName, commands, loop = false, mode = 'pw') {
+    registerMacro(triggerKeyName, commands, loop = false, mode = 'seiya') {
         const triggerVk = KEY_TO_VK[triggerKeyName.toUpperCase()];
 
         if (!triggerVk) {
@@ -190,7 +190,7 @@ class MacroService extends EventEmitter {
 
             if (batchCommands.length > 0) {
                 const jobId = `macro_${pressedVk}_${Date.now()}`;
-                const mode = this.macros.get(pressedVk).mode || 'pw';
+                const mode = this.macros.get(pressedVk).mode || 'seiya';
 
                 // Register in active map
                 this.activeJobMap.set(pressedVk, {

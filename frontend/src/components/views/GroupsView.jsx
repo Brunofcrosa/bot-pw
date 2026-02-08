@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { FaPlus, FaUsers } from 'react-icons/fa';
-import ActiveInstancesModal from '../modals/ActiveInstancesModal';
 import GroupCard from '../groups/GroupCard';
 import './GroupsView.css';
 
@@ -13,6 +12,7 @@ const GroupsView = ({
     onSaveGroups,
     onOpenGroup,
     onStopGroup,
+    onOpenInstances,
     showConfirm,
     hideConfirm
 }) => {
@@ -20,7 +20,6 @@ const GroupsView = ({
     const [newGroupName, setNewGroupName] = useState('');
     const [selectedAccounts, setSelectedAccounts] = useState([]);
     const [editingGroup, setEditingGroup] = useState(null);
-    const [instancesGroup, setInstancesGroup] = useState(null);
 
     const handleOpenGroupEditor = (group = null) => {
         if (group) {
@@ -96,17 +95,10 @@ const GroupsView = ({
     };
 
     const handleShowInstances = (groupId) => {
-        setInstancesGroup(groupId);
+        if (onOpenInstances) {
+            onOpenInstances(groupId);
+        }
     };
-
-    // Filtra running accounts para mostrar apenas do grupo selecionado
-    const currentInstancesGroup = groups.find(g => g.id === instancesGroup);
-    const filteredRunningAccounts = currentInstancesGroup
-        ? runningAccounts.filter(r => {
-            const account = accounts.find(a => a.id === r.accountId);
-            return account && currentInstancesGroup.accountIds.includes(account.id);
-        })
-        : [];
 
     return (
         <div className="groups-view">
@@ -183,6 +175,7 @@ const GroupsView = ({
                                 key={group.id}
                                 group={group}
                                 groupAccounts={groupAccounts}
+                                runningAccounts={runningAccounts}
                                 onOpenGroup={onOpenGroup}
                                 onStopGroup={onStopGroup}
                                 onEditGroup={handleOpenGroupEditor}
@@ -195,14 +188,7 @@ const GroupsView = ({
                 )}
             </div>
 
-            <ActiveInstancesModal
-                isOpen={!!instancesGroup}
-                onClose={() => setInstancesGroup(null)}
-                runningAccounts={filteredRunningAccounts}
-                accounts={accounts}
-                showConfirm={showConfirm}
-                hideConfirm={hideConfirm}
-            />
+
         </div>
     );
 };
@@ -215,6 +201,7 @@ GroupsView.propTypes = {
     onSaveGroups: PropTypes.func.isRequired,
     onOpenGroup: PropTypes.func.isRequired,
     onStopGroup: PropTypes.func,
+    onOpenInstances: PropTypes.func,
     showConfirm: PropTypes.func.isRequired,
     hideConfirm: PropTypes.func.isRequired
 };

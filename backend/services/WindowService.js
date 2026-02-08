@@ -25,6 +25,49 @@ class WindowService extends EventEmitter {
         this.startBackgroundSender();
         this.startForegroundSender();
         this.startSeiyaSender();
+
+        this.macrosWindows = new Map(); // groupId -> BrowserWindow
+    }
+
+    createMacrosWindow(groupId) {
+        if (this.macrosWindows.has(groupId)) {
+            const win = this.macrosWindows.get(groupId);
+            if (!win.isDestroyed()) {
+                win.focus();
+                return;
+            }
+        }
+
+        const { BrowserWindow } = require('electron');
+        const win = new BrowserWindow({
+            width: 800,
+            height: 600,
+            title: 'Central de Macros',
+            icon: path.join(__dirname, '..', '..', 'frontend', 'src', 'assets', 'Guerreiro.ico'), // Default icon
+            autoHideMenuBar: true,
+            webPreferences: {
+                preload: path.join(__dirname, '..', 'preload.js'),
+                nodeIntegration: false,
+                contextIsolation: true
+            }
+        });
+
+        const startUrl = process.env.ELECTRON_START_URL || `file://${path.join(__dirname, '..', '..', 'frontend', 'index.html')}`;
+        // Append query params
+        const separator = startUrl.includes('?') ? '&' : '?';
+        win.loadURL(`${startUrl}${separator}macros=true`);
+
+        win.on('closed', () => {
+            this.macrosWindows.delete(groupId);
+        });
+
+        // Store reference
+        this.macrosWindows.set(groupId, win);
+
+        // Open DevTools in dev mode
+        // win.webContents.openDevTools();
+
+        return win;
     }
 
     startSender() {

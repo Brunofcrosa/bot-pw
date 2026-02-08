@@ -9,9 +9,10 @@ import SettingsModal from './components/modals/SettingsModal';
 import ConfirmModal from './components/modals/ConfirmModal';
 import AccountsView from './components/views/AccountsView';
 import GroupsView from './components/views/GroupsView';
-import AutoForgeView from './components/views/AutoForgeView';
+
 import BottomBar from './components/server/BottomBar';
 import OverlayView from './components/views/OverlayView';
+import MacrosWindow from './components/windows/MacrosWindow';
 import MacroModal from './components/modals/MacroModal';
 import { FaUser, FaUsers, FaPlus, FaCog, FaHammer, FaKeyboard } from 'react-icons/fa';
 import './App.css';
@@ -296,12 +297,7 @@ const App = () => {
                             >
                                 <FaUsers /> Grupos
                             </button>
-                            <button
-                                className={`tab-button ${activeTab === 'autoforge' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('autoforge')}
-                            >
-                                <FaHammer /> Auto Forja
-                            </button>
+
                         </div>
 
                         <div className="header-actions">
@@ -314,8 +310,6 @@ const App = () => {
                                     <FaPlus /> Nova Conta
                                 </button>
                             )}
-
-
 
                             <button
                                 className="btn-settings"
@@ -350,11 +344,11 @@ const App = () => {
                             onSaveGroups={saveGroups}
                             onOpenGroup={(group) => handleOpenGroup(group)}
                             onStopGroup={(group) => handleStopGroup(group)}
+                            onOpenInstances={() => setIsAccountsListModalOpen(true)}
                             showConfirm={showConfirm}
                             hideConfirm={hideConfirm}
                         />
                     )}
-                    {activeTab === 'autoforge' && <AutoForgeView />}
                 </div>
             </div>
 
@@ -410,7 +404,7 @@ const App = () => {
                 onCancel={hideConfirm}
                 type={confirmModal.type}
             />
-        </div>
+        </div >
     );
 
 };

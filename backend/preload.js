@@ -63,7 +63,12 @@ const ALLOWED_INVOKE_CHANNELS = [
     'unregister-macro',
     'macro-get-active',
     'macro-start-background',
-    'macro-stop-background'
+    'macro-stop-background',
+    // New Macros Window
+    'open-macros-window',
+    'macros-window-ready',
+    'get-accounts',
+    'get-group-details'
 ];
 
 const ALLOWED_RECEIVE_CHANNELS = [
@@ -71,7 +76,8 @@ const ALLOWED_RECEIVE_CHANNELS = [
     'element-closed',
     'auto-forge-event',
     'auto-forge-stop',
-    'macro-status-update'
+    'macro-status-update',
+    'macros-window-data'
 ];
 
 contextBridge.exposeInMainWorld('electronAPI', {

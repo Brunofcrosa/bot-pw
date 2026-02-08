@@ -34,6 +34,23 @@ const ServerCard = ({
         <div className={`account-card ${isRunning ? 'running' : ''}`}>
             <div className="card-status-bar" style={{ backgroundColor: statusColor }}></div>
 
+            <div className="secondary-actions">
+                <button
+                    className="btn-icon"
+                    onClick={(e) => { e.stopPropagation(); onEdit(accountData); }}
+                    title="Editar"
+                >
+                    <FaEdit />
+                </button>
+                <button
+                    className="btn-icon delete"
+                    onClick={(e) => { e.stopPropagation(); onDelete(accountData.id); }}
+                    title="Excluir"
+                >
+                    <FaTrash />
+                </button>
+            </div>
+
             <div className="card-content">
                 <div className="card-header">
                     <div className="char-avatar">
@@ -64,22 +81,7 @@ const ServerCard = ({
                         <span>{isRunning ? 'Parar' : 'Iniciar'}</span>
                     </button>
 
-                    <div className="secondary-actions">
-                        <button
-                            className="btn-icon"
-                            onClick={(e) => { e.stopPropagation(); onEdit(accountData); }}
-                            title="Editar"
-                        >
-                            <FaEdit />
-                        </button>
-                        <button
-                            className="btn-icon delete"
-                            onClick={(e) => { e.stopPropagation(); onDelete(accountData.id); }}
-                            title="Excluir"
-                        >
-                            <FaTrash />
-                        </button>
-                    </div>
+
                 </div>
             </div>
         </div>
